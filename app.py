@@ -12,6 +12,8 @@ from flask import Flask, jsonify, request, send_file, send_from_directory, sessi
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 import secrets
+import hmac
+import hashlib
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
@@ -30,6 +32,11 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.getenv("SUNPOWER_SECURE_COOKIES", "0") == "1",
 )
+
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
+RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
+RAZORPAY_MODE = os.getenv("RAZORPAY_MODE", "test").lower()
 
 
 def db():
@@ -72,6 +79,8 @@ def initialize_database():
             customer_details TEXT,
             input_json TEXT NOT NULL,
             calculation_json TEXT NOT NULL,
+            customer_user_id INTEGER,
+            status TEXT NOT NULL DEFAULT 'Draft',
             created_at TEXT NOT NULL
         );
         CREATE TABLE IF NOT EXISTS survey_request (
@@ -150,7 +159,55 @@ def initialize_database():
             confidence TEXT NOT NULL,
             created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS payment_transactions (
+            id TEXT PRIMARY KEY,
+            quotation_id TEXT NOT NULL,
+            quotation_version INTEGER NOT NULL,
+            customer_user_id INTEGER NOT NULL,
+            razorpay_order_id TEXT,
+            razorpay_payment_id TEXT,
+            amount_paise INTEGER NOT NULL,
+            currency TEXT NOT NULL DEFAULT 'INR',
+            purpose TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'created',
+            method TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            captured_at TEXT,
+            provider_error TEXT,
+            UNIQUE(quotation_id, purpose, quotation_version)
+        );
+        CREATE TABLE IF NOT EXISTS payment_refunds (
+            id TEXT PRIMARY KEY,
+            payment_transaction_id TEXT NOT NULL,
+            razorpay_refund_id TEXT,
+            amount_paise INTEGER NOT NULL,
+            reason TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'created',
+            initiated_by INTEGER NOT NULL,
+            created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS payment_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            provider_event_id TEXT NOT NULL UNIQUE,
+            event_type TEXT NOT NULL,
+            raw_body TEXT NOT NULL,
+            processed_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS payment_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            payment_transaction_id TEXT,
+            action TEXT NOT NULL,
+            actor_user_id INTEGER NOT NULL,
+            details TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
         """)
+        quote_columns = {row["name"] for row in connection.execute("PRAGMA table_info(quotation)")}
+        if "customer_user_id" not in quote_columns:
+            connection.execute("ALTER TABLE quotation ADD COLUMN customer_user_id INTEGER")
+        if "status" not in quote_columns:
+            connection.execute("ALTER TABLE quotation ADD COLUMN status TEXT NOT NULL DEFAULT 'Draft'")
         count = connection.execute("SELECT COUNT(*) FROM products").fetchone()[0]
         if count == 0:
             connection.executemany(
@@ -176,6 +233,7 @@ def initialize_database():
             ("warehouse@sunpower.local", "Demo Warehouse", "warehouse"),
             ("technician@sunpower.local", "Demo Technician", "technician"),
             ("support@sunpower.local", "Demo Support", "support"),
+            ("finance@sunpower.local", "Demo Finance", "finance"),
             ("admin@sunpower.local", "Demo Admin", "admin"),
         ]
         for email, name, role in demo_accounts:
@@ -258,6 +316,51 @@ def auth_me():
     if user is None:
         return jsonify({"authenticated": False}), 401
     return jsonify({"authenticated": True, "user": dict(user)})
+
+
+def razorpay_configured():
+    return bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET and RAZORPAY_MODE in {"test", "live"})
+
+
+def razorpay_api(method, path, payload=None):
+    import base64
+    import urllib.request
+    body = json.dumps(payload).encode("utf-8") if payload is not None else None
+    credentials = base64.b64encode(f"{RAZORPAY_KEY_ID}:{RAZORPAY_KEY_SECRET}".encode()).decode()
+    headers = {"Authorization": f"Basic {credentials}", "Content-Type": "application/json"}
+    request_object = urllib.request.Request(
+        f"https://api.razorpay.com/v1{path}", data=body, headers=headers, method=method
+    )
+    with urllib.request.urlopen(request_object, timeout=20) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def captured_amount(connection, quotation_id, purpose=None):
+    sql = "SELECT COALESCE(SUM(amount_paise), 0) FROM payment_transactions WHERE quotation_id=? AND status='captured'"
+    params = [quotation_id]
+    if purpose:
+        sql += " AND purpose=?"
+        params.append(purpose)
+    return connection.execute(sql, params).fetchone()[0]
+
+
+def advance_satisfied(connection, quotation_id):
+    quote = connection.execute("SELECT calculation_json FROM quotation WHERE id=?", (quotation_id,)).fetchone()
+    if not quote:
+        return False
+    amount_paise = int(Decimal(str(json.loads(quote["calculation_json"])["final_amount"])) * 100)
+    paid_paise = captured_amount(connection, quotation_id, "advance")
+    return paid_paise >= (amount_paise + 1) // 2
+
+
+def update_payment_workflow(connection, quotation_id):
+    satisfied = advance_satisfied(connection, quotation_id)
+    if satisfied:
+        connection.execute(
+            "UPDATE orders SET evidence_json=?, updated_at=? WHERE quotation_id=? AND status NOT IN ('completed')",
+            (json.dumps({"advance_payment_satisfied": True}), datetime.now().isoformat(), quotation_id),
+        )
+    return satisfied
 
 
 @app.get("/")
@@ -360,12 +463,369 @@ def save_quote():
         version = (quote["version"] + 1) if quote else 1
         quote_id = uuid.uuid4().hex
         connection.execute(
-            "INSERT INTO quotation(id,number,version,parent_id,customer_name,customer_details,input_json,calculation_json,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO quotation(id,number,version,parent_id,customer_name,customer_details,input_json,calculation_json,customer_user_id,status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
             (quote_id, number, version, parent_id, payload.get("customer_name", "Walk-in Customer"),
              payload.get("customer_details", ""), __import__("json").dumps(payload),
-             __import__("json").dumps(calculation), datetime.now().isoformat()),
+             __import__("json").dumps(calculation), current_user()["id"] if current_user() else None,
+             "Draft", datetime.now().isoformat()),
         )
     return jsonify({"id": quote_id, "number": number, "version": version, "calculation": calculation})
+
+
+@app.post("/api/quotes/<quote_id>/approve")
+@login_required(["customer", "sales", "admin"])
+def approve_quote(quote_id):
+    with db() as connection:
+        quote = connection.execute("SELECT * FROM quotation WHERE id=?", (quote_id,)).fetchone()
+        if not quote:
+            return jsonify({"error": "Quotation not found"}), 404
+        if request.user["role"] != "admin" and quote["customer_user_id"] not in (None, request.user["id"]):
+            return jsonify({"error": "Forbidden"}), 403
+        connection.execute("UPDATE quotation SET status='Approved' WHERE id=?", (quote_id,))
+    return jsonify({"id": quote_id, "status": "Approved"})
+
+
+@app.get("/api/payments/config")
+@login_required(["admin", "sales", "finance", "customer"])
+def payment_config():
+    return jsonify({
+        "mode": RAZORPAY_MODE,
+        "keyIdConfigured": bool(RAZORPAY_KEY_ID),
+        "keyId": RAZORPAY_KEY_ID,
+        "liveReady": RAZORPAY_MODE == "live" and bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET and RAZORPAY_WEBHOOK_SECRET),
+        "currency": "INR",
+    })
+
+
+@app.get("/api/payments/quotation/<quote_id>/summary")
+@login_required(["customer", "sales", "admin"])
+def payment_summary(quote_id):
+    with db() as connection:
+        quote = connection.execute("SELECT * FROM quotation WHERE id=?", (quote_id,)).fetchone()
+        if not quote:
+            return jsonify({"error": "Quotation not found"}), 404
+        if request.user["role"] != "admin" and quote["customer_user_id"] != request.user["id"]:
+            return jsonify({"error": "Forbidden"}), 403
+        calculation = json.loads(quote["calculation_json"])
+        paid = connection.execute(
+            "SELECT COALESCE(SUM(amount_paise),0) FROM payment_transactions WHERE quotation_id=? AND status='captured'",
+            (quote_id,),
+        ).fetchone()[0]
+        advance_required = (int(Decimal(str(calculation["final_amount"])) * 100) + 1) // 2
+    return jsonify({
+        "quotationId": quote["id"],
+        "quotationNumber": quote["number"],
+        "version": quote["version"],
+        "customerName": quote["customer_name"],
+        "items": calculation["items"],
+        "confirmedAmountPaise": int(Decimal(str(calculation["final_amount"])) * 100),
+        "paidPaise": paid,
+        "balancePaise": max(0, int(Decimal(str(calculation["final_amount"])) * 100) - paid),
+        "advanceRequiredPaise": advance_required,
+        "status": quote["status"],
+    })
+
+
+@app.post("/api/payments/orders")
+@login_required(["customer"])
+def create_payment_order():
+    payload = request.get_json(silent=True) or {}
+    quotation_id = payload.get("quotationId")
+    purpose = payload.get("purpose")
+    if purpose not in {"advance", "balance"}:
+        return jsonify({"error": "Invalid payment milestone"}), 400
+    if not razorpay_configured():
+        return jsonify({"error": "Razorpay credentials are not configured for payment creation", "configured": False}), 503
+    with db() as connection:
+        quote = connection.execute("SELECT * FROM quotation WHERE id=?", (quotation_id,)).fetchone()
+        if not quote:
+            return jsonify({"error": "Quotation not found"}), 404
+        if quote["customer_user_id"] != request.user["id"] or quote["status"] != "Approved":
+            return jsonify({"error": "Quotation is not approved for this customer"}), 403
+        calculation = json.loads(quote["calculation_json"])
+        total_paise = int(Decimal(str(calculation["final_amount"])) * 100)
+        paid_paise = captured_amount(connection, quotation_id)
+        advance_paise = (total_paise + 1) // 2
+        advance_paid = captured_amount(connection, quotation_id, "advance")
+        payable_paise = advance_paise if purpose == "advance" else max(0, total_paise - advance_paise)
+        if purpose == "advance" and advance_paid >= advance_paise:
+            return jsonify({"error": "Advance milestone is already completed"}), 409
+        if purpose == "balance" and advance_paid < advance_paise:
+            return jsonify({"error": "Advance milestone must be satisfied first"}), 409
+        if purpose == "balance":
+            balance_paid = captured_amount(connection, quotation_id, "balance")
+            payable_paise = max(0, total_paise - advance_paid - balance_paid)
+        if payable_paise <= 0:
+            return jsonify({"error": "Payment milestone is already completed"}), 409
+        existing = connection.execute(
+            "SELECT * FROM payment_transactions WHERE quotation_id=? AND purpose=? AND quotation_version=?",
+            (quotation_id, purpose, quote["version"]),
+        ).fetchone()
+        if existing and existing["status"] in {"created", "attempted", "authorized"}:
+            return jsonify({
+                "transactionId": existing["id"],
+                "razorpayOrderId": existing["razorpay_order_id"],
+                "keyId": RAZORPAY_KEY_ID,
+                "amountPaise": existing["amount_paise"],
+                "currency": "INR",
+                "mode": RAZORPAY_MODE,
+            })
+    try:
+        receipt = f"{quote['number']}-{purpose}"
+        provider = razorpay_api("POST", "/orders", {
+            "amount": payable_paise,
+            "currency": "INR",
+            "receipt": receipt[:40],
+            "notes": {"quotationId": quote["id"], "purpose": purpose, "version": quote["version"]},
+        })
+    except Exception as error:
+        return jsonify({"error": "Razorpay order creation failed", "details": str(error)}), 502
+    transaction_id = existing["id"] if existing else uuid.uuid4().hex
+    now = datetime.now().isoformat()
+    with db() as connection:
+        if existing:
+            connection.execute(
+                "UPDATE payment_transactions SET razorpay_order_id=?, amount_paise=?, status='created', updated_at=?, provider_error=NULL WHERE id=?",
+                (provider["id"], payable_paise, now, transaction_id),
+            )
+        else:
+            connection.execute(
+                """INSERT INTO payment_transactions
+                (id,quotation_id,quotation_version,customer_user_id,razorpay_order_id,amount_paise,currency,purpose,status,created_at,updated_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
+                (transaction_id, quotation_id, quote["version"], request.user["id"], provider["id"],
+                 payable_paise, "INR", purpose, "created", now, now),
+            )
+    return jsonify({
+        "transactionId": transaction_id,
+        "razorpayOrderId": provider["id"],
+        "keyId": RAZORPAY_KEY_ID,
+        "amountPaise": payable_paise,
+        "currency": "INR",
+        "mode": RAZORPAY_MODE,
+    })
+
+
+@app.post("/api/payments/verify")
+@login_required(["customer"])
+def verify_payment():
+    payload = request.get_json(silent=True) or {}
+    razorpay_order_id = payload.get("razorpay_order_id")
+    payment_id = payload.get("razorpay_payment_id")
+    signature = payload.get("razorpay_signature")
+    expected = hmac.new(
+        RAZORPAY_KEY_SECRET.encode("utf-8"),
+        f"{razorpay_order_id}|{payment_id}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not signature or not hmac.compare_digest(expected, signature):
+        return jsonify({"error": "Invalid Razorpay signature"}), 400
+    with db() as connection:
+        transaction = connection.execute(
+            "SELECT * FROM payment_transactions WHERE razorpay_order_id=? AND customer_user_id=?",
+            (razorpay_order_id, request.user["id"]),
+        ).fetchone()
+    if not transaction:
+        return jsonify({"error": "Payment transaction not found"}), 404
+    try:
+        provider_payment = razorpay_api("GET", f"/payments/{payment_id}")
+    except Exception as error:
+        return jsonify({"error": "Payment could not be verified with Razorpay", "details": str(error)}), 502
+    if provider_payment.get("order_id") != razorpay_order_id:
+        return jsonify({"error": "Payment does not belong to this Razorpay order"}), 400
+    captured = provider_payment.get("status") == "captured"
+    now = datetime.now().isoformat()
+    with db() as connection:
+        connection.execute(
+            "UPDATE payment_transactions SET razorpay_payment_id=?, status=?, method=?, updated_at=?, captured_at=? WHERE id=?",
+            (payment_id, "captured" if captured else provider_payment.get("status", "attempted"),
+             provider_payment.get("method"), now, now if captured else None, transaction["id"]),
+        )
+        connection.execute(
+            "INSERT INTO payment_audit(payment_transaction_id,action,actor_user_id,details,created_at) VALUES(?,?,?,?,?)",
+            (transaction["id"], "payment_callback_verified", request.user["id"], json.dumps({"provider_status": provider_payment.get("status")}), now),
+        )
+        satisfied = update_payment_workflow(connection, transaction["quotation_id"]) if captured else False
+    if captured and satisfied:
+        notify("warehouse", "Advance payment satisfied", f"Quotation {transaction['quotation_id'][:8]} cleared for dispatch.")
+        notify("sales", "Advance payment received", f"Quotation {transaction['quotation_id'][:8]} advance is satisfied.")
+    return jsonify({"status": "captured" if captured else provider_payment.get("status"), "advanceSatisfied": satisfied})
+
+
+@app.post("/api/payments/webhook")
+def razorpay_webhook():
+    raw_body = request.get_data(cache=False)
+    signature = request.headers.get("X-Razorpay-Signature", "")
+    if not RAZORPAY_WEBHOOK_SECRET:
+        return jsonify({"error": "Webhook secret is not configured"}), 503
+    expected = hmac.new(RAZORPAY_WEBHOOK_SECRET.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected, signature):
+        return jsonify({"error": "Invalid webhook signature"}), 400
+    payload = json.loads(raw_body.decode("utf-8"))
+    event_id = payload.get("event_id") or payload.get("id")
+    event_type = payload["event"]
+    if not event_id or not isinstance(event_id, str):
+        return jsonify({"error": "Webhook event ID is required"}), 400
+    with db() as connection:
+        if connection.execute("SELECT 1 FROM payment_events WHERE provider_event_id=?", (event_id,)).fetchone():
+            return jsonify({"received": True, "duplicate": True})
+        connection.execute(
+            "INSERT INTO payment_events(provider_event_id,event_type,raw_body,processed_at) VALUES(?,?,?,?)",
+            (event_id, event_type, raw_body.decode("utf-8"), datetime.now().isoformat()),
+        )
+        entity = payload.get("payload", {}).get("payment", {}).get("entity")
+        if not entity and payload.get("payload", {}).get("order", {}):
+            entity = payload["payload"]["order"]["entity"]
+        provider_order_id = entity.get("order_id") if entity and entity.get("entity") == "payment" else (
+            entity.get("id") if entity and entity.get("entity") == "order" else None
+        )
+        payment_id = entity.get("id") if entity and entity.get("entity") == "payment" else None
+        provider_status = entity.get("status") if entity else None
+        if provider_order_id:
+            transaction = connection.execute(
+                "SELECT * FROM payment_transactions WHERE razorpay_order_id=?", (provider_order_id,)
+            ).fetchone()
+        elif entity and entity.get("receipt"):
+            transaction = connection.execute(
+                "SELECT * FROM payment_transactions WHERE razorpay_order_id=?", (entity.get("receipt"),)
+            ).fetchone()
+        else:
+            transaction = None
+        if transaction:
+            status = "captured" if event_type in {"payment.captured", "order.paid"} else (
+                "failed" if event_type == "payment.failed" else provider_status or transaction["status"]
+            )
+            connection.execute(
+                "UPDATE payment_transactions SET razorpay_payment_id=COALESCE(?,razorpay_payment_id), status=?, method=COALESCE(method,?,method), updated_at=?, captured_at=CASE WHEN ?='captured' THEN COALESCE(captured_at,?) ELSE captured_at END WHERE id=?",
+                (payment_id, status, entity.get("method") if entity else None, datetime.now().isoformat(),
+                 status, datetime.now().isoformat(), transaction["id"]),
+            )
+            if status == "captured":
+                satisfied = update_payment_workflow(connection, transaction["quotation_id"])
+                if satisfied:
+                    notify("warehouse", "Advance payment satisfied", f"Quotation {transaction['quotation_id'][:8]} cleared for dispatch.")
+                    notify("sales", "Advance payment received", f"Quotation {transaction['quotation_id'][:8]} advance is satisfied.")
+    return jsonify({"received": True})
+
+
+@app.get("/api/payments/history")
+@login_required(["customer"])
+def payment_history():
+    with db() as connection:
+        rows = connection.execute(
+            "SELECT * FROM payment_transactions WHERE customer_user_id=? ORDER BY created_at DESC",
+            (request.user["id"],),
+        ).fetchall()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.get("/api/payments/<transaction_id>/receipt.pdf")
+@login_required(["customer", "admin", "finance"])
+def payment_receipt(transaction_id):
+    with db() as connection:
+        payment = connection.execute("SELECT * FROM payment_transactions WHERE id=?", (transaction_id,)).fetchone()
+        if not payment or request.user["role"] == "customer" and payment["customer_user_id"] != request.user["id"]:
+            return jsonify({"error": "Payment not found"}), 404
+        quote = connection.execute("SELECT * FROM quotation WHERE id=?", (payment["quotation_id"],)).fetchone()
+    if payment["status"] != "captured":
+        return jsonify({"error": "A captured payment is required for a receipt"}), 409
+    buffer = BytesIO()
+    document = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+    styles = getSampleStyleSheet()
+    story = [
+        Paragraph("SunPower Nexus - Payment Receipt", styles["Title"]),
+        Paragraph(f"Receipt for {quote['number']} v{payment['quotation_version']}", styles["Heading2"]),
+        Spacer(1, 16),
+        Table([
+            ["Payment ID", payment["razorpay_payment_id"] or "Pending"],
+            ["Razorpay Order", payment["razorpay_order_id"] or "Pending"],
+            ["Customer", quote["customer_name"]],
+            ["Purpose", payment["purpose"].title()],
+            ["Amount", f"INR {Decimal(payment['amount_paise']) / Decimal(100):.2f}"],
+            ["Status", payment["status"].title()],
+            ["Captured at", payment["captured_at"] or payment["updated_at"]],
+        ], colWidths=[120, 320]),
+    ]
+    document.build(story)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name=f"payment-{transaction_id[:8]}.pdf", mimetype="application/pdf")
+
+
+@app.post("/api/payments/<transaction_id>/refund")
+@login_required(["finance", "admin"])
+def refund_payment(transaction_id):
+    payload = request.get_json(silent=True) or {}
+    amount = Decimal(str(payload.get("amount", 0)))
+    reason = str(payload.get("reason", "")).strip()
+    if amount <= 0 or not reason:
+        return jsonify({"error": "Refund amount and reason are required"}), 400
+    with db() as connection:
+        payment = connection.execute(
+            "SELECT * FROM payment_transactions WHERE id=? AND status='captured'", (transaction_id,)
+        ).fetchone()
+        if not payment:
+            return jsonify({"error": "Captured payment not found"}), 404
+        refunded = connection.execute(
+            "SELECT COALESCE(SUM(amount_paise),0) FROM payment_refunds WHERE payment_transaction_id=? AND status IN ('processed','created')",
+            (transaction_id,),
+        ).fetchone()[0]
+        amount_paise = int(amount * 100)
+        if amount_paise > payment["amount_paise"] - refunded:
+            return jsonify({"error": "Refund exceeds the remaining captured amount"}), 400
+    if not razorpay_configured():
+        return jsonify({"error": "Razorpay credentials are not configured"}), 503
+    try:
+        provider_refund = razorpay_api("POST", f"/payments/{payment['razorpay_payment_id']}/refund", {
+            "amount": amount_paise,
+            "notes": {"reason": reason},
+        })
+    except Exception as error:
+        return jsonify({"error": "Razorpay refund failed", "details": str(error)}), 502
+    refund_id = uuid.uuid4().hex
+    now = datetime.now().isoformat()
+    with db() as connection:
+        connection.execute(
+            """INSERT INTO payment_refunds
+            (id,payment_transaction_id,razorpay_refund_id,amount_paise,reason,status,initiated_by,created_at)
+            VALUES(?,?,?,?,?,?,?,?)""",
+            (refund_id, transaction_id, provider_refund["id"], amount_paise, reason,
+             provider_refund.get("status", "processed"), request.user["id"], now),
+        )
+        connection.execute(
+            "INSERT INTO payment_audit(payment_transaction_id,action,actor_user_id,details,created_at) VALUES(?,?,?,?,?)",
+            (transaction_id, "refund_initiated", request.user["id"],
+             json.dumps({"refundId": provider_refund["id"], "amountPaise": amount_paise, "reason": reason}), now),
+        )
+    return jsonify({"id": refund_id, "razorpayRefundId": provider_refund["id"], "status": provider_refund.get("status")})
+
+
+@app.get("/api/payments/admin/summary")
+@login_required(["finance", "admin"])
+def payment_admin_summary():
+    with db() as connection:
+        captured = connection.execute(
+            "SELECT COALESCE(SUM(amount_paise),0) FROM payment_transactions WHERE status='captured'"
+        ).fetchone()[0]
+        pending = connection.execute(
+            "SELECT COALESCE(SUM(amount_paise),0) FROM payment_transactions WHERE status IN ('created','attempted','authorized')"
+        ).fetchone()[0]
+        failed = connection.execute(
+            "SELECT COALESCE(SUM(amount_paise),0) FROM payment_transactions WHERE status='failed'"
+        ).fetchone()[0]
+        refunds = connection.execute(
+            "SELECT COALESCE(SUM(amount_paise),0) FROM payment_refunds"
+        ).fetchone()[0]
+        transactions = connection.execute(
+            "SELECT * FROM payment_transactions ORDER BY created_at DESC LIMIT 100"
+        ).fetchall()
+    return jsonify({
+        "mode": RAZORPAY_MODE,
+        "capturedPaise": captured,
+        "pendingPaise": pending,
+        "failedPaise": failed,
+        "refundedPaise": refunds,
+        "transactions": [dict(row) for row in transactions],
+    })
 
 
 @app.get("/api/quotes/<quote_id>/pdf")
@@ -539,12 +999,14 @@ def transition_order(order_id):
                    "support": "warranty_issued", "admin": "completed"}
     acting_role = request.user["role"]
     with db() as connection:
-        row = connection.execute("SELECT status FROM orders WHERE id=?", (order_id,)).fetchone()
+        row = connection.execute("SELECT status, quotation_id FROM orders WHERE id=?", (order_id,)).fetchone()
         if not row:
             return jsonify({"error": "Order not found"}), 404
         allowed = ORDER_STATES.get(row["status"], set())
         if target != stage_roles.get(acting_role) or acting_role not in allowed:
             return jsonify({"error": f"Invalid transition from {row['status']} to {target} by {acting_role}"}), 409
+        if target == "warehouse_ready" and row["quotation_id"] and not advance_satisfied(connection, row["quotation_id"]):
+            return jsonify({"error": "Warehouse dispatch is locked until the 50% advance is captured"}), 409
         if target == "installed":
             checks = payload.get("qc_checklist", [])
             electrical = payload.get("electrical", {})

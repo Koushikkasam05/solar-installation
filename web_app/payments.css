@@ -1,0 +1,15 @@
+:root{--navy:#071d3a;--gold:#f0b429;--green:#15803d;--muted:#64748b}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,sans-serif;background:#f4f7fb;color:#12233f}
+.payment-shell{min-height:100vh}
+.payment-header{display:flex;align-items:center;justify-content:space-between;padding:22px 32px;background:var(--navy);color:#fff}
+.payment-header a{color:#fff;text-decoration:none}.payment-header strong{color:#ffd166}
+.payment-content{width:min(1080px,calc(100% - 32px));margin:32px auto;display:grid;grid-template-columns:1fr 330px;gap:24px}
+.payment-card,.payment-summary{background:white;border-radius:18px;padding:24px;box-shadow:0 12px 35px rgba(7,29,58,.08)}
+.payment-card h1,.payment-summary h2{margin-top:0}.environment{border-radius:999px;padding:7px 12px;background:#fff4cc;color:#7a5200;font-weight:700}
+.environment.live{background:#fee2e2;color:#991b1b}
+.payment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.payment-grid div{background:#f8fafc;border-radius:12px;padding:14px}.payment-grid small{display:block;color:var(--muted);margin-bottom:5px}
+.milestones{display:flex;gap:10px;margin:24px 0}.milestone{flex:1;border:1px solid #dbe4ef;border-radius:12px;padding:14px;text-align:left;background:white;cursor:pointer}.milestone.active{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,180,41,.15)}
+.pay-button{width:100%;border:0;border-radius:10px;padding:14px;background:var(--gold);font-weight:800;color:#071d3a;cursor:pointer}.pay-button:disabled{opacity:.55;cursor:not-allowed}
+.history-table{width:100%;border-collapse:collapse;margin-top:18px}.history-table th,.history-table td{padding:12px;border-bottom:1px solid #e5eaf1;text-align:left}.status{display:inline-block;border-radius:999px;padding:5px 9px;font-size:.82rem;font-weight:700}.status.captured{background:#dcfce7;color:#166534}.status.failed{background:#fee2e2;color:#991b1b}.status.created{background:#e0f2fe;color:#075985}
+.error-message{color:#b91c1c}.secure-note{font-size:.85rem;color:var(--muted)}
+@media(max-width:800px){.payment-content{grid-template-columns:1fr}.payment-grid{grid-template-columns:1fr 1fr}.payment-header{padding:18px 16px}}

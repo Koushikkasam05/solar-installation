@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Payments | SunPower Nexus</title>
+  <link rel="stylesheet" href="payments.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+  <script src="payments.js" defer></script>
+</head>
+<body>
+  <div class="payment-shell">
+    <header class="payment-header">
+      <strong>SunPower Nexus</strong>
+      <span id="environment" class="environment">Payment environment</span>
+      <a href="customer.html">Back to dashboard</a>
+    </header>
+    <main class="payment-content">
+      <section class="payment-card" aria-labelledby="payment-title">
+        <p class="eyebrow">SECURE CHECKOUT</p>
+        <h1 id="payment-title">Quotation payment</h1>
+        <p id="payment-message" role="status"></p>
+        <div class="payment-grid">
+          <div><small>Quotation</small><strong id="quotation-number">—</strong></div>
+          <div><small>Customer</small><strong id="customer-name">—</strong></div>
+          <div><small>Confirmed amount</small><strong id="confirmed-amount">—</strong></div>
+          <div><small>Already paid</small><strong id="paid-amount">—</strong></div>
+          <div><small>Remaining balance</small><strong id="balance-amount">—</strong></div>
+          <div><small>Advance required</small><strong id="advance-amount">—</strong></div>
+        </div>
+        <div class="milestones" role="radiogroup" aria-label="Payment milestone">
+          <button class="milestone active" id="advance-milestone" role="radio" aria-checked="true" data-purpose="advance">50% Advance</button>
+          <button class="milestone" id="balance-milestone" role="radio" aria-checked="false" data-purpose="balance">Final Balance</button>
+        </div>
+        <button id="pay-now" class="pay-button">Pay Now</button>
+        <p class="secure-note">Payments are processed securely by Razorpay. No card or banking credentials are stored by SunPower Nexus.</p>
+      </section>
+      <aside class="payment-summary">
+        <h2>Payment history</h2>
+        <div id="payment-history">Loading transactions...</div>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>
