@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_solar_survey_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <div class="page" style="font-family: 'Helvetica Neue', Arial, sans-serif; color: #2d3748; padding: 25px;">
+                    <!-- Header -->
+                    <div style="border-bottom: 3px solid #f59e0b; padding-bottom: 12px; margin-bottom: 25px;">
+                        <h2 style="color: #1e3a8a; font-weight: 700; margin: 0;">SOLAR ROOFTOP FEASIBILITY &amp; SITE SURVEY REPORT</h2>
+                        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                            <span><strong>Survey Ref:</strong> <t t-esc="doc.name"/></span>
+                            <span><strong>Date:</strong> <t t-esc="doc.scheduled_date"/></span>
+                            <span><strong>Status:</strong> <span style="background-color: #10b981; color: white; padding: 2px 8px; border-radius: 4px;"><t t-esc="doc.state.upper()"/></span></span>
+                        </div>
+                    </div>
+
+                    <!-- Client & Location Info -->
+                    <div style="display: flex; gap: 20px; margin-bottom: 25px;">
+                        <div style="flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+                            <h4 style="color: #0f172a; margin-top: 0; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;">Client Information</h4>
+                            <p style="margin: 4px 0;"><strong>Name:</strong> <t t-esc="doc.partner_id.name"/></p>
+                            <p style="margin: 4px 0;"><strong>Phone:</strong> <t t-esc="doc.partner_id.phone or 'N/A'"/></p>
+                            <p style="margin: 4px 0;"><strong>Address:</strong> <t t-esc="doc.site_address or doc.partner_id.contact_address"/></p>
+                        </div>
+                        <div style="flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+                            <h4 style="color: #0f172a; margin-top: 0; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;">Engineering Assessment</h4>
+                            <p style="margin: 4px 0;"><strong>Surveyor:</strong> <t t-esc="doc.surveyor_id.name"/></p>
+                            <p style="margin: 4px 0;"><strong>Approving Engineer:</strong> <t t-esc="doc.engineer_id.name or 'Pending Review'"/></p>
+                            <p style="margin: 4px 0;"><strong>Proposed System:</strong> <span style="font-weight: bold; color: #d97706;"><t t-esc="doc.recommended_kw"/> kW</span> (<t t-esc="doc.package_id.name or 'Custom'"/>)</p>
+                        </div>
+                    </div>
+
+                    <!-- Roof & Electrical Specifications Table -->
+                    <h4 style="color: #1e3a8a; border-left: 4px solid #f59e0b; padding-left: 8px;">Technical Site Parameters</h4>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+                        <thead>
+                            <tr style="background: #e2e8f0;">
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: left;">Parameter</th>
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: left;">Surveyed Value</th>
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: left;">Parameter</th>
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: left;">Surveyed Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><strong>Roof Type</strong></td>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><t t-esc="doc.roof_type.replace('_', ' ').title()"/></td>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><strong>Roof Tilt &amp; Azimuth</strong></td>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><t t-esc="doc.roof_tilt_deg"/>° / <t t-esc="doc.azimuth_deg"/>° (South)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><strong>Usable Shadow-Free Area</strong></td>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><t t-esc="doc.usable_area_sqft"/> sq. ft.</td>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><strong>Shading Analysis</strong></td>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><t t-esc="doc.shadow_profile.replace('_', ' ').title()"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><strong>Distance to Main DB</strong></td>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><t t-esc="doc.db_distance_meters"/> Meters</td>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><strong>Service Phase</strong></td>
+                                <td style="padding: 8px; border: 1px solid #cbd5e1;"><t t-esc="doc.service_phase.replace('_', ' ').title()"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Bill of Materials Summary -->
+                    <h4 style="color: #1e3a8a; border-left: 4px solid #f59e0b; padding-left: 8px;">Automated Bill of Materials (BOM)</h4>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+                        <thead>
+                            <tr style="background: #1e3a8a; color: white;">
+                                <th style="padding: 8px; text-align: left;">Category</th>
+                                <th style="padding: 8px; text-align: left;">Component Specification</th>
+                                <th style="padding: 8px; text-align: center;">Qty</th>
+                                <th style="padding: 8px; text-align: right;">Unit Cost</th>
+                                <th style="padding: 8px; text-align: right;">Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="doc.bom_line_ids" t-as="line">
+                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                    <td style="padding: 8px;"><t t-esc="line.category.upper()"/></td>
+                                    <td style="padding: 8px;"><t t-esc="line.name"/></td>
+                                    <td style="padding: 8px; text-align: center;"><t t-esc="line.quantity"/> <t t-esc="line.uom"/></td>
+                                    <td style="padding: 8px; text-align: right;"><t t-esc="line.unit_cost"/></td>
+                                    <td style="padding: 8px; text-align: right; font-weight: bold;"><t t-esc="line.total_cost"/></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+
+                    <!-- Signatures -->
+                    <div style="display: flex; justify-content: space-between; margin-top: 50px;">
+                        <div style="text-align: center; border-top: 1px solid #64748b; width: 220px; padding-top: 5px;">
+                            <p style="margin: 0; font-weight: bold;">Field Surveyor</p>
+                            <small><t t-esc="doc.surveyor_id.name"/></small>
+                        </div>
+                        <div style="text-align: center; border-top: 1px solid #64748b; width: 220px; padding-top: 5px;">
+                            <p style="margin: 0; font-weight: bold;">Chief Solar Engineer</p>
+                            <small><t t-esc="doc.engineer_id.name or 'Authorized Signatory'"/></small>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,31 @@
+/* Solar EPC Custom Theme Styling */
+:root {
+    --solar-gold: #f59e0b;
+    --solar-blue: #1e3a8a;
+    --solar-green: #10b981;
+    --solar-dark: #0f172a;
+}
+
+.solar-badge-feasibility-high {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.solar-badge-feasibility-med {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #ffffff;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.solar-stat-card {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    border-left: 4px solid var(--solar-gold);
+}

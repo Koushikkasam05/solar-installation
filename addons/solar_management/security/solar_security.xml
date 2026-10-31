@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record model="ir.module.category" id="module_solar_management_category">
+        <field name="name">Solar EPC Operations</field>
+        <field name="description">Access levels for Solar EPC Installation ERP</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- Field Technician / Electrician -->
+    <record id="group_solar_technician" model="res.groups">
+        <field name="name">Field Technician / Electrician</field>
+        <field name="category_id" ref="module_solar_management_category"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Site Surveyor & Sales Executive -->
+    <record id="group_solar_user" model="res.groups">
+        <field name="name">Solar Surveyor &amp; Sales Officer</field>
+        <field name="category_id" ref="module_solar_management_category"/>
+        <field name="implied_ids" eval="[(4, ref('group_solar_technician'))]"/>
+    </record>
+
+    <!-- Design & Project Engineer -->
+    <record id="group_solar_engineer" model="res.groups">
+        <field name="name">Solar Design &amp; Project Engineer</field>
+        <field name="category_id" ref="module_solar_management_category"/>
+        <field name="implied_ids" eval="[(4, ref('group_solar_user'))]"/>
+    </record>
+
+    <!-- Operations Manager / Administrator -->
+    <record id="group_solar_manager" model="res.groups">
+        <field name="name">Solar EPC Operations Manager</field>
+        <field name="category_id" ref="module_solar_management_category"/>
+        <field name="implied_ids" eval="[(4, ref('group_solar_engineer'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+</odoo>

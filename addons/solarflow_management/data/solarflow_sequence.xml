@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Solar Lead Sequence -->
+        <record id="seq_solarflow_lead" model="ir.sequence">
+            <field name="name">SolarFlow Lead Reference</field>
+            <field name="code">solarflow.lead.seq</field>
+            <field name="prefix">SF/LEAD/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Site Survey Sequence -->
+        <record id="seq_solarflow_survey" model="ir.sequence">
+            <field name="name">SolarFlow Site Survey</field>
+            <field name="code">solarflow.survey.seq</field>
+            <field name="prefix">SF/SURV/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Installation Project Sequence -->
+        <record id="seq_solarflow_installation" model="ir.sequence">
+            <field name="name">SolarFlow Installation</field>
+            <field name="code">solarflow.installation.seq</field>
+            <field name="prefix">SF/INST/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Digital Warranty Sequence -->
+        <record id="seq_solarflow_warranty" model="ir.sequence">
+            <field name="name">SolarFlow Warranty Certificate</field>
+            <field name="code">solarflow.warranty.seq</field>
+            <field name="prefix">SF/WRNT/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Service Ticket Sequence -->
+        <record id="seq_solarflow_service_ticket" model="ir.sequence">
+            <field name="name">SolarFlow Service Ticket</field>
+            <field name="code">solarflow.service.ticket.seq</field>
+            <field name="prefix">SF/TICK/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

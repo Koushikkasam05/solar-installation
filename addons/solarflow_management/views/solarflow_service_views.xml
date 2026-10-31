@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Service Ticket Search View -->
+    <record id="view_solarflow_service_ticket_search" model="ir.ui.view">
+        <field name="name">solarflow.service.ticket.search</field>
+        <field name="model">solarflow.service.ticket</field>
+        <field name="arch" type="xml">
+            <search string="Search Service Tickets">
+                <field name="name" string="Ticket Reference"/>
+                <field name="lot_id" string="Equipment Serial Number"/>
+                <field name="customer_id" string="Customer"/>
+                <field name="warranty_id" string="Warranty Reference"/>
+                <field name="product_id" string="Product"/>
+                <field name="assigned_technician_id" string="Technician"/>
+                <separator/>
+                <filter string="Open Tickets" name="filter_open" domain="[('state', 'in', ['new', 'assigned', 'in_progress', 'waiting_parts'])]"/>
+                <filter string="Under Warranty (Free Repair)" name="filter_covered" domain="[('warranty_covered', '=', True)]"/>
+                <filter string="Non-Covered (Billable)" name="filter_non_covered" domain="[('warranty_covered', '=', False)]"/>
+                <filter string="Waiting for Parts" name="filter_waiting_parts" domain="[('state', '=', 'waiting_parts')]"/>
+                <filter string="Resolved &amp; Closed" name="filter_closed" domain="[('state', 'in', ['resolved', 'closed'])]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Ticket Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Fault Category" name="group_fault" context="{'group_by': 'fault_category'}"/>
+                    <filter string="Customer" name="group_customer" context="{'group_by': 'customer_id'}"/>
+                    <filter string="Assigned Technician" name="group_tech" context="{'group_by': 'assigned_technician_id'}"/>
+                    <filter string="Warranty Coverage" name="group_warranty" context="{'group_by': 'warranty_covered'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Ticket Kanban View -->
+    <record id="view_solarflow_service_ticket_kanban" model="ir.ui.view">
+        <field name="name">solarflow.service.ticket.kanban</field>
+        <field name="model">solarflow.service.ticket</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" quick_create="false">
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="fault_category"/>
+                <field name="priority"/>
+                <field name="assigned_technician_id"/>
+                <field name="warranty_covered"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click p-2 border rounded shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="text-primary"><field name="name"/></strong>
+                                <field name="priority" widget="priority"/>
+                            </div>
+                            <div class="mb-1 text-dark fw-bold"><field name="customer_id"/></div>
+                            <div class="mb-1 text-muted small"><field name="product_id"/> (<field name="lot_id"/>)</div>
+                            <div class="mb-1">
+                                <t t-if="record.warranty_covered.raw_value">
+                                    <span class="badge bg-success">Covered ($0.00)</span>
+                                </t>
+                                <t t-else="">
+                                    <span class="badge bg-warning text-dark">Non-Covered</span>
+                                </t>
+                            </div>
+                            <div class="text-secondary small">
+                                <i class="fa fa-wrench me-1"/> <field name="assigned_technician_id"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Ticket Tree View -->
+    <record id="view_solarflow_service_ticket_tree" model="ir.ui.view">
+        <field name="name">solarflow.service.ticket.tree</field>
+        <field name="model">solarflow.service.ticket</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'assigned'" decoration-warning="state in ['in_progress', 'waiting_parts']" decoration-success="state in ['resolved', 'closed']">
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="product_id"/>
+                <field name="lot_id" string="Serial Number"/>
+                <field name="warranty_id"/>
+                <field name="complaint_date"/>
+                <field name="fault_category"/>
+                <field name="assigned_technician_id"/>
+                <field name="warranty_covered" widget="boolean_toggle"/>
+                <field name="repair_cost"/>
+                <field name="customer_charge"/>
+                <field name="customer_confirmation" widget="boolean_toggle"/>
+                <field name="state" widget="badge" decoration-info="state == 'assigned'" decoration-warning="state in ['in_progress', 'waiting_parts']" decoration-success="state in ['resolved', 'closed']"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Ticket Form View -->
+    <record id="view_solarflow_service_ticket_form" model="ir.ui.view">
+        <field name="name">solarflow.service.ticket.form</field>
+        <field name="model">solarflow.service.ticket</field>
+        <field name="arch" type="xml">
+            <form string="SolarFlow After-Sales Service Management">
+                <header>
+                    <button name="action_assign" string="Assign Technician" type="object" class="btn-primary" invisible="state != 'new'"/>
+                    <button name="action_start_repair" string="Start Work" type="object" class="btn-primary" invisible="state not in ['assigned', 'waiting_parts']"/>
+                    <button name="action_wait_parts" string="Wait for Parts" type="object" class="btn-secondary" invisible="state != 'in_progress'"/>
+                    <button name="action_resolve" string="Mark Resolved" type="object" class="btn-success" invisible="state != 'in_progress'"/>
+                    <button name="action_close" string="Customer Sign-off &amp; Close" type="object" class="btn-success" invisible="state != 'resolved'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="new,assigned,in_progress,waiting_parts,resolved,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Ticket Reference"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Equipment Identification &amp; Serial Lookup">
+                            <field name="lot_id" string="Equipment Serial Number" placeholder="Select or scan equipment serial..."/>
+                            <field name="product_id"/>
+                            <field name="customer_id"/>
+                            <field name="installation_id" readonly="1"/>
+                            <field name="warranty_id" readonly="1"/>
+                            <field name="warranty_covered" widget="badge" decoration-success="warranty_covered == True" decoration-warning="warranty_covered == False"/>
+                        </group>
+                        <group string="Complaint Details &amp; Technician Assignment">
+                            <field name="complaint_date"/>
+                            <field name="fault_category"/>
+                            <field name="priority" widget="priority"/>
+                            <field name="assigned_technician_id"/>
+                            <field name="customer_confirmation"/>
+                            <field name="customer_confirmation_date" invisible="not customer_confirmation" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Problem Description &amp; Customer Symptoms">
+                        <field name="problem_description" placeholder="Customer reported symptoms, inverter blink codes, or generation drops..."/>
+                    </group>
+
+                    <notebook>
+                        <page string="Technician Diagnosis &amp; Root Cause">
+                            <group>
+                                <field name="diagnosis" placeholder="Root cause diagnosis, multimer readings, insulation checks..."/>
+                                <field name="resolution" placeholder="Corrective repair actions taken, component replacements..."/>
+                            </group>
+                        </page>
+
+                        <page string="Replacement Parts &amp; Consumables">
+                            <field name="part_line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="unit_price"/>
+                                    <field name="subtotal"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Repair Cost &amp; Billing Calculation">
+                            <group>
+                                <group string="Gross Repair Costs">
+                                    <field name="parts_cost"/>
+                                    <field name="labour_cost"/>
+                                    <field name="repair_cost"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </group>
+                                <group string="Customer Billing Policy">
+                                    <div class="alert alert-info" role="alert" invisible="not warranty_covered">
+                                        <strong>Warranty Active:</strong> This repair is covered under warranty. Customer payable charge is $0.00.
+                                    </div>
+                                    <div class="alert alert-warning" role="alert" invisible="warranty_covered">
+                                        <strong>Non-Covered Fault:</strong> This repair is outside warranty terms. Customer will be charged full parts and labour charges.
+                                    </div>
+                                    <field name="customer_charge" class="oe_subtotal_footer_separator"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_solarflow_service_tickets" model="ir.actions.act_window">
+        <field name="name">Service &amp; Warranty Claims</field>
+        <field name="res_model">solarflow.service.ticket</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_solarflow_service_ticket_search"/>
+        <field name="context">{'search_default_filter_open': 1}</field>
+    </record>
+</odoo>
+

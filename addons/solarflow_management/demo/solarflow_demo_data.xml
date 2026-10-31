@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- ================================================================= -->
+        <!-- 10 CUSTOMERS                                                      -->
+        <!-- ================================================================= -->
+        <record id="partner_solarflow_demo_1" model="res.partner">
+            <field name="name">Dr. Rajesh Sharma</field>
+            <field name="street">42 Palm Meadows Boulevard</field>
+            <field name="city">Bengaluru</field>
+            <field name="zip">560066</field>
+            <field name="phone">+91 98765 43210</field>
+            <field name="email">rajesh.sharma@example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="partner_solarflow_demo_2" model="res.partner">
+            <field name="name">Apex Logistics &amp; Warehousing Hub</field>
+            <field name="is_company">True</field>
+            <field name="street">Plot 18, Industrial Corridor Phase 2</field>
+            <field name="city">Pune</field>
+            <field name="zip">411019</field>
+            <field name="phone">+91 98111 22334</field>
+            <field name="email">contact@apexlogistics.example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="partner_solarflow_demo_3" model="res.partner">
+            <field name="name">Priya Sundaram</field>
+            <field name="street">14 Temple Road, Malleshwaram</field>
+            <field name="city">Bengaluru</field>
+            <field name="zip">560003</field>
+            <field name="phone">+91 98450 11223</field>
+            <field name="email">priya.sundaram@example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="partner_solarflow_demo_4" model="res.partner">
+            <field name="name">GreenLeaf Organic Farmhouse</field>
+            <field name="street">Survey 45, Nandi Hills Road</field>
+            <field name="city">Chikkaballapur</field>
+            <field name="zip">562101</field>
+            <field name="phone">+91 99000 55667</field>
+            <field name="email">info@greenleaf.example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="partner_solarflow_demo_5" model="res.partner">
+            <field name="name">Vikramaditya Rao</field>
+            <field name="street">88 Jubilee Hills Checkpost</field>
+            <field name="city">Hyderabad</field>
+            <field name="zip">500033</field>
+            <field name="phone">+91 98222 77889</field>
+            <field name="email">vikram.rao@example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="partner_solarflow_demo_6" model="res.partner">
+            <field name="name">Modern Heights Apartment Association</field>
+            <field name="is_company">True</field>
+            <field name="street">Tower B, Outer Ring Road</field>
+            <field name="city">Bengaluru</field>
+            <field name="zip">560103</field>
+            <field name="phone">+91 99112 33445</field>
+            <field name="email">secretary@modernheights.example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="partner_solarflow_demo_7" model="res.partner">
+            <field name="name">Amitabh Choudhury</field>
+            <field name="street">5 Salt Lake Sector V</field>
+            <field name="city">Kolkata</field>
+            <field name="zip">700091</field>
+            <field name="phone">+91 98300 44556</field>
+            <field name="email">amitabh.c@example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="partner_solarflow_demo_8" model="res.partner">
+            <field name="name">Zenith Polymer Industries</field>
+            <field name="is_company">True</field>
+            <field name="street">GIDC Industrial Area, Makarpura</field>
+            <field name="city">Vadodara</field>
+            <field name="zip">390010</field>
+            <field name="phone">+91 98250 88990</field>
+            <field name="email">plant@zenithpolymers.example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="partner_solarflow_demo_9" model="res.partner">
+            <field name="name">Sunita Deshmukh</field>
+            <field name="street">23 Shivaji Park</field>
+            <field name="city">Mumbai</field>
+            <field name="zip">400028</field>
+            <field name="phone">+91 98201 23456</field>
+            <field name="email">sunita.d@example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <record id="partner_solarflow_demo_10" model="res.partner">
+            <field name="name">Kaveri Cold Storage &amp; Food Processing</field>
+            <field name="is_company">True</field>
+            <field name="street">NH 44 Highway Bypass</field>
+            <field name="city">Salem</field>
+            <field name="zip">636005</field>
+            <field name="phone">+91 94432 11223</field>
+            <field name="email">manager@kavericold.example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <!-- ================================================================= -->
+        <!-- 10 SOLAR LEADS                                                    -->
+        <!-- ================================================================= -->
+        <record id="crm_lead_solarflow_demo_1" model="crm.lead">
+            <field name="name">Residential Rooftop Solar 3kW - Dr. Rajesh Sharma</field>
+            <field name="solarflow_reference">SF/LEAD/2026/0001</field>
+            <field name="partner_id" ref="partner_solarflow_demo_1"/>
+            <field name="contact_name">Dr. Rajesh Sharma</field>
+            <field name="email_from">rajesh.sharma@example.com</field>
+            <field name="phone">+91 98765 43210</field>
+            <field name="is_solar_lead">True</field>
+            <field name="solar_capacity_kw">3.0</field>
+            <field name="solar_system_type">on_grid</field>
+            <field name="subsidy_required">True</field>
+            <field name="expected_install_date">2026-11-15</field>
+            <field name="solar_lead_source">web_inbound</field>
+            <field name="survey_status">approved</field>
+            <field name="monthly_consumption_kwh">380.0</field>
+            <field name="current_electricity_tariff">8.5</field>
+            <field name="estimated_roof_area_sqft">650.0</field>
+        </record>
+
+        <record id="crm_lead_solarflow_demo_2" model="crm.lead">
+            <field name="name">Warehouse Commercial Solar 50kW - Apex Logistics</field>
+            <field name="solarflow_reference">SF/LEAD/2026/0002</field>
+            <field name="partner_id" ref="partner_solarflow_demo_2"/>
+            <field name="contact_name">Mr. Sanjay Kulkarni</field>
+            <field name="email_from">contact@apexlogistics.example.com</field>
+            <field name="phone">+91 98111 22334</field>
+            <field name="is_solar_lead">True</field>
+            <field name="solar_capacity_kw">50.0</field>
+            <field name="solar_system_type">on_grid</field>
+            <field name="subsidy_required">False</field>
+            <field name="solar_lead_source">referral</field>
+            <field name="monthly_consumption_kwh">6500.0</field>
+            <field name="current_electricity_tariff">11.2</field>
+            <field name="estimated_roof_area_sqft">8000.0</field>
+        </record>
+
+        <record id="crm_lead_solarflow_demo_3" model="crm.lead">
+            <field name="name">Villa Hybrid Solar 5kW - Priya Sundaram</field>
+            <field name="solarflow_reference">SF/LEAD/2026/0003</field>
+            <field name="partner_id" ref="partner_solarflow_demo_3"/>
+            <field name="contact_name">Priya Sundaram</field>
+            <field name="email_from">priya.sundaram@example.com</field>
+            <field name="phone">+91 98450 11223</field>
+            <field name="is_solar_lead">True</field>
+            <field name="solar_capacity_kw">5.0</field>
+            <field name="solar_system_type">hybrid</field>
+            <field name="subsidy_required">True</field>
+            <field name="solar_lead_source">social</field>
+            <field name="monthly_consumption_kwh">550.0</field>
+            <field name="current_electricity_tariff">8.5</field>
+            <field name="estimated_roof_area_sqft">900.0</field>
+        </record>
+
+        <record id="crm_lead_solarflow_demo_4" model="crm.lead">
+            <field name="name">Off-Grid Farmhouse 5kW - GreenLeaf Farms</field>
+            <field name="solarflow_reference">SF/LEAD/2026/0004</field>
+            <field name="partner_id" ref="partner_solarflow_demo_4"/>
+            <field name="contact_name">Kiran Patel</field>
+            <field name="email_from">info@greenleaf.example.com</field>
+            <field name="phone">+91 99000 55667</field>
+            <field name="is_solar_lead">True</field>
+            <field name="solar_capacity_kw">5.0</field>
+            <field name="solar_system_type">off_grid</field>
+            <field name="subsidy_required">False</field>
+            <field name="solar_lead_source">campaign</field>
+            <field name="monthly_consumption_kwh">420.0</field>
+            <field name="estimated_roof_area_sqft">1200.0</field>
+        </record>
+
+        <record id="crm_lead_solarflow_demo_5" model="crm.lead">
+            <field name="name">Bungalow On-Grid 10kW - Vikramaditya Rao</field>
+            <field name="solarflow_reference">SF/LEAD/2026/0005</field>
+            <field name="partner_id" ref="partner_solarflow_demo_5"/>
+            <field name="contact_name">Vikramaditya Rao</field>
+            <field name="email_from">vikram.rao@example.com</field>
+            <field name="phone">+91 98222 77889</field>
+            <field name="is_solar_lead">True</field>
+            <field name="solar_capacity_kw">10.0</field>
+            <field name="solar_system_type">on_grid</field>
+            <field name="subsidy_required">True</field>
+            <field name="solar_lead_source">web_inbound</field>
+            <field name="monthly_consumption_kwh">1200.0</field>
+            <field name="estimated_roof_area_sqft">1500.0</field>
+        </record>
+
+        <record id="crm_lead_solarflow_demo_6" model="crm.lead">
+            <field name="name">Apartment Common Utilities 25kW - Modern Heights</field>
+            <field name="solarflow_reference">SF/LEAD/2026/0006</field>
+            <field name="partner_id" ref="partner_solarflow_demo_6"/>
+            <field name="contact_name">R. Narayanan</field>
+            <field name="email_from">secretary@modernheights.example.com</field>
+            <field name="phone">+91 99112 33445</field>
+            <field name="is_solar_lead">True</field>
+            <field name="solar_capacity_kw">25.0</field>
+            <field name="solar_system_type">on_grid</field>
+            <field name="subsidy_required">False</field>
+            <field name="solar_lead_source">referral</field>
+            <field name="monthly_consumption_kwh">3200.0</field>
+            <field name="estimated_roof_area_sqft">4000.0</field>
+        </record>
+
+        <record id="crm_lead_solarflow_demo_7" model="crm.lead">
+            <field name="name">Residential Rooftop 2kW - Amitabh Choudhury</field>
+            <field name="solarflow_reference">SF/LEAD/2026/0007</field>
+            <field name="partner_id" ref="partner_solarflow_demo_7"/>
+            <field name="contact_name">Amitabh Choudhury</field>
+            <field name="email_from">amitabh.c@example.com</field>
+            <field name="phone">+91 98300 44556</field>
+            <field name="is_solar_lead">True</field>
+            <field name="solar_capacity_kw">2.0</field>
+            <field name="solar_system_type">on_grid</field>
+            <field name="subsidy_required">True</field>
+            <field name="solar_lead_source">web_inbound</field>
+            <field name="monthly_consumption_kwh">240.0</field>
+            <field name="estimated_roof_area_sqft">350.0</field>
+        </record>
+
+        <record id="crm_lead_solarflow_demo_8" model="crm.lead">
+            <field name="name">Factory Rooftop 100kW - Zenith Polymer</field>
+            <field name="solarflow_reference">SF/LEAD/2026/0008</field>
+            <field name="partner_id" ref="partner_solarflow_demo_8"/>
+            <field name="contact_name">Dinesh Shah</field>
+            <field name="email_from">plant@zenithpolymers.example.com</field>
+            <field name="phone">+91 98250 88990</field>
+            <field name="is_solar_lead">True</field>
+            <field name="solar_capacity_kw">100.0</field>
+            <field name="solar_system_type">on_grid</field>
+            <field name="subsidy_required">False</field>
+            <field name="solar_lead_source">cold_call</field>
+            <field name="monthly_consumption_kwh">14000.0</field>
+            <field name="estimated_roof_area_sqft">12000.0</field>
+        </record>
+
+        <record id="crm_lead_solarflow_demo_9" model="crm.lead">
+            <field name="name">Rowhouse Hybrid 3kW - Sunita Deshmukh</field>
+            <field name="solarflow_reference">SF/LEAD/2026/0009</field>
+            <field name="partner_id" ref="partner_solarflow_demo_9"/>
+            <field name="contact_name">Sunita Deshmukh</field>
+            <field name="email_from">sunita.d@example.com</field>
+            <field name="phone">+91 98201 23456</field>
+            <field name="is_solar_lead">True</field>
+            <field name="solar_capacity_kw">3.0</field>
+            <field name="solar_system_type">hybrid</field>
+            <field name="subsidy_required">True</field>
+            <field name="solar_lead_source">social</field>
+            <field name="monthly_consumption_kwh">340.0</field>
+            <field name="estimated_roof_area_sqft">500.0</field>
+        </record>
+
+        <record id="crm_lead_solarflow_demo_10" model="crm.lead">
+            <field name="name">Commercial Solar 40kW - Kaveri Cold Storage</field>
+            <field name="solarflow_reference">SF/LEAD/2026/0010</field>
+            <field name="partner_id" ref="partner_solarflow_demo_10"/>
+            <field name="contact_name">S. Thangavel</field>
+            <field name="email_from">manager@kavericold.example.com</field>
+            <field name="phone">+91 94432 11223</field>
+            <field name="is_solar_lead">True</field>
+            <field name="solar_capacity_kw">40.0</field>
+            <field name="solar_system_type">on_grid</field>
+            <field name="subsidy_required">False</field>
+            <field name="solar_lead_source">referral</field>
+            <field name="monthly_consumption_kwh">5200.0</field>
+            <field name="estimated_roof_area_sqft">6000.0</field>
+        </record>
+
+        <!-- ================================================================= -->
+        <!-- SITE SURVEYS                                                      -->
+        <!-- ================================================================= -->
+        <!-- Survey 1 (Approved for 3kW Showcase) -->
+        <record id="survey_solarflow_demo_1" model="solarflow.survey">
+            <field name="partner_id" ref="partner_solarflow_demo_1"/>
+            <field name="lead_id" ref="crm_lead_solarflow_demo_1"/>
+            <field name="survey_date">2026-10-31</field>
+            <field name="roof_type">rcc_flat</field>
+            <field name="roof_area_sqft">650.0</field>
+            <field name="usable_area_sqft">500.0</field>
+            <field name="roof_direction">south</field>
+            <field name="roof_tilt_deg">12.0</field>
+            <field name="cable_distance_meters">20.0</field>
+            <field name="grid_availability">single_phase</field>
+            <field name="roof_condition">excellent</field>
+            <field name="recommended_capacity_kw">3.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="package_id" ref="pkg_3kw_ongrid"/>
+            <field name="state">approved</field>
+            <field name="survey_notes">Rooftop is flat RCC with zero shading. Excellent load bearing capacity.</field>
+        </record>
+
+        <!-- Survey 2 (Scheduled) -->
+        <record id="survey_solarflow_demo_2" model="solarflow.survey">
+            <field name="partner_id" ref="partner_solarflow_demo_3"/>
+            <field name="lead_id" ref="crm_lead_solarflow_demo_3"/>
+            <field name="survey_date">2026-11-02</field>
+            <field name="roof_type">rcc_flat</field>
+            <field name="roof_area_sqft">900.0</field>
+            <field name="usable_area_sqft">700.0</field>
+            <field name="roof_direction">south_west</field>
+            <field name="roof_tilt_deg">15.0</field>
+            <field name="cable_distance_meters">25.0</field>
+            <field name="grid_availability">three_phase</field>
+            <field name="roof_condition">good</field>
+            <field name="recommended_capacity_kw">5.0</field>
+            <field name="system_type">hybrid</field>
+            <field name="package_id" ref="pkg_5kw_hybrid"/>
+            <field name="state">scheduled</field>
+            <field name="survey_notes">Scheduled visit for shadow analysis and parapet height check.</field>
+        </record>
+
+        <!-- Survey 3 (Rejected with reason) -->
+        <record id="survey_solarflow_demo_3" model="solarflow.survey">
+            <field name="partner_id" ref="partner_solarflow_demo_7"/>
+            <field name="lead_id" ref="crm_lead_solarflow_demo_7"/>
+            <field name="survey_date">2026-10-25</field>
+            <field name="roof_type">asbestos_tin</field>
+            <field name="roof_area_sqft">350.0</field>
+            <field name="usable_area_sqft">120.0</field>
+            <field name="roof_direction">north</field>
+            <field name="roof_tilt_deg">25.0</field>
+            <field name="cable_distance_meters">55.0</field>
+            <field name="grid_availability">single_phase</field>
+            <field name="roof_condition">poor</field>
+            <field name="recommended_capacity_kw">1.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="state">rejected</field>
+            <field name="rejection_reason">Structural weakness in corrugated tin roof and severe shadow obstruction from adjacent 4-storey building.</field>
+        </record>
+
+        <!-- ================================================================= -->
+        <!-- SERIALIZED EQUIPMENT LOTS                                         -->
+        <!-- ================================================================= -->
+        <record id="lot_inv_demo_1" model="stock.lot">
+            <field name="name">INV-GROWATT-3KW-9901</field>
+            <field name="product_id" ref="prod_inv_3kw"/>
+            <field name="oem_manufacturer">Growatt Solar New Energy</field>
+            <field name="allocation_status">installed</field>
+            <field name="customer_id" ref="partner_solarflow_demo_1"/>
+            <field name="dispatch_date">2026-10-31</field>
+            <field name="commissioning_date">2026-10-31</field>
+        </record>
+
+        <record id="lot_panel_demo_1" model="stock.lot">
+            <field name="name">PV-MONO-550W-STR-01</field>
+            <field name="product_id" ref="prod_panel_550w"/>
+            <field name="oem_manufacturer">Canadian Solar Inc.</field>
+            <field name="allocation_status">installed</field>
+            <field name="customer_id" ref="partner_solarflow_demo_1"/>
+            <field name="dispatch_date">2026-10-31</field>
+            <field name="commissioning_date">2026-10-31</field>
+        </record>
+
+        <record id="lot_inv_demo_2" model="stock.lot">
+            <field name="name">INV-DEYE-5KW-HYBRID-8802</field>
+            <field name="product_id" ref="prod_inv_5kw"/>
+            <field name="oem_manufacturer">Deye Hybrid Inverters</field>
+            <field name="allocation_status">available</field>
+        </record>
+
+        <record id="lot_bat_demo_1" model="stock.lot">
+            <field name="name">BAT-LIFEPO4-48V-100AH-7703</field>
+            <field name="product_id" ref="prod_batt_48v"/>
+            <field name="oem_manufacturer">BYD Energy Storage</field>
+            <field name="allocation_status">available</field>
+        </record>
+
+        <!-- ================================================================= -->
+        <!-- COMPLETE 3kW ON-GRID DEMO SCENARIO                                -->
+        <!-- Customer -> Approved Survey -> Sales Order -> Installation ->     -->
+        <!-- Warranty -> Service Ticket -> Project Costing                     -->
+        <!-- ================================================================= -->
+
+        <!-- 3kW Installation Record -->
+        <record id="inst_solarflow_demo_1" model="solarflow.installation">
+            <field name="name">INST-2026-0001</field>
+            <field name="customer_id" ref="partner_solarflow_demo_1"/>
+            <field name="installation_address">42 Palm Meadows Boulevard, Bengaluru</field>
+            <field name="survey_id" ref="survey_solarflow_demo_1"/>
+            <field name="package_id" ref="pkg_3kw_ongrid"/>
+            <field name="installation_capacity_kw">3.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="scheduled_date">2026-10-31</field>
+            <field name="start_date">2026-10-31</field>
+            <field name="completion_date">2026-10-31</field>
+            <field name="state">completed</field>
+            <field name="lot_ids" eval="[(4, ref('lot_inv_demo_1')), (4, ref('lot_panel_demo_1'))]"/>
+            <!-- 6-Phase Execution Milestones Checked -->
+            <field name="phase_1_structure">True</field>
+            <field name="phase_2_modules">True</field>
+            <field name="phase_3_inverter">True</field>
+            <field name="phase_4_earthing">True</field>
+            <field name="phase_5_testing">True</field>
+            <field name="phase_6_discom_sync">True</field>
+            <!-- Testing Results (Voc>0, Isc>0, Earth <= 5.0 Ohm) -->
+            <field name="test_voc">385.0</field>
+            <field name="test_isc">9.4</field>
+            <field name="test_earth_resistance">2.4</field>
+            <field name="test_insulation_resistance">25.0</field>
+            <field name="test_grid_voltage">235.0</field>
+            <field name="test_notes">String Voc verified at 385V DC under 850 W/m2 irradiance. Chemical earthing pit resistance measured at 2.4 Ohms (well within 5.0 Ohm limit).</field>
+            <field name="customer_accepted">True</field>
+            <field name="acceptance_date">2026-10-31</field>
+            <field name="acceptance_signature">Dr. Rajesh Sharma (Digital Acceptance OTP Verified)</field>
+            <field name="acceptance_notes">Very satisfied with clean cable dressing and net meter synchronization.</field>
+        </record>
+
+        <!-- Link Lot to Installation -->
+        <record id="lot_inv_demo_1" model="stock.lot">
+            <field name="installation_id" ref="inst_solarflow_demo_1"/>
+        </record>
+        <record id="lot_panel_demo_1" model="stock.lot">
+            <field name="installation_id" ref="inst_solarflow_demo_1"/>
+        </record>
+
+        <!-- Digital Warranty Records -->
+        <record id="warranty_demo_inv_1" model="solarflow.warranty">
+            <field name="name">WRNT-INV-2026-0001</field>
+            <field name="customer_id" ref="partner_solarflow_demo_1"/>
+            <field name="installation_id" ref="inst_solarflow_demo_1"/>
+            <field name="product_id" ref="prod_inv_3kw"/>
+            <field name="lot_id" ref="lot_inv_demo_1"/>
+            <field name="warranty_type">inverter</field>
+            <field name="duration_months">24</field>
+            <field name="start_date">2026-10-31</field>
+            <field name="manufacturer_details">Growatt Solar New Energy Co.</field>
+            <field name="terms_clauses">Full replacement warranty on inverter electronics, MPPT components, and Wi-Fi monitoring dongle.</field>
+        </record>
+
+        <record id="warranty_demo_panel_1" model="solarflow.warranty">
+            <field name="name">WRNT-PV-2026-0001</field>
+            <field name="customer_id" ref="partner_solarflow_demo_1"/>
+            <field name="installation_id" ref="inst_solarflow_demo_1"/>
+            <field name="product_id" ref="prod_panel_550w"/>
+            <field name="lot_id" ref="lot_panel_demo_1"/>
+            <field name="warranty_type">panel</field>
+            <field name="duration_months">240</field>
+            <field name="start_date">2026-10-31</field>
+            <field name="manufacturer_details">Canadian Solar Inc.</field>
+            <field name="terms_clauses">20-Year linear output warranty: minimum 90% peak output at Year 10, minimum 80% output at Year 20.</field>
+        </record>
+
+        <!-- Service Ticket 1: Covered Inverter Fault ($0.00 customer charge) -->
+        <record id="ticket_demo_1" model="solarflow.service.ticket">
+            <field name="name">TICK-2026-0001</field>
+            <field name="customer_id" ref="partner_solarflow_demo_1"/>
+            <field name="product_id" ref="prod_inv_3kw"/>
+            <field name="lot_id" ref="lot_inv_demo_1"/>
+            <field name="warranty_id" ref="warranty_demo_inv_1"/>
+            <field name="installation_id" ref="inst_solarflow_demo_1"/>
+            <field name="complaint_date">2026-11-01</field>
+            <field name="problem_description">Inverter front LCD blinking Error Code 129: MPPT Communication Timeout.</field>
+            <field name="fault_category">inverter_fault</field>
+            <field name="priority">2</field>
+            <field name="state">resolved</field>
+            <field name="diagnosis">Firmware deadlock in secondary MPPT communication controller chip.</field>
+            <field name="resolution">Updated inverter MCU firmware to v3.4.1 and re-calibrated string 1 sensor. System restored to normal generation.</field>
+            <field name="customer_confirmation">True</field>
+            <field name="customer_confirmation_date">2026-11-01</field>
+        </record>
+
+        <!-- Service Ticket 2: Non-Covered Physical / Grid Surge Repair (Billable) -->
+        <record id="ticket_demo_2" model="solarflow.service.ticket">
+            <field name="name">TICK-2026-0002</field>
+            <field name="customer_id" ref="partner_solarflow_demo_1"/>
+            <field name="product_id" ref="prod_inv_3kw"/>
+            <field name="lot_id" ref="lot_inv_demo_1"/>
+            <field name="installation_id" ref="inst_solarflow_demo_1"/>
+            <field name="complaint_date">2026-11-02</field>
+            <field name="problem_description">External lightning surge from DISCOM grid blew external AC surge protection device (SPD).</field>
+            <field name="fault_category">grid_surge</field>
+            <field name="priority">1</field>
+            <field name="state">closed</field>
+            <field name="diagnosis">External grid voltage surge (>400V AC) tripped ACDB Class II surge arrestor cartridge.</field>
+            <field name="resolution">Replaced sacrificial SPD cartridge and tightened neutral lug.</field>
+            <field name="labour_cost">45.0</field>
+            <field name="customer_confirmation">True</field>
+            <field name="customer_confirmation_date">2026-11-02</field>
+        </record>
+
+        <!-- Project Costing Sheet 1 (Showcase 3kW: Healthy Gross Margin) -->
+        <record id="cost_solarflow_demo_1" model="solarflow.project.cost">
+            <field name="name">COST-INST-2026-0001</field>
+            <field name="installation_id" ref="inst_solarflow_demo_1"/>
+            <field name="customer_id" ref="partner_solarflow_demo_1"/>
+            <field name="estimated_revenue">2040.0</field>
+            <field name="actual_revenue">2040.0</field>
+            <field name="estimated_material_cost">1230.0</field>
+            <field name="material_cost">1230.0</field>
+            <field name="estimated_labour_cost">90.0</field>
+            <field name="technician_labour_cost">90.0</field>
+            <field name="estimated_transportation_cost">60.0</field>
+            <field name="transportation_cost">60.0</field>
+            <field name="additional_material_cost">0.0</field>
+            <field name="estimated_other_expenses">120.0</field>
+            <field name="other_expenses">120.0</field>
+            <field name="leakage_threshold_pct">10.0</field>
+            <field name="notes">3kW On-Grid showcase project. Total cost: $1,500. Gross Profit: $540. Gross Margin: 26.47%.</field>
+        </record>
+
+        <!-- Project Costing Sheet 2 (Profit Leakage Scenario for Testing) -->
+        <record id="cost_solarflow_demo_2" model="solarflow.project.cost">
+            <field name="name">COST-PROJECT-OVERRUN</field>
+            <field name="installation_id" ref="inst_solarflow_demo_1"/>
+            <field name="customer_id" ref="partner_solarflow_demo_1"/>
+            <field name="estimated_revenue">3000.0</field>
+            <field name="actual_revenue">3000.0</field>
+            <field name="estimated_material_cost">1500.0</field>
+            <field name="material_cost">1900.0</field>
+            <field name="estimated_labour_cost">200.0</field>
+            <field name="technician_labour_cost">350.0</field>
+            <field name="estimated_transportation_cost">100.0</field>
+            <field name="transportation_cost">180.0</field>
+            <field name="additional_material_cost">150.0</field>
+            <field name="estimated_other_expenses">100.0</field>
+            <field name="other_expenses">120.0</field>
+            <field name="leakage_threshold_pct">10.0</field>
+            <field name="notes">Unplanned trenching and copper price surge created cost overrun (+40%), exceeding 10% threshold.</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- ================================================================= -->
+        <!-- STANDARD SOLAR COMPONENTS (product.product)                      -->
+        <!-- ================================================================= -->
+        <!-- 1. Solar Panels -->
+        <record id="prod_panel_550w" model="product.product">
+            <field name="name">Solar PV Module 550W TOPCon Bifacial</field>
+            <field name="default_code">SOL-MOD-550W</field>
+            <field name="type">product</field>
+            <field name="list_price">154.0</field>
+            <field name="tracking">serial</field>
+        </record>
+
+        <!-- 2. On-Grid Inverters -->
+        <record id="prod_inv_1kw_og" model="product.product">
+            <field name="name">1 kW Grid-Tied Inverter (1-Phase MPPT)</field>
+            <field name="default_code">SOL-INV-1KW-OG</field>
+            <field name="type">product</field>
+            <field name="list_price">325.0</field>
+            <field name="tracking">serial</field>
+        </record>
+        <record id="prod_inv_2kw_og" model="product.product">
+            <field name="name">2 kW Grid-Tied Inverter (1-Phase MPPT)</field>
+            <field name="default_code">SOL-INV-2KW-OG</field>
+            <field name="type">product</field>
+            <field name="list_price">450.0</field>
+            <field name="tracking">serial</field>
+        </record>
+        <record id="prod_inv_3kw_og" model="product.product">
+            <field name="name">3.3 kW Smart Grid-Tied Inverter (1-Phase Dual MPPT + Wi-Fi)</field>
+            <field name="default_code">SOL-INV-3KW-OG</field>
+            <field name="type">product</field>
+            <field name="list_price">580.0</field>
+            <field name="tracking">serial</field>
+        </record>
+        <record id="prod_inv_5kw_og" model="product.product">
+            <field name="name">5 kW Smart Grid-Tied Inverter (1-Phase Dual MPPT + Wi-Fi)</field>
+            <field name="default_code">SOL-INV-5KW-OG</field>
+            <field name="type">product</field>
+            <field name="list_price">850.0</field>
+            <field name="tracking">serial</field>
+        </record>
+
+        <!-- 3. Off-Grid Inverters -->
+        <record id="prod_inv_1kw_off" model="product.product">
+            <field name="name">1 kW Standalone Off-Grid Solar Inverter (Pure Sine Wave)</field>
+            <field name="default_code">SOL-INV-1KW-OFF</field>
+            <field name="type">product</field>
+            <field name="list_price">380.0</field>
+            <field name="tracking">serial</field>
+        </record>
+        <record id="prod_inv_2kw_off" model="product.product">
+            <field name="name">2 kW Standalone Off-Grid Solar Inverter (Pure Sine Wave)</field>
+            <field name="default_code">SOL-INV-2KW-OFF</field>
+            <field name="type">product</field>
+            <field name="list_price">520.0</field>
+            <field name="tracking">serial</field>
+        </record>
+        <record id="prod_inv_3kw_off" model="product.product">
+            <field name="name">3 kW Off-Grid Solar Inverter with 60A MPPT Charger</field>
+            <field name="default_code">SOL-INV-3KW-OFF</field>
+            <field name="type">product</field>
+            <field name="list_price">690.0</field>
+            <field name="tracking">serial</field>
+        </record>
+        <record id="prod_inv_5kw_off" model="product.product">
+            <field name="name">5 kW Off-Grid Solar Inverter with 80A MPPT Charger</field>
+            <field name="default_code">SOL-INV-5KW-OFF</field>
+            <field name="type">product</field>
+            <field name="list_price">980.0</field>
+            <field name="tracking">serial</field>
+        </record>
+
+        <!-- 4. Batteries -->
+        <record id="prod_bat_lifepo4_2kwh" model="product.product">
+            <field name="name">2.5 kWh LiFePO4 Lithium Solar Battery Pack (48V)</field>
+            <field name="default_code">SOL-BAT-2KWH</field>
+            <field name="type">product</field>
+            <field name="list_price">650.0</field>
+            <field name="tracking">serial</field>
+        </record>
+        <record id="prod_bat_lifepo4_5kwh" model="product.product">
+            <field name="name">5.0 kWh LiFePO4 Lithium Solar Battery Pack (48V)</field>
+            <field name="default_code">SOL-BAT-5KWH</field>
+            <field name="type">product</field>
+            <field name="list_price">1250.0</field>
+            <field name="tracking">serial</field>
+        </record>
+
+        <!-- 5. Mounting Structures -->
+        <record id="prod_struct_slot" model="product.product">
+            <field name="name">Module Mounting Rail Slot (Anodized Aluminum / HDGI)</field>
+            <field name="default_code">SOL-STR-RAIL</field>
+            <field name="type">consu</field>
+            <field name="list_price">26.0</field>
+        </record>
+
+        <!-- 6. DC & AC Cables -->
+        <record id="prod_cable_dc_4mm" model="product.product">
+            <field name="name">Solar DC Copper Cable 4 sq. mm (UV Resistant)</field>
+            <field name="default_code">SOL-CAB-DC4</field>
+            <field name="type">consu</field>
+            <field name="list_price">1.65</field>
+        </record>
+        <record id="prod_cable_ac_6mm" model="product.product">
+            <field name="name">AC Armored Copper Cable 6 sq. mm (3-Core)</field>
+            <field name="default_code">SOL-CAB-AC6</field>
+            <field name="type">consu</field>
+            <field name="list_price">3.20</field>
+        </record>
+
+        <!-- 7. Connectors -->
+        <record id="prod_conn_mc4" model="product.product">
+            <field name="name">MC4 Solar Connectors Male/Female Pair (IP68)</field>
+            <field name="default_code">SOL-CON-MC4</field>
+            <field name="type">consu</field>
+            <field name="list_price">2.50</field>
+        </record>
+
+        <!-- 8. Switches & Isolators -->
+        <record id="prod_switch_dc_isolator" model="product.product">
+            <field name="name">DC Rotary Isolator Switch 1000V 32A (IP66)</field>
+            <field name="default_code">SOL-SW-DC32</field>
+            <field name="type">consu</field>
+            <field name="list_price">38.0</field>
+        </record>
+
+        <!-- 9. Earthing Equipment -->
+        <record id="prod_earth_electrode" model="product.product">
+            <field name="name">Copper Bonded Chemical Earthing Electrode (3m) + Compound</field>
+            <field name="default_code">SOL-BOS-EARTH</field>
+            <field name="type">consu</field>
+            <field name="list_price">55.0</field>
+        </record>
+
+        <!-- 10. Safety Components (SPDs & Fuses) -->
+        <record id="prod_safety_box" model="product.product">
+            <field name="name">Solar ACDB + DCDB Box with Class II SPDs and MCBs</field>
+            <field name="default_code">SOL-BOS-ACDC-BOX</field>
+            <field name="type">consu</field>
+            <field name="list_price">110.0</field>
+        </record>
+
+        <!-- ================================================================= -->
+        <!-- CONFIGURABLE SOLAR PACKAGES (ON-GRID & OFF-GRID)                  -->
+        <!-- ================================================================= -->
+
+        <!-- 1kW On-Grid -->
+        <record id="pkg_1kw_ongrid" model="solarflow.package">
+            <field name="name">1kW On-Grid Rooftop Solar Package</field>
+            <field name="code">SF-PKG-1KW-OG</field>
+            <field name="system_capacity_kw">1.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="phase">single_phase</field>
+            <field name="pricing_method">sum_components</field>
+        </record>
+        <record id="line_1kw_og_panel" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_1kw_ongrid"/>
+            <field name="product_id" ref="prod_panel_550w"/>
+            <field name="name">Solar PV Module 550W TOPCon Bifacial</field>
+            <field name="category">panel</field>
+            <field name="quantity">2.0</field>
+        </record>
+        <record id="line_1kw_og_inv" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_1kw_ongrid"/>
+            <field name="product_id" ref="prod_inv_1kw_og"/>
+            <field name="name">1 kW Grid-Tied Inverter (1-Phase MPPT)</field>
+            <field name="category">inverter</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_1kw_og_struct" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_1kw_ongrid"/>
+            <field name="product_id" ref="prod_struct_slot"/>
+            <field name="name">Mounting Structure Rails for 2 Modules</field>
+            <field name="category">structure</field>
+            <field name="quantity">2.0</field>
+        </record>
+        <record id="line_1kw_og_safety" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_1kw_ongrid"/>
+            <field name="product_id" ref="prod_safety_box"/>
+            <field name="name">Solar ACDB + DCDB Box with SPDs</field>
+            <field name="category">safety</field>
+            <field name="quantity">1.0</field>
+        </record>
+
+        <!-- 2kW On-Grid -->
+        <record id="pkg_2kw_ongrid" model="solarflow.package">
+            <field name="name">2kW On-Grid Rooftop Solar Package</field>
+            <field name="code">SF-PKG-2KW-OG</field>
+            <field name="system_capacity_kw">2.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="phase">single_phase</field>
+            <field name="pricing_method">sum_components</field>
+        </record>
+        <record id="line_2kw_og_panel" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_2kw_ongrid"/>
+            <field name="product_id" ref="prod_panel_550w"/>
+            <field name="name">Solar PV Module 550W TOPCon Bifacial</field>
+            <field name="category">panel</field>
+            <field name="quantity">4.0</field>
+        </record>
+        <record id="line_2kw_og_inv" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_2kw_ongrid"/>
+            <field name="product_id" ref="prod_inv_2kw_og"/>
+            <field name="name">2 kW Grid-Tied Inverter (1-Phase MPPT)</field>
+            <field name="category">inverter</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_2kw_og_struct" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_2kw_ongrid"/>
+            <field name="product_id" ref="prod_struct_slot"/>
+            <field name="name">Mounting Structure Rails for 4 Modules</field>
+            <field name="category">structure</field>
+            <field name="quantity">4.0</field>
+        </record>
+        <record id="line_2kw_og_safety" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_2kw_ongrid"/>
+            <field name="product_id" ref="prod_safety_box"/>
+            <field name="name">Solar ACDB + DCDB Box with SPDs</field>
+            <field name="category">safety</field>
+            <field name="quantity">1.0</field>
+        </record>
+
+        <!-- 3kW On-Grid (Test Subject) -->
+        <record id="pkg_3kw_ongrid" model="solarflow.package">
+            <field name="name">3kW On-Grid Rooftop Solar Package</field>
+            <field name="code">SF-PKG-3KW-OG</field>
+            <field name="system_capacity_kw">3.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="phase">single_phase</field>
+            <field name="pricing_method">sum_components</field>
+        </record>
+        <record id="line_3kw_og_panel" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_3kw_ongrid"/>
+            <field name="product_id" ref="prod_panel_550w"/>
+            <field name="name">Solar PV Module 550W TOPCon Bifacial</field>
+            <field name="category">panel</field>
+            <field name="quantity">6.0</field>
+        </record>
+        <record id="line_3kw_og_inv" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_3kw_ongrid"/>
+            <field name="product_id" ref="prod_inv_3kw_og"/>
+            <field name="name">3.3 kW Smart Grid-Tied Inverter (1-Phase Dual MPPT + Wi-Fi)</field>
+            <field name="category">inverter</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_3kw_og_struct" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_3kw_ongrid"/>
+            <field name="product_id" ref="prod_struct_slot"/>
+            <field name="name">Mounting Structure Rails for 6 Modules</field>
+            <field name="category">structure</field>
+            <field name="quantity">6.0</field>
+        </record>
+        <record id="line_3kw_og_safety" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_3kw_ongrid"/>
+            <field name="product_id" ref="prod_safety_box"/>
+            <field name="name">Solar ACDB + DCDB Box with SPDs</field>
+            <field name="category">safety</field>
+            <field name="quantity">1.0</field>
+        </record>
+
+        <!-- 5kW On-Grid -->
+        <record id="pkg_5kw_ongrid" model="solarflow.package">
+            <field name="name">5kW On-Grid Rooftop Solar Package</field>
+            <field name="code">SF-PKG-5KW-OG</field>
+            <field name="system_capacity_kw">5.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="phase">single_phase</field>
+            <field name="pricing_method">sum_components</field>
+        </record>
+        <record id="line_5kw_og_panel" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_5kw_ongrid"/>
+            <field name="product_id" ref="prod_panel_550w"/>
+            <field name="name">Solar PV Module 550W TOPCon Bifacial</field>
+            <field name="category">panel</field>
+            <field name="quantity">10.0</field>
+        </record>
+        <record id="line_5kw_og_inv" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_5kw_ongrid"/>
+            <field name="product_id" ref="prod_inv_5kw_og"/>
+            <field name="name">5 kW Smart Grid-Tied Inverter (1-Phase Dual MPPT + Wi-Fi)</field>
+            <field name="category">inverter</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_5kw_og_struct" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_5kw_ongrid"/>
+            <field name="product_id" ref="prod_struct_slot"/>
+            <field name="name">Mounting Structure Rails for 10 Modules</field>
+            <field name="category">structure</field>
+            <field name="quantity">10.0</field>
+        </record>
+        <record id="line_5kw_og_safety" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_5kw_ongrid"/>
+            <field name="product_id" ref="prod_safety_box"/>
+            <field name="name">Solar ACDB + DCDB Box with SPDs</field>
+            <field name="category">safety</field>
+            <field name="quantity">1.0</field>
+        </record>
+
+        <!-- 1kW Off-Grid -->
+        <record id="pkg_1kw_offgrid" model="solarflow.package">
+            <field name="name">1kW Off-Grid Solar Package + 2.5kWh Battery</field>
+            <field name="code">SF-PKG-1KW-OFF</field>
+            <field name="system_capacity_kw">1.0</field>
+            <field name="system_type">off_grid</field>
+            <field name="phase">single_phase</field>
+            <field name="pricing_method">sum_components</field>
+        </record>
+        <record id="line_1kw_off_panel" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_1kw_offgrid"/>
+            <field name="product_id" ref="prod_panel_550w"/>
+            <field name="name">Solar PV Module 550W</field>
+            <field name="category">panel</field>
+            <field name="quantity">2.0</field>
+        </record>
+        <record id="line_1kw_off_inv" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_1kw_offgrid"/>
+            <field name="product_id" ref="prod_inv_1kw_off"/>
+            <field name="name">1 kW Off-Grid Solar Inverter</field>
+            <field name="category">inverter</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_1kw_off_bat" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_1kw_offgrid"/>
+            <field name="product_id" ref="prod_bat_lifepo4_2kwh"/>
+            <field name="name">2.5 kWh LiFePO4 Lithium Battery</field>
+            <field name="category">battery</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_1kw_off_struct" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_1kw_offgrid"/>
+            <field name="product_id" ref="prod_struct_slot"/>
+            <field name="name">Mounting Structure Rails</field>
+            <field name="category">structure</field>
+            <field name="quantity">2.0</field>
+        </record>
+
+        <!-- 2kW Off-Grid -->
+        <record id="pkg_2kw_offgrid" model="solarflow.package">
+            <field name="name">2kW Off-Grid Solar Package + 2.5kWh Battery</field>
+            <field name="code">SF-PKG-2KW-OFF</field>
+            <field name="system_capacity_kw">2.0</field>
+            <field name="system_type">off_grid</field>
+            <field name="phase">single_phase</field>
+            <field name="pricing_method">sum_components</field>
+        </record>
+        <record id="line_2kw_off_panel" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_2kw_offgrid"/>
+            <field name="product_id" ref="prod_panel_550w"/>
+            <field name="name">Solar PV Module 550W</field>
+            <field name="category">panel</field>
+            <field name="quantity">4.0</field>
+        </record>
+        <record id="line_2kw_off_inv" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_2kw_offgrid"/>
+            <field name="product_id" ref="prod_inv_2kw_off"/>
+            <field name="name">2 kW Off-Grid Solar Inverter</field>
+            <field name="category">inverter</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_2kw_off_bat" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_2kw_offgrid"/>
+            <field name="product_id" ref="prod_bat_lifepo4_2kwh"/>
+            <field name="name">2.5 kWh LiFePO4 Lithium Battery</field>
+            <field name="category">battery</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_2kw_off_struct" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_2kw_offgrid"/>
+            <field name="product_id" ref="prod_struct_slot"/>
+            <field name="name">Mounting Structure Rails</field>
+            <field name="category">structure</field>
+            <field name="quantity">4.0</field>
+        </record>
+
+        <!-- 3kW Off-Grid -->
+        <record id="pkg_3kw_offgrid" model="solarflow.package">
+            <field name="name">3kW Off-Grid Solar Package + 5.0kWh Battery</field>
+            <field name="code">SF-PKG-3KW-OFF</field>
+            <field name="system_capacity_kw">3.0</field>
+            <field name="system_type">off_grid</field>
+            <field name="phase">single_phase</field>
+            <field name="pricing_method">sum_components</field>
+        </record>
+        <record id="line_3kw_off_panel" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_3kw_offgrid"/>
+            <field name="product_id" ref="prod_panel_550w"/>
+            <field name="name">Solar PV Module 550W</field>
+            <field name="category">panel</field>
+            <field name="quantity">6.0</field>
+        </record>
+        <record id="line_3kw_off_inv" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_3kw_offgrid"/>
+            <field name="product_id" ref="prod_inv_3kw_off"/>
+            <field name="name">3 kW Off-Grid Solar Inverter</field>
+            <field name="category">inverter</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_3kw_off_bat" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_3kw_offgrid"/>
+            <field name="product_id" ref="prod_bat_lifepo4_5kwh"/>
+            <field name="name">5.0 kWh LiFePO4 Lithium Battery</field>
+            <field name="category">battery</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_3kw_off_struct" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_3kw_offgrid"/>
+            <field name="product_id" ref="prod_struct_slot"/>
+            <field name="name">Mounting Structure Rails</field>
+            <field name="category">structure</field>
+            <field name="quantity">6.0</field>
+        </record>
+
+        <!-- 5kW Off-Grid -->
+        <record id="pkg_5kw_offgrid" model="solarflow.package">
+            <field name="name">5kW Off-Grid Solar Package + 10kWh Battery</field>
+            <field name="code">SF-PKG-5KW-OFF</field>
+            <field name="system_capacity_kw">5.0</field>
+            <field name="system_type">off_grid</field>
+            <field name="phase">single_phase</field>
+            <field name="pricing_method">sum_components</field>
+        </record>
+        <record id="line_5kw_off_panel" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_5kw_offgrid"/>
+            <field name="product_id" ref="prod_panel_550w"/>
+            <field name="name">Solar PV Module 550W</field>
+            <field name="category">panel</field>
+            <field name="quantity">10.0</field>
+        </record>
+        <record id="line_5kw_off_inv" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_5kw_offgrid"/>
+            <field name="product_id" ref="prod_inv_5kw_off"/>
+            <field name="name">5 kW Off-Grid Solar Inverter</field>
+            <field name="category">inverter</field>
+            <field name="quantity">1.0</field>
+        </record>
+        <record id="line_5kw_off_bat" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_5kw_offgrid"/>
+            <field name="product_id" ref="prod_bat_lifepo4_5kwh"/>
+            <field name="name">5.0 kWh LiFePO4 Lithium Battery</field>
+            <field name="category">battery</field>
+            <field name="quantity">2.0</field>
+        </record>
+        <record id="line_5kw_off_struct" model="solarflow.package.line">
+            <field name="package_id" ref="pkg_5kw_offgrid"/>
+            <field name="product_id" ref="prod_struct_slot"/>
+            <field name="name">Mounting Structure Rails</field>
+            <field name="category">structure</field>
+            <field name="quantity">10.0</field>
+        </record>
+    </data>
+</odoo>

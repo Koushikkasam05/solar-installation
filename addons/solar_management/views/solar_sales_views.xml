@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_solar_quotations" model="ir.actions.act_window">
+        <field name="name">Solar EPC Quotations</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('is_solar_order', '=', True)]</field>
+        <field name="context">{'default_is_solar_order': True}</field>
+    </record>
+
+    <record id="action_solar_payment_milestones" model="ir.actions.act_window">
+        <field name="name">Payment Milestones</field>
+        <field name="res_model">solar.payment.milestone</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="view_solar_payment_milestone_tree" model="ir.ui.view">
+        <field name="name">solar.payment.milestone.tree</field>
+        <field name="model">solar.payment.milestone</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'paid'" decoration-info="state == 'invoiced'" decoration-muted="state == 'pending'">
+                <field name="order_id"/>
+                <field name="name"/>
+                <field name="milestone_stage"/>
+                <field name="percentage"/>
+                <field name="amount" widget="monetary"/>
+                <field name="state" widget="badge" decoration-success="state == 'paid'" decoration-info="state == 'invoiced'"/>
+                <button name="action_mark_paid" string="Mark as Paid" type="object" class="btn-sm btn-success" invisible="state == 'paid'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Inherited Sale Order Form -->
+    <record id="view_order_form_solar_inherit" model="ir.ui.view">
+        <field name="name">sale.order.form.solar.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Header button to generate milestones -->
+            <xpath expr="//header" position="inside">
+                <button name="action_generate_milestones" string="Auto-Split Milestones" type="object" class="btn-secondary" invisible="not is_solar_order"/>
+            </xpath>
+
+            <!-- Button Box: Link to Installation -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_installation" type="object" class="oe_stat_button" icon="fa-bolt" invisible="not installation_project_id">
+                    <field name="installation_count" widget="statinfo" string="Installation"/>
+                </button>
+            </xpath>
+
+            <!-- Notebook Tab for Solar EPC Contract -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Solar EPC &amp; Subsidy Analysis" invisible="not is_solar_order">
+                    <group>
+                        <group string="System Configuration">
+                            <field name="is_solar_order" invisible="1"/>
+                            <field name="survey_id" readonly="1"/>
+                            <field name="package_id"/>
+                            <field name="system_capacity_kw"/>
+                            <field name="system_type"/>
+                            <field name="roof_type"/>
+                        </group>
+                        <group string="Commercials &amp; Subsidy Offset">
+                            <field name="amount_total" string="Gross Contract Value" widget="monetary" readonly="1"/>
+                            <field name="subsidy_eligible"/>
+                            <field name="subsidy_amount" widget="monetary"/>
+                            <field name="net_customer_cost" widget="monetary" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </group>
+
+                    <group string="Solar ROI &amp; Customer Payback Metrics">
+                        <group>
+                            <field name="grid_tariff_rate"/>
+                            <field name="annual_generation_kwh"/>
+                            <field name="annual_bill_savings" widget="monetary"/>
+                        </group>
+                        <group>
+                            <field name="simple_payback_years" widget="badge"/>
+                            <field name="lifetime_25yr_savings" widget="monetary"/>
+                            <field name="co2_offset_ton_per_yr"/>
+                        </group>
+                    </group>
+
+                    <group string="Milestone Payment Breakdown">
+                        <field name="milestone_ids" nolabel="1">
+                            <tree editable="bottom">
+                                <field name="name"/>
+                                <field name="milestone_stage"/>
+                                <field name="percentage"/>
+                                <field name="amount" widget="monetary"/>
+                                <field name="state" widget="badge" decoration-success="state == 'paid'" decoration-info="state == 'invoiced'"/>
+                                <button name="action_mark_paid" string="Mark Paid" type="object" class="btn-sm btn-success" invisible="state == 'paid'"/>
+                            </tree>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

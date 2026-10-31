@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action for SolarFlow Leads -->
+    <record id="action_solarflow_crm_lead" model="ir.actions.act_window">
+        <field name="name">Solar Leads &amp; Enquiries</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_solar_lead', '=', True)]</field>
+        <field name="context">{'default_is_solar_lead': True, 'default_type': 'opportunity'}</field>
+        <field name="search_view_id" ref="view_solarflow_crm_lead_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Register a new SolarFlow Customer Enquiry!
+            </p>
+            <p>
+                Capture consumer contact details, calculate required kW solar capacity based on monthly consumption, record subsidy requirements, and schedule rooftop site surveys.
+            </p>
+        </field>
+    </record>
+
+    <!-- SolarFlow Lead Tree / List View -->
+    <record id="view_solarflow_crm_lead_tree" model="ir.ui.view">
+        <field name="name">crm.lead.tree.solarflow</field>
+        <field name="model">crm.lead</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <tree string="Solar Leads" decoration-info="survey_status == 'scheduled'" decoration-success="survey_status == 'approved'" decoration-danger="survey_status == 'rejected'">
+                <field name="solarflow_reference"/>
+                <field name="name" string="Enquiry / Opportunity"/>
+                <field name="contact_name" string="Customer Name"/>
+                <field name="phone"/>
+                <field name="email_from"/>
+                <field name="solar_capacity_kw" widget="badge"/>
+                <field name="solar_system_type"/>
+                <field name="subsidy_required" widget="boolean_toggle"/>
+                <field name="user_id" string="Salesperson" widget="many2one_avatar_user"/>
+                <field name="expected_install_date"/>
+                <field name="survey_status" widget="badge" decoration-info="survey_status == 'scheduled'" decoration-success="survey_status == 'approved'" decoration-danger="survey_status == 'rejected'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- SolarFlow Lead Kanban View -->
+    <record id="view_solarflow_crm_lead_kanban" model="ir.ui.view">
+        <field name="name">crm.lead.kanban.solarflow</field>
+        <field name="model">crm.lead</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id" quick_create="false">
+                <field name="solarflow_reference"/>
+                <field name="contact_name"/>
+                <field name="name"/>
+                <field name="solar_capacity_kw"/>
+                <field name="solar_system_type"/>
+                <field name="survey_status"/>
+                <field name="user_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click p-3 rounded border shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-primary"><field name="solarflow_reference"/></span>
+                                <span class="badge bg-warning text-dark"><field name="solar_capacity_kw"/> kW</span>
+                            </div>
+                            <div class="fw-bold fs-6 text-dark mb-1">
+                                <field name="name"/>
+                            </div>
+                            <div class="text-muted small mb-1">
+                                <i class="fa fa-user me-1"/> <field name="contact_name"/>
+                            </div>
+                            <div class="text-muted small mb-2">
+                                <i class="fa fa-bolt me-1 text-warning"/> <field name="solar_system_type"/>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                <span class="badge bg-info"><field name="survey_status"/></span>
+                                <field name="user_id" widget="many2one_avatar_user"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Inherited CRM Lead Form View with SolarFlow Tab -->
+    <record id="view_crm_lead_form_solarflow_inherit" model="ir.ui.view">
+        <field name="name">crm.lead.form.solarflow.inherit</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Header Action Button -->
+            <xpath expr="//header" position="inside">
+                <button name="action_schedule_site_survey"
+                        string="Schedule Site Survey"
+                        type="object"
+                        class="btn-primary"
+                        invisible="not is_solar_lead"/>
+            </xpath>
+
+            <!-- Stat Button Box -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_surveys"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-compass"
+                        invisible="not is_solar_lead">
+                    <field name="survey_count" widget="statinfo" string="Surveys"/>
+                </button>
+            </xpath>
+
+            <!-- Header Title Addition -->
+            <xpath expr="//div[hasclass('oe_title')]" position="before">
+                <div class="mb-2" invisible="not is_solar_lead">
+                    <span class="badge bg-primary fs-6 p-2">
+                        <i class="fa fa-sun-o me-1"/> Reference: <field name="solarflow_reference" readonly="1" class="fw-bold"/>
+                    </span>
+                    <field name="is_solar_lead" invisible="1"/>
+                </div>
+            </xpath>
+
+            <!-- SolarFlow Notebook Page -->
+            <xpath expr="//notebook" position="inside">
+                <page string="SolarFlow Technical Sizing &amp; Feasibility" invisible="not is_solar_lead">
+                    <group>
+                        <group string="Solar Plant Requirements">
+                            <field name="solar_capacity_kw"/>
+                            <field name="solar_system_type"/>
+                            <field name="subsidy_required" widget="boolean_toggle"/>
+                            <field name="expected_install_date"/>
+                            <field name="solar_lead_source"/>
+                            <field name="survey_status" widget="badge"/>
+                        </group>
+                        <group string="Electricity Consumption &amp; Roof Specs">
+                            <field name="monthly_consumption_kwh"/>
+                            <field name="current_electricity_tariff"/>
+                            <field name="estimated_monthly_bill" widget="monetary"/>
+                            <field name="estimated_roof_area_sqft"/>
+                            <field name="solar_feasibility_score" widget="progressbar"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- SolarFlow Lead Search, Filters & Group By View -->
+    <record id="view_solarflow_crm_lead_search" model="ir.ui.view">
+        <field name="name">crm.lead.search.solarflow</field>
+        <field name="model">crm.lead</field>
+        <field name="arch" type="xml">
+            <search string="Search Solar Leads">
+                <field name="solarflow_reference"/>
+                <field name="name" string="Enquiry / Opportunity"/>
+                <field name="contact_name" string="Customer"/>
+                <field name="phone"/>
+                <field name="email_from"/>
+                <field name="user_id" string="Salesperson"/>
+
+                <!-- Custom Filters -->
+                <separator/>
+                <filter string="On-Grid Systems" name="filter_ongrid" domain="[('solar_system_type', '=', 'on_grid')]"/>
+                <filter string="Hybrid Systems" name="filter_hybrid" domain="[('solar_system_type', '=', 'hybrid')]"/>
+                <filter string="Off-Grid Systems" name="filter_offgrid" domain="[('solar_system_type', '=', 'off_grid')]"/>
+                <separator/>
+                <filter string="Subsidy Required" name="filter_subsidy" domain="[('subsidy_required', '=', True)]"/>
+                <separator/>
+                <filter string="Survey Not Scheduled" name="filter_survey_pending" domain="[('survey_status', '=', 'not_scheduled')]"/>
+                <filter string="Survey Approved" name="filter_survey_approved" domain="[('survey_status', '=', 'approved')]"/>
+
+                <!-- Custom Group By -->
+                <group expand="0" string="Group By">
+                    <filter string="System Type" name="group_system_type" context="{'group_by': 'solar_system_type'}"/>
+                    <filter string="Survey Status" name="group_survey_status" context="{'group_by': 'survey_status'}"/>
+                    <filter string="Salesperson" name="group_salesperson" context="{'group_by': 'user_id'}"/>
+                    <filter string="Lead Source" name="group_source" context="{'group_by': 'solar_lead_source'}"/>
+                    <filter string="Expected Installation Date" name="group_install_month" context="{'group_by': 'expected_install_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

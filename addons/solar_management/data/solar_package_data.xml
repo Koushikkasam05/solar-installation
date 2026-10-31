@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- 3 kW On-Grid Residential Package -->
+        <record id="package_solar_3kw_ongrid" model="solar.package">
+            <field name="name">3 kW Surya Ghar Residential (On-Grid 1-Phase)</field>
+            <field name="code">PKG-SOL-3KW-OG</field>
+            <field name="system_capacity_kw">3.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="phase">single_phase</field>
+            <field name="default_panel_wattage">550</field>
+            <field name="panel_technology">topcon_bifacial</field>
+            <field name="base_price">2150.0</field>
+            <field name="subsidy_eligible">True</field>
+            <field name="description"><![CDATA[
+                <p><strong>Ideal for homes consuming 300 - 400 kWh/month.</strong></p>
+                <ul>
+                    <li>Includes 6 x 550W TOPCon Bifacial High-Efficiency PV Modules</li>
+                    <li>3.3 kW Single-Phase MPPT String Inverter with Wi-Fi Logger</li>
+                    <li>Elevated Aluminum / HDGI Mounting Structure</li>
+                    <li>Eligible for max PM Surya Ghar Subsidy tier</li>
+                </ul>
+            ]]></field>
+        </record>
+
+        <!-- 5 kW On-Grid Residential Package -->
+        <record id="package_solar_5kw_ongrid" model="solar.package">
+            <field name="name">5 kW Premium Villa Solar (On-Grid 1-Phase / 3-Phase)</field>
+            <field name="code">PKG-SOL-5KW-OG</field>
+            <field name="system_capacity_kw">5.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="phase">single_phase</field>
+            <field name="default_panel_wattage">550</field>
+            <field name="panel_technology">topcon_bifacial</field>
+            <field name="base_price">3400.0</field>
+            <field name="subsidy_eligible">True</field>
+            <field name="description"><![CDATA[
+                <p><strong>Ideal for large villas with 2-3 ACs consuming 600 - 750 kWh/month.</strong></p>
+                <ul>
+                    <li>Includes 9 x 550W High-Efficiency Half-Cut PV Modules</li>
+                    <li>5.0 kW Smart On-Grid Inverter with Dual MPPT</li>
+                    <li>Class II Surge Protection ACDB & DCDB</li>
+                    <li>Estimated generation: 625 Units/Month</li>
+                </ul>
+            ]]></field>
+        </record>
+
+        <!-- 10 kW Commercial On-Grid 3-Phase -->
+        <record id="package_solar_10kw_ongrid" model="solar.package">
+            <field name="name">10 kW Commercial Rooftop (On-Grid 3-Phase)</field>
+            <field name="code">PKG-SOL-10KW-OG</field>
+            <field name="system_capacity_kw">10.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="phase">three_phase</field>
+            <field name="default_panel_wattage">580</field>
+            <field name="panel_technology">topcon_bifacial</field>
+            <field name="base_price">6400.0</field>
+            <field name="subsidy_eligible">False</field>
+            <field name="description"><![CDATA[
+                <p><strong>Designed for clinics, schools, offices, and retail showrooms.</strong></p>
+                <ul>
+                    <li>18 x 580W TOPCon Bifacial High-Yield Modules</li>
+                    <li>10 kW 3-Phase Commercial Grid-Tied Inverter</li>
+                    <li>Custom HDGI Elevated Mounting Structure with chemical anchoring</li>
+                    <li>Generates ~1,250 kWh/Month with rapid payback of ~3.2 years</li>
+                </ul>
+            ]]></field>
+        </record>
+
+        <!-- 5 kW Hybrid with Lithium Storage -->
+        <record id="package_solar_5kw_hybrid" model="solar.package">
+            <field name="name">5 kW Smart Hybrid Solar + 7.5 kWh LiFePO4 Battery</field>
+            <field name="code">PKG-SOL-5KW-HYB</field>
+            <field name="system_capacity_kw">5.0</field>
+            <field name="system_type">hybrid</field>
+            <field name="phase">single_phase</field>
+            <field name="default_panel_wattage">550</field>
+            <field name="panel_technology">topcon_bifacial</field>
+            <field name="battery_capacity_kwh">7.5</field>
+            <field name="base_price">5800.0</field>
+            <field name="subsidy_eligible">True</field>
+            <field name="description"><![CDATA[
+                <p><strong>Zero Blackouts: Continuous 24/7 power backup with solar self-consumption.</strong></p>
+                <ul>
+                    <li>9 x 550W High-Efficiency Solar PV Modules</li>
+                    <li>5 kW Smart Hybrid Inverter with 10ms seamless UPS transfer</li>
+                    <li>7.5 kWh Wall-Mount LiFePO4 Battery (6000 cycles at 90% DoD)</li>
+                </ul>
+            ]]></field>
+        </record>
+
+        <!-- 25 kW Industrial Commercial Rooftop -->
+        <record id="package_solar_25kw_commercial" model="solar.package">
+            <field name="name">25 kW Industrial C&amp;I Solar Plant (On-Grid 3-Phase)</field>
+            <field name="code">PKG-SOL-25KW-IND</field>
+            <field name="system_capacity_kw">25.0</field>
+            <field name="system_type">on_grid</field>
+            <field name="phase">three_phase</field>
+            <field name="default_panel_wattage">580</field>
+            <field name="panel_technology">topcon_bifacial</field>
+            <field name="base_price">15200.0</field>
+            <field name="subsidy_eligible">False</field>
+            <field name="description"><![CDATA[
+                <p><strong>High-yield commercial installation for factories, warehouses, and cold storages.</strong></p>
+                <ul>
+                    <li>44 x 580W Bifacial Panels producing ~3,125 kWh/Month</li>
+                    <li>25 kW 3-Phase String Inverter with Multi-MPPT tracking</li>
+                    <li>Rapid accelerated depreciation tax benefit and 2.9-year payback</li>
+                </ul>
+            ]]></field>
+        </record>
+    </data>
+</odoo>

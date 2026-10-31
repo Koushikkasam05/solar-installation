@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Project Costing Search View -->
+    <record id="view_solarflow_project_cost_search" model="ir.ui.view">
+        <field name="name">solarflow.project.cost.search</field>
+        <field name="model">solarflow.project.cost</field>
+        <field name="arch" type="xml">
+            <search string="Search Project Costing">
+                <field name="name" string="Cost Sheet Reference"/>
+                <field name="installation_id" string="Solar Project"/>
+                <field name="customer_id" string="Customer"/>
+                <field name="sale_order_id" string="Sales Order"/>
+                <separator/>
+                <filter string="Profit Leakage Alert" name="filter_leakage" domain="[('is_profit_leakage', '=', True)]"/>
+                <filter string="Budget Exceeded" name="filter_exceeded" domain="[('is_budget_exceeded', '=', True)]"/>
+                <filter string="Profitable (Margin &gt; 0)" name="filter_profitable" domain="[('gross_profit', '&gt;', 0)]"/>
+                <filter string="Loss / Deficit" name="filter_loss" domain="[('gross_profit', '&lt;=', 0)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Customer" name="group_customer" context="{'group_by': 'customer_id'}"/>
+                    <filter string="Budget Exceeded" name="group_budget_exceeded" context="{'group_by': 'is_budget_exceeded'}"/>
+                    <filter string="Profit Leakage Triggered" name="group_leakage" context="{'group_by': 'is_profit_leakage'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_solarflow_project_cost_tree" model="ir.ui.view">
+        <field name="name">solarflow.project.cost.tree</field>
+        <field name="model">solarflow.project.cost</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="is_profit_leakage" decoration-warning="is_budget_exceeded and not is_profit_leakage" decoration-success="not is_budget_exceeded and gross_profit &gt; 0">
+                <field name="name"/>
+                <field name="installation_id"/>
+                <field name="customer_id"/>
+                <field name="sale_order_id"/>
+                <field name="estimated_revenue" widget="monetary"/>
+                <field name="actual_revenue" widget="monetary"/>
+                <field name="estimated_cost" widget="monetary"/>
+                <field name="actual_cost" widget="monetary"/>
+                <field name="cost_variance" widget="monetary"/>
+                <field name="cost_variance_pct" widget="badge" decoration-danger="cost_variance_pct &gt; 10" decoration-warning="cost_variance_pct &gt; 0"/>
+                <field name="gross_profit" widget="monetary"/>
+                <field name="gross_margin" widget="badge" decoration-success="gross_margin &gt;= 15" decoration-warning="gross_margin &gt; 0 and gross_margin &lt; 15" decoration-danger="gross_margin &lt;= 0"/>
+                <field name="is_budget_exceeded" widget="boolean_toggle"/>
+                <field name="is_profit_leakage" widget="badge" decoration-danger="is_profit_leakage == True"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_solarflow_project_cost_form" model="ir.ui.view">
+        <field name="name">solarflow.project.cost.form</field>
+        <field name="model">solarflow.project.cost</field>
+        <field name="arch" type="xml">
+            <form string="Project Cost &amp; Profitability Sheet">
+                <header>
+                    <button name="action_notify_profit_leakage" string="Send Profit Leakage Alert" type="object" class="btn-warning" invisible="not is_profit_leakage"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Cost Sheet Reference"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Project &amp; Contract Association">
+                            <field name="installation_id"/>
+                            <field name="sale_order_id"/>
+                            <field name="customer_id"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Budget Alert Thresholds">
+                            <field name="leakage_threshold_pct"/>
+                            <field name="cost_variance"/>
+                            <field name="cost_variance_pct" widget="badge"/>
+                            <field name="is_budget_exceeded" widget="boolean_toggle"/>
+                            <field name="is_profit_leakage" widget="badge" decoration-danger="is_profit_leakage == True"/>
+                            <field name="alert_notified" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-danger" role="alert" invisible="not is_profit_leakage">
+                        <strong>Warning: Profit Leakage Alert!</strong> Actual project cost exceeds estimated cost by more than <field name="leakage_threshold_pct" readonly="1"/>%. Management notification triggered.
+                    </div>
+
+                    <notebook>
+                        <page string="Itemized Costs (Estimated vs Actual)">
+                            <group>
+                                <group string="Actual Incurred Execution Costs">
+                                    <field name="material_cost" widget="monetary"/>
+                                    <field name="technician_labour_cost" widget="monetary"/>
+                                    <field name="transportation_cost" widget="monetary"/>
+                                    <field name="additional_material_cost" widget="monetary"/>
+                                    <field name="other_expenses" widget="monetary"/>
+                                    <field name="actual_cost" widget="monetary" class="oe_subtotal_footer_separator"/>
+                                </group>
+                                <group string="Estimated Budget Baseline">
+                                    <field name="estimated_material_cost" widget="monetary"/>
+                                    <field name="estimated_labour_cost" widget="monetary"/>
+                                    <field name="estimated_transportation_cost" widget="monetary"/>
+                                    <field name="estimated_additional_cost" widget="monetary"/>
+                                    <field name="estimated_other_expenses" widget="monetary"/>
+                                    <field name="estimated_cost" widget="monetary" class="oe_subtotal_footer_separator"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Project Profitability Summary">
+                            <group>
+                                <group string="Actual Financial Performance">
+                                    <field name="actual_revenue" widget="monetary"/>
+                                    <field name="actual_cost" widget="monetary"/>
+                                    <field name="gross_profit" widget="monetary" class="oe_subtotal_footer_separator"/>
+                                    <field name="gross_margin" widget="badge" class="fs-5"/>
+                                </group>
+                                <group string="Estimated Budget Performance">
+                                    <field name="estimated_revenue" widget="monetary"/>
+                                    <field name="estimated_cost" widget="monetary"/>
+                                    <field name="estimated_gross_profit" widget="monetary" class="oe_subtotal_footer_separator"/>
+                                    <field name="estimated_gross_margin" widget="badge"/>
+                                </group>
+                            </group>
+                            <div class="text-muted small mt-2">
+                                <em>Note: Gross Profit = Revenue − Total Cost. Gross Margin = (Gross Profit / Revenue) × 100. This is project-level gross profitability and not final audited accounting net profit.</em>
+                            </div>
+                        </page>
+
+                        <page string="Management &amp; Procurement Notes">
+                            <field name="notes" placeholder="Variance explanations, subcontractor labor overtime notes, transportation surcharges..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_solarflow_project_costs" model="ir.actions.act_window">
+        <field name="name">Project Cost &amp; Profitability</field>
+        <field name="res_model">solarflow.project.cost</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_solarflow_project_cost_search"/>
+    </record>
+</odoo>
+

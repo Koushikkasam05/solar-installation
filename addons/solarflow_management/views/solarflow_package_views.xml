@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_solarflow_packages" model="ir.actions.act_window">
+        <field name="name">Solar Packages</field>
+        <field name="res_model">solarflow.package</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_solarflow_package_tree" model="ir.ui.view">
+        <field name="name">solarflow.package.tree</field>
+        <field name="model">solarflow.package</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="system_capacity_kw" widget="badge"/>
+                <field name="system_type"/>
+                <field name="phase"/>
+                <field name="default_panel_wattage"/>
+                <field name="est_monthly_units_kwh"/>
+                <field name="base_price" widget="monetary"/>
+                <field name="max_subsidy_amount" widget="monetary"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_solarflow_package_form" model="ir.ui.view">
+        <field name="name">solarflow.package.form</field>
+        <field name="model">solarflow.package</field>
+        <field name="arch" type="xml">
+            <form string="Solar Package">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Package Name"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                        <h3>
+                            <field name="code"/>
+                        </h3>
+                    </div>
+                    <group>
+                        <group string="Capacity &amp; Architecture">
+                            <field name="system_capacity_kw"/>
+                            <field name="system_type"/>
+                            <field name="phase"/>
+                            <field name="battery_capacity_kwh" invisible="system_type == 'on_grid'"/>
+                        </group>
+                        <group string="Hardware &amp; Commercials">
+                            <field name="default_panel_wattage"/>
+                            <field name="panel_technology"/>
+                            <field name="base_price" widget="monetary"/>
+                            <field name="subsidy_eligible"/>
+                            <field name="max_subsidy_amount" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

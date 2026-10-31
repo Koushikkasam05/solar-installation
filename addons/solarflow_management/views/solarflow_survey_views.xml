@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_solarflow_surveys" model="ir.actions.act_window">
+        <field name="name">Site Surveys</field>
+        <field name="res_model">solarflow.survey</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_solarflow_survey_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Record a new Solar Rooftop Feasibility Survey!
+            </p>
+            <p>
+                Inspect roof architecture, pitch, azimuth, shadow obstacles, distance to main DB, and auto-generate the complete Bill of Materials.
+            </p>
+        </field>
+    </record>
+
+    <!-- Wizard Action for Rejecting Survey -->
+    <record id="action_solarflow_survey_reject_wizard" model="ir.actions.act_window">
+        <field name="name">Reject Site Survey</field>
+        <field name="res_model">solarflow.survey.reject.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_survey_id': active_id}</field>
+    </record>
+
+    <!-- Survey Rejection Wizard Form -->
+    <record id="view_solarflow_survey_reject_wizard_form" model="ir.ui.view">
+        <field name="name">solarflow.survey.reject.wizard.form</field>
+        <field name="model">solarflow.survey.reject.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Rejection Rationale">
+                <group>
+                    <field name="survey_id" readonly="1"/>
+                    <field name="rejection_reason" placeholder="Explain why the rooftop is infeasible (e.g. severe shading, weak asbestos, low load bearing)..." required="1"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_rejection" string="Confirm Rejection" type="object" class="btn-danger"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_solarflow_survey_tree" model="ir.ui.view">
+        <field name="name">solarflow.survey.tree</field>
+        <field name="model">solarflow.survey</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'scheduled'" decoration-warning="state in ['in_progress', 'submitted']" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="lead_id"/>
+                <field name="survey_date"/>
+                <field name="surveyor_id"/>
+                <field name="roof_type"/>
+                <field name="roof_area_sqft"/>
+                <field name="usable_area_sqft"/>
+                <field name="roof_condition"/>
+                <field name="grid_availability"/>
+                <field name="recommended_capacity_kw" widget="badge"/>
+                <field name="state" widget="badge" decoration-info="state == 'scheduled'" decoration-warning="state == 'submitted'" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="view_solarflow_survey_kanban" model="ir.ui.view">
+        <field name="name">solarflow.survey.kanban</field>
+        <field name="model">solarflow.survey</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" quick_create="false">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="surveyor_id"/>
+                <field name="recommended_capacity_kw"/>
+                <field name="roof_condition"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click p-2 border rounded shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="text-primary"><field name="name"/></strong>
+                                <span class="badge bg-warning text-dark"><field name="recommended_capacity_kw"/> kW</span>
+                            </div>
+                            <div class="mb-1"><field name="partner_id"/></div>
+                            <div class="mb-1 text-muted small"><field name="roof_condition"/></div>
+                            <small class="text-muted"><i class="fa fa-user"/> <field name="surveyor_id"/></small>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_solarflow_survey_form" model="ir.ui.view">
+        <field name="name">solarflow.survey.form</field>
+        <field name="model">solarflow.survey</field>
+        <field name="arch" type="xml">
+            <form string="SolarFlow Rooftop Site Survey">
+                <header>
+                    <button name="action_schedule" string="Schedule Survey" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_start" string="Start Survey" type="object" class="btn-secondary" invisible="state != 'scheduled'"/>
+                    <button name="action_submit" string="Submit Survey" type="object" class="btn-primary" invisible="state != 'in_progress'"/>
+                    <button name="action_approve" string="Approve Survey" type="object" class="btn-success" invisible="state != 'submitted'" groups="solarflow_management.group_solarflow_engineer,solarflow_management.group_solarflow_manager"/>
+                    <button name="%(action_solarflow_survey_reject_wizard)d" string="Reject Survey" type="action" class="btn-danger" invisible="state not in ['submitted', 'in_progress']" groups="solarflow_management.group_solarflow_engineer,solarflow_management.group_solarflow_manager"/>
+                    <button name="action_generate_automatic_bom" string="Generate Auto-BOM" type="object" class="btn-secondary" invisible="state not in ['submitted', 'approved']"/>
+                    <button name="action_create_sales_quotation" string="Create Quotation" type="object" class="btn-primary" invisible="state != 'approved'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,submitted,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Survey Reference"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Customer &amp; Assignment">
+                            <field name="partner_id"/>
+                            <field name="lead_id"/>
+                            <field name="survey_date"/>
+                            <field name="surveyor_id"/>
+                            <field name="engineer_id"/>
+                        </group>
+                        <group string="Plant Recommendation">
+                            <field name="recommended_capacity_kw"/>
+                            <field name="system_type"/>
+                            <field name="package_id"/>
+                            <field name="quotation_count" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Roof &amp; Environmental Feasibility">
+                            <group>
+                                <group string="Roof Dimensions &amp; Pitch">
+                                    <field name="roof_area_sqft"/>
+                                    <field name="usable_area_sqft"/>
+                                    <field name="roof_direction"/>
+                                    <field name="roof_tilt_deg"/>
+                                </group>
+                                <group string="Condition &amp; Electrical Grid">
+                                    <field name="roof_condition"/>
+                                    <field name="grid_availability"/>
+                                    <field name="cable_distance_meters"/>
+                                    <field name="rejection_reason" invisible="state != 'rejected'"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Bill of Materials (BOM Lines)">
+                            <field name="bom_line_ids">
+                                <tree editable="bottom">
+                                    <field name="category" widget="badge"/>
+                                    <field name="product_id"/>
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="uom"/>
+                                    <field name="unit_cost" widget="monetary"/>
+                                    <field name="total_cost" widget="monetary"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="bom_total_cost" widget="monetary"/>
+                            </group>
+                        </page>
+
+                        <page string="Site Photographs &amp; Attachments">
+                            <group>
+                                <group string="Roof Overview">
+                                    <field name="photo_roof" widget="image" class="oe_avatar" options="{'size': [160, 160]}"/>
+                                    <field name="photo_meter" widget="image" class="oe_avatar" options="{'size': [160, 160]}"/>
+                                </group>
+                                <group string="Shadow Analysis">
+                                    <field name="photo_shadow" widget="image" class="oe_avatar" options="{'size': [160, 160]}"/>
+                                    <field name="photo_ids" widget="many2many_binary"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Surveyor Field Notes">
+                            <field name="survey_notes" placeholder="Enter site observations, cable routing path, obstacle notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search, Filters and Group By View -->
+    <record id="view_solarflow_survey_search" model="ir.ui.view">
+        <field name="name">solarflow.survey.search</field>
+        <field name="model">solarflow.survey</field>
+        <field name="arch" type="xml">
+            <search string="Search Surveys">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="lead_id"/>
+                <field name="surveyor_id"/>
+                <separator/>
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Scheduled" name="filter_scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="Submitted for Review" name="filter_submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="Approved" name="filter_approved" domain="[('state', '=', 'approved')]"/>
+                <filter string="Rejected" name="filter_rejected" domain="[('state', '=', 'rejected')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Approval Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Surveyor" name="group_surveyor" context="{'group_by': 'surveyor_id'}"/>
+                    <filter string="Roof Condition" name="group_roof_condition" context="{'group_by': 'roof_condition'}"/>
+                    <filter string="Grid Type" name="group_grid" context="{'group_by': 'grid_availability'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

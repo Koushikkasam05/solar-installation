@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Installation Window Action -->
+    <record id="action_solarflow_installations" model="ir.actions.act_window">
+        <field name="name">Field Installations</field>
+        <field name="res_model">solarflow.installation</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_solarflow_installation_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Manage SolarFlow Field Commissioning Projects!
+            </p>
+            <p>
+                Assign field technicians, execute the 6-phase commissioning checklist, log electrical testing readings, and record customer sign-off.
+            </p>
+        </field>
+    </record>
+
+    <!-- Sales Order Window Action -->
+    <record id="action_solarflow_sale_orders" model="ir.actions.act_window">
+        <field name="name">Solar Quotations &amp; Contracts</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('is_solar_order', '=', True)]</field>
+        <field name="context">{'default_is_solar_order': True}</field>
+    </record>
+
+    <record id="action_solarflow_payment_milestones" model="ir.actions.act_window">
+        <field name="name">Milestone Payments</field>
+        <field name="res_model">solarflow.payment.milestone</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_solarflow_dashboard" model="ir.actions.act_window">
+        <field name="name">Executive Dashboard</field>
+        <field name="res_model">solarflow.installation</field>
+        <field name="view_mode">kanban,tree,form</field>
+    </record>
+
+    <!-- Installation Kanban View (Mobile Friendly) -->
+    <record id="view_solarflow_installation_kanban" model="ir.ui.view">
+        <field name="name">solarflow.installation.kanban</field>
+        <field name="model">solarflow.installation</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" quick_create="false">
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="installation_capacity_kw"/>
+                <field name="progress_percent"/>
+                <field name="technician_id"/>
+                <field name="state"/>
+                <field name="scheduled_date"/>
+                <field name="readiness_score"/>
+                <field name="readiness_grade"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click p-3 rounded border shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="text-primary fs-6"><field name="name"/></strong>
+                                <span class="badge bg-warning text-dark"><field name="installation_capacity_kw"/> kW</span>
+                            </div>
+                            <div class="mb-1 text-dark fw-semibold"><field name="customer_id"/></div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-primary text-white">Score: <field name="readiness_score"/>/100</span>
+                                <span class="badge bg-light text-dark"><field name="readiness_grade"/></span>
+                            </div>
+                            <div class="mb-2 text-muted small">
+                                <i class="fa fa-calendar me-1"/> <field name="scheduled_date"/>
+                            </div>
+                            <div class="mb-2">
+                                <i class="fa fa-wrench me-1 text-secondary"/> <field name="technician_id"/>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" t-attf-style="width: #{record.progress_percent.raw_value}%"/>
+                            </div>
+                            <small class="text-muted"><field name="progress_percent"/>% Completed</small>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Installation Tree View -->
+    <record id="view_solarflow_installation_tree" model="ir.ui.view">
+        <field name="name">solarflow.installation.tree</field>
+        <field name="model">solarflow.installation</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'scheduled'" decoration-warning="state in ['in_progress', 'testing']" decoration-success="state == 'completed'">
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="sale_order_id"/>
+                <field name="installation_capacity_kw" widget="badge"/>
+                <field name="system_type"/>
+                <field name="technician_id"/>
+                <field name="scheduled_date"/>
+                <field name="readiness_score" widget="progressbar"/>
+                <field name="readiness_grade" widget="badge"/>
+                <field name="progress_percent" widget="progressbar"/>
+                <field name="customer_accepted" widget="boolean_toggle"/>
+                <field name="state" widget="badge" decoration-info="state == 'scheduled'" decoration-warning="state == 'testing'" decoration-success="state == 'completed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Installation Form View (Optimized for Mobile/Desktop Technicians) -->
+    <record id="view_solarflow_installation_form" model="ir.ui.view">
+        <field name="name">solarflow.installation.form</field>
+        <field name="model">solarflow.installation</field>
+        <field name="arch" type="xml">
+            <form string="Solar Installation Project">
+                <header>
+                    <button name="action_mark_ready" string="Mark Ready" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_schedule" string="Schedule Crew" type="object" class="btn-primary" invisible="state != 'ready'"/>
+                    <button name="action_start" string="Start Installation" type="object" class="btn-primary" invisible="state not in ['scheduled', 'ready']"/>
+                    <button name="action_testing_qc" string="Enter Testing QC" type="object" class="btn-secondary" invisible="state != 'in_progress'"/>
+                    <button name="action_complete_and_handover" string="Complete &amp; Customer Handover" type="object" class="btn-success" invisible="state != 'testing'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,ready,scheduled,in_progress,testing,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Installation Reference"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Contract &amp; Site Details">
+                            <field name="customer_id"/>
+                            <field name="installation_address"/>
+                            <field name="sale_order_id"/>
+                            <field name="survey_id" readonly="1"/>
+                            <field name="package_id"/>
+                            <field name="installation_capacity_kw"/>
+                            <field name="system_type"/>
+                        </group>
+                        <group string="Technicians &amp; Dates">
+                            <field name="technician_id" required="state in ['ready', 'scheduled']"/>
+                            <field name="technician_ids" widget="many2many_tags"/>
+                            <field name="scheduled_date"/>
+                            <field name="start_date" readonly="1"/>
+                            <field name="completion_date" readonly="1"/>
+                            <field name="progress_percent" widget="progressbar"/>
+                        </group>
+                    </group>
+
+                    <!-- UNIQUE FEATURE: Installation Readiness Score Panel -->
+                    <div class="card bg-light border-primary mb-3 p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="badge bg-primary fs-6 me-2">Installation Readiness Score: <field name="readiness_score" readonly="1"/> / 100</span>
+                                <span class="badge bg-secondary"><field name="readiness_grade" readonly="1"/></span>
+                            </div>
+                            <small class="text-muted fst-italic">Informational score (Critical validation gates still enforced)</small>
+                        </div>
+                        <div class="row g-2 text-center small">
+                            <div class="col">
+                                <div class="p-2 border rounded bg-white">
+                                    <field name="readiness_survey" widget="boolean_toggle" readonly="1"/>
+                                    <div class="fw-semibold">Survey Approved (20)</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="p-2 border rounded bg-white">
+                                    <field name="readiness_payment" widget="boolean_toggle" readonly="1"/>
+                                    <div class="fw-semibold">Payment Satisfied (20)</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="p-2 border rounded bg-white">
+                                    <field name="readiness_stock" widget="boolean_toggle" readonly="1"/>
+                                    <div class="fw-semibold">Stock Available (20)</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="p-2 border rounded bg-white">
+                                    <field name="readiness_equipment" widget="boolean_toggle" readonly="1"/>
+                                    <div class="fw-semibold">Equipment Allocated (20)</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="p-2 border rounded bg-white">
+                                    <field name="readiness_technician" widget="boolean_toggle" readonly="1"/>
+                                    <div class="fw-semibold">Technician Assigned (20)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <notebook>
+                        <page string="6-Phase Execution Checklist">
+
+                            <group string="Commissioning Milestones (Field Verification)">
+                                <group>
+                                    <field name="phase_1_structure"/>
+                                    <field name="phase_2_modules"/>
+                                    <field name="phase_3_inverter"/>
+                                </group>
+                                <group>
+                                    <field name="phase_4_earthing"/>
+                                    <field name="phase_5_testing"/>
+                                    <field name="phase_6_discom_sync"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Electrical QC Testing (Mandatory)">
+                            <group>
+                                <group string="DC Measurements">
+                                    <field name="test_voc" required="state == 'testing'"/>
+                                    <field name="test_isc" required="state == 'testing'"/>
+                                </group>
+                                <group string="Safety &amp; Earthing Thresholds">
+                                    <field name="test_earth_resistance" required="state == 'testing'"/>
+                                    <field name="test_insulation_resistance" required="state == 'testing'"/>
+                                    <field name="test_grid_voltage"/>
+                                </group>
+                            </group>
+                            <group>
+                                <field name="test_notes" placeholder="QC testing notes, cable insulation resistance, torque check remarks..."/>
+                            </group>
+                        </page>
+
+                        <page string="Dispatched Equipment Serials">
+                            <field name="lot_ids">
+                                <tree>
+                                    <field name="name" string="Serial Number / Barcode"/>
+                                    <field name="product_id"/>
+                                    <field name="oem_manufacturer"/>
+                                    <field name="allocation_status" widget="badge"/>
+                                    <field name="dispatch_date"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Site Photographs">
+                            <group>
+                                <group string="Structure &amp; Modules">
+                                    <field name="photo_structure" widget="image" class="oe_avatar" options="{'size': [150, 150]}"/>
+                                    <field name="photo_modules" widget="image" class="oe_avatar" options="{'size': [150, 150]}"/>
+                                </group>
+                                <group string="Inverter &amp; Net Meter">
+                                    <field name="photo_inverter" widget="image" class="oe_avatar" options="{'size': [150, 150]}"/>
+                                    <field name="photo_net_meter" widget="image" class="oe_avatar" options="{'size': [150, 150]}"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Customer Acceptance &amp; Sign-Off">
+                            <group string="Client Commissioning Acceptance">
+                                <group>
+                                    <field name="customer_accepted" widget="boolean_toggle"/>
+                                    <field name="acceptance_date"/>
+                                    <field name="acceptance_signature" placeholder="Client Sign-Off Name / Token"/>
+                                </group>
+                                <group>
+                                    <field name="acceptance_notes" placeholder="Customer satisfaction feedback..."/>
+                                    <field name="technician_notes" placeholder="Technician closing observations..."/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_solarflow_installation_search" model="ir.ui.view">
+        <field name="name">solarflow.installation.search</field>
+        <field name="model">solarflow.installation</field>
+        <field name="arch" type="xml">
+            <search string="Search Installations">
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="sale_order_id"/>
+                <field name="technician_id"/>
+                <separator/>
+                <filter string="Scheduled" name="filter_scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="In Progress" name="filter_inprogress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Testing QC" name="filter_testing" domain="[('state', '=', 'testing')]"/>
+                <filter string="Completed" name="filter_completed" domain="[('state', '=', 'completed')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Technician" name="group_tech" context="{'group_by': 'technician_id'}"/>
+                    <filter string="Scheduled Date" name="group_date" context="{'group_by': 'scheduled_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Extended Sale Order Form View -->
+    <record id="view_sale_order_form_solarflow_inherit" model="ir.ui.view">
+        <field name="name">sale.order.form.solarflow.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_populate_package_components" string="Populate Package Components" type="object" class="btn-secondary" invisible="not is_solar_order or not solar_package_id"/>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="SolarFlow Contract &amp; Payment Policy" invisible="not is_solar_order">
+                    <group>
+                        <group string="Solar Engineering &amp; Approved Survey">
+                            <field name="is_solar_order" invisible="1"/>
+                            <field name="survey_id" domain="[('state', '=', 'approved')]" required="is_solar_order"/>
+                            <field name="solar_package_id"/>
+                            <field name="installation_capacity_kw"/>
+                            <field name="solar_system_type"/>
+                            <field name="roof_type"/>
+                        </group>
+                        <group string="Payment Policy &amp; Dispatch Permission">
+                            <field name="advance_payment_pct"/>
+                            <field name="advance_payment_amount" widget="monetary"/>
+                            <field name="amount_paid" widget="monetary"/>
+                            <field name="amount_outstanding" widget="monetary"/>
+                            <field name="payment_status" widget="badge" decoration-danger="payment_status == 'unpaid'" decoration-warning="payment_status == 'partially_paid'" decoration-success="payment_status == 'fully_paid'"/>
+                            <field name="dispatch_permission" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+
+                    <group string="Subsidy &amp; Payback">
+                        <group>
+                            <field name="subsidy_amount" widget="monetary"/>
+                            <field name="net_customer_cost" widget="monetary"/>
+                        </group>
+                        <group>
+                            <field name="simple_payback_years" widget="badge"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Solar CRM Lead Action -->
+    <record id="action_solar_crm_lead" model="ir.actions.act_window">
+        <field name="name">Solar Opportunities</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_solar_lead', '=', True)]</field>
+        <field name="context">{'default_is_solar_lead': True, 'default_type': 'opportunity'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Solar Lead or Opportunity!
+            </p>
+            <p>
+                Analyze monthly electricity bills, calculate roof solar feasibility, and schedule engineering site surveys.
+            </p>
+        </field>
+    </record>
+
+    <!-- Inherited CRM Lead Form View -->
+    <record id="view_crm_lead_form_solar_inherit" model="ir.ui.view">
+        <field name="name">crm.lead.form.solar.inherit</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Add Smart Buttons -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_surveys" type="object" class="oe_stat_button" icon="fa-compass" invisible="not is_solar_lead">
+                    <field name="survey_count" widget="statinfo" string="Surveys"/>
+                </button>
+            </xpath>
+
+            <!-- Header Action Button -->
+            <xpath expr="//header" position="inside">
+                <button name="action_schedule_site_survey" string="Schedule Site Survey" type="object" class="btn-primary" invisible="not is_solar_lead"/>
+            </xpath>
+
+            <!-- Solar Profile Notebook Page -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Solar Feasibility &amp; Bill Profile" invisible="not is_solar_lead">
+                    <group>
+                        <group string="Customer &amp; DISCOM Details">
+                            <field name="is_solar_lead" invisible="1"/>
+                            <field name="customer_segment"/>
+                            <field name="discom_provider"/>
+                            <field name="consumer_number"/>
+                            <field name="sanctioned_load_kw"/>
+                        </group>
+                        <group string="Electricity Consumption &amp; Tariff">
+                            <field name="monthly_avg_kwh"/>
+                            <field name="current_tariff_rate"/>
+                            <field name="monthly_bill_amount" widget="monetary"/>
+                        </group>
+                    </group>
+                    <group string="Automated Solar Sizing &amp; Feasibility Score">
+                        <group>
+                            <field name="roof_area_sqft"/>
+                            <field name="recommended_capacity_kw" widget="badge"/>
+                        </group>
+                        <group>
+                            <field name="solar_feasibility_score" widget="progressbar"/>
+                            <field name="feasibility_status" widget="badge" decoration-success="feasibility_status == 'high'" decoration-warning="feasibility_status == 'medium'" decoration-danger="feasibility_status == 'low'"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

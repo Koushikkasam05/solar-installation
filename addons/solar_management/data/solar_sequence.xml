@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Site Survey Sequence -->
+        <record id="seq_solar_site_survey" model="ir.sequence">
+            <field name="name">Solar Site Survey</field>
+            <field name="code">solar.site.survey</field>
+            <field name="prefix">SURV/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Installation Project Sequence -->
+        <record id="seq_solar_installation_project" model="ir.sequence">
+            <field name="name">Solar Installation Project</field>
+            <field name="code">solar.installation.project</field>
+            <field name="prefix">INST/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Warranty Card Sequence -->
+        <record id="seq_solar_warranty_card" model="ir.sequence">
+            <field name="name">Solar Warranty Certificate</field>
+            <field name="code">solar.warranty.card</field>
+            <field name="prefix">WRNT/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Service Ticket Sequence -->
+        <record id="seq_solar_service_ticket" model="ir.sequence">
+            <field name="name">Solar Service Ticket</field>
+            <field name="code">solar.service.ticket</field>
+            <field name="prefix">TICK/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

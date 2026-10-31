@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Demo Customer 1: Residential -->
+        <record id="partner_solar_demo_1" model="res.partner">
+            <field name="name">Dr. Rajesh Sharma</field>
+            <field name="street">42 Palm Meadows Boulevard</field>
+            <field name="city">Bengaluru</field>
+            <field name="zip">560066</field>
+            <field name="phone">+91 98765 43210</field>
+            <field name="email">rajesh.sharma@example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <!-- Demo Customer 2: Commercial -->
+        <record id="partner_solar_demo_2" model="res.partner">
+            <field name="name">Apex Logistics &amp; Warehousing Hub</field>
+            <field name="is_company">True</field>
+            <field name="street">Plot 18, Industrial Corridor Phase 2</field>
+            <field name="city">Pune</field>
+            <field name="zip">411019</field>
+            <field name="phone">+91 98111 22334</field>
+            <field name="email">contact@apexlogistics.example.com</field>
+            <field name="customer_rank">1</field>
+        </record>
+
+        <!-- Demo Lead 1 -->
+        <record id="crm_lead_solar_demo_1" model="crm.lead">
+            <field name="name">Residential Rooftop Solar 5kW - Dr. Rajesh Sharma</field>
+            <field name="partner_id" ref="partner_solar_demo_1"/>
+            <field name="contact_name">Dr. Rajesh Sharma</field>
+            <field name="email_from">rajesh.sharma@example.com</field>
+            <field name="phone">+91 98765 43210</field>
+            <field name="is_solar_lead">True</field>
+            <field name="customer_segment">residential</field>
+            <field name="discom_provider">BESCOM</field>
+            <field name="consumer_number">BC-889214-X</field>
+            <field name="sanctioned_load_kw">6.0</field>
+            <field name="monthly_avg_kwh">620.0</field>
+            <field name="current_tariff_rate">8.75</field>
+            <field name="roof_area_sqft">850.0</field>
+            <field name="expected_revenue">3400.0</field>
+        </record>
+
+        <!-- Demo Site Survey -->
+        <record id="survey_solar_demo_1" model="solar.site.survey">
+            <field name="partner_id" ref="partner_solar_demo_1"/>
+            <field name="lead_id" ref="crm_lead_solar_demo_1"/>
+            <field name="roof_type">rcc_flat</field>
+            <field name="roof_area_sqft">850.0</field>
+            <field name="usable_area_sqft">650.0</field>
+            <field name="roof_tilt_deg">14.0</field>
+            <field name="azimuth_deg">180.0</field>
+            <field name="floor_level">2</field>
+            <field name="structural_soundness">good</field>
+            <field name="shadow_profile">clear</field>
+            <field name="db_distance_meters">22.0</field>
+            <field name="service_phase">single_phase</field>
+            <field name="earthing_pit_available">True</field>
+            <field name="chemical_pits_required">3</field>
+            <field name="lightning_arrester_req">True</field>
+            <field name="check_roof_strength">True</field>
+            <field name="check_meter_box">True</field>
+            <field name="check_earthing_space">True</field>
+            <field name="check_cable_route">True</field>
+            <field name="check_client_briefing">True</field>
+            <field name="package_id" ref="package_solar_5kw_ongrid"/>
+            <field name="state">approved</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root SolarFlow ERP Menu -->
+    <menuitem id="menu_solarflow_root"
+              name="SolarFlow ERP"
+              web_icon="solarflow_management,static/description/icon.png"
+              sequence="5"/>
+
+    <!-- 1. Dashboard -->
+    <menuitem id="menu_solarflow_dashboard"
+              name="Dashboard"
+              parent="menu_solarflow_root"
+              action="action_solarflow_dashboard_server"
+              sequence="10"/>
+
+    <!-- 2. Sales -->
+    <menuitem id="menu_solarflow_sales"
+              name="Sales"
+              parent="menu_solarflow_root"
+              sequence="20"/>
+
+    <menuitem id="menu_solarflow_crm_leads"
+              name="Solar Leads"
+              parent="menu_solarflow_sales"
+              action="action_solarflow_crm_lead"
+              sequence="10"/>
+
+    <menuitem id="menu_solarflow_quotations"
+              name="Quotations &amp; Contracts"
+              parent="menu_solarflow_sales"
+              action="action_solarflow_sale_orders"
+              sequence="20"/>
+
+    <menuitem id="menu_solarflow_packages"
+              name="Solar Packages"
+              parent="menu_solarflow_sales"
+              action="action_solarflow_packages"
+              sequence="30"/>
+
+    <!-- 3. Operations -->
+    <menuitem id="menu_solarflow_operations"
+              name="Operations"
+              parent="menu_solarflow_root"
+              sequence="30"/>
+
+    <menuitem id="menu_solarflow_surveys"
+              name="Site Surveys"
+              parent="menu_solarflow_operations"
+              action="action_solarflow_surveys"
+              sequence="10"/>
+
+    <menuitem id="menu_solarflow_installations"
+              name="Field Installations"
+              parent="menu_solarflow_operations"
+              action="action_solarflow_installations"
+              sequence="20"/>
+
+    <!-- 4. Inventory -->
+    <menuitem id="menu_solarflow_inventory"
+              name="Inventory"
+              parent="menu_solarflow_root"
+              sequence="40"/>
+
+    <menuitem id="menu_solarflow_stock_transfers"
+              name="Material Dispatches"
+              parent="menu_solarflow_inventory"
+              action="stock.action_picking_tree_all"
+              sequence="10"/>
+
+    <menuitem id="menu_solarflow_stock_lots"
+              name="Serialized Modules &amp; Inverters"
+              parent="menu_solarflow_inventory"
+              action="stock.action_production_lot_form"
+              sequence="20"/>
+
+    <!-- 5. After-Sales -->
+    <menuitem id="menu_solarflow_after_sales"
+              name="After-Sales"
+              parent="menu_solarflow_root"
+              sequence="50"/>
+
+    <menuitem id="menu_solarflow_warranties"
+              name="Digital Warranties"
+              parent="menu_solarflow_after_sales"
+              action="action_solarflow_warranties"
+              sequence="10"/>
+
+    <menuitem id="menu_solarflow_service_tickets"
+              name="Service Tickets"
+              parent="menu_solarflow_after_sales"
+              action="action_solarflow_service_tickets"
+              sequence="20"/>
+
+    <menuitem id="menu_solarflow_amc_contracts"
+              name="AMC Maintenance Contracts"
+              parent="menu_solarflow_after_sales"
+              action="action_solarflow_amc_contracts"
+              sequence="30"/>
+
+    <!-- 6. Finance -->
+    <menuitem id="menu_solarflow_finance"
+              name="Finance"
+              parent="menu_solarflow_root"
+              sequence="60"/>
+
+    <menuitem id="menu_solarflow_project_costs"
+              name="Job Costing &amp; Profitability"
+              parent="menu_solarflow_finance"
+              action="action_solarflow_project_costs"
+              sequence="10"/>
+
+    <menuitem id="menu_solarflow_milestones"
+              name="Milestone Invoicing"
+              parent="menu_solarflow_finance"
+              action="action_solarflow_payment_milestones"
+              sequence="20"/>
+
+    <!-- 7. Reports -->
+    <menuitem id="menu_solarflow_reports"
+              name="Reports"
+              parent="menu_solarflow_root"
+              sequence="70"/>
+
+    <menuitem id="menu_solarflow_report_surveys"
+              name="Survey Analytics"
+              parent="menu_solarflow_reports"
+              action="action_solarflow_surveys"
+              sequence="10"/>
+
+    <menuitem id="menu_solarflow_report_costs"
+              name="Costing Analytics"
+              parent="menu_solarflow_reports"
+              action="action_solarflow_project_costs"
+              sequence="20"/>
+
+    <!-- 8. Settings -->
+    <menuitem id="menu_solarflow_settings"
+              name="Settings"
+              parent="menu_solarflow_root"
+              sequence="80"/>
+
+    <menuitem id="menu_solarflow_settings_packages"
+              name="Manage Solar Packages"
+              parent="menu_solarflow_settings"
+              action="action_solarflow_packages"
+              sequence="10"/>
+</odoo>

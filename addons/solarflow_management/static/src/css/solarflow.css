@@ -1,0 +1,14 @@
+/* SolarFlow ERP Custom Styling */
+:root {
+    --solarflow-gold: #f59e0b;
+    --solarflow-navy: #1e3a8a;
+    --solarflow-emerald: #10b981;
+}
+
+.solarflow-badge-ref {
+    background-color: var(--solarflow-navy);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+}

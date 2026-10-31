@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_solar_site_survey" model="ir.actions.act_window">
+        <field name="name">Site Surveys</field>
+        <field name="res_model">solar.site.survey</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Record a new Solar Rooftop Site Survey!
+            </p>
+            <p>
+                Inspect roof structure, tilt, shading obstacles, distance to main DB, and auto-generate the complete Bill of Materials.
+            </p>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_solar_site_survey_tree" model="ir.ui.view">
+        <field name="name">solar.site.survey.tree</field>
+        <field name="model">solar.site.survey</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'draft'" decoration-warning="state == 'in_progress'" decoration-success="state == 'approved'" decoration-muted="state == 'rejected'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="surveyor_id"/>
+                <field name="scheduled_date"/>
+                <field name="roof_type"/>
+                <field name="usable_area_sqft"/>
+                <field name="recommended_kw" widget="badge"/>
+                <field name="bom_total_cost" widget="monetary"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'completed'" decoration-success="state == 'approved'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_solar_site_survey_form" model="ir.ui.view">
+        <field name="name">solar.site.survey.form</field>
+        <field name="model">solar.site.survey</field>
+        <field name="arch" type="xml">
+            <form string="Solar Rooftop Site Survey">
+                <header>
+                    <button name="action_start_survey" string="Start Survey" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_complete_survey" string="Submit Completed Survey" type="object" class="btn-primary" invisible="state != 'in_progress'"/>
+                    <button name="action_engineer_approve" string="Engineer Approve" type="object" class="btn-success" invisible="state != 'completed'" groups="solar_management.group_solar_engineer"/>
+                    <button name="action_generate_automatic_bom" string="Generate Auto-BOM" type="object" class="btn-secondary" invisible="state not in ['completed', 'approved']"/>
+                    <button name="action_create_sales_quotation" string="Generate Solar Quotation" type="object" class="btn-primary" invisible="state != 'approved' or sale_order_id"/>
+                    <button name="action_reject" string="Reject / Infeasible" type="object" class="btn-danger" invisible="state in ['approved', 'rejected']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,completed,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Survey Assignment &amp; Customer">
+                            <field name="partner_id"/>
+                            <field name="lead_id"/>
+                            <field name="surveyor_id"/>
+                            <field name="engineer_id" readonly="1"/>
+                            <field name="site_address"/>
+                        </group>
+                        <group string="Schedule &amp; Sizing">
+                            <field name="scheduled_date"/>
+                            <field name="completed_date" readonly="1"/>
+                            <field name="recommended_kw"/>
+                            <field name="package_id"/>
+                            <field name="sale_order_id" readonly="1" invisible="not sale_order_id"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Roof &amp; Structural Specs">
+                            <group>
+                                <group string="Roof Attributes">
+                                    <field name="roof_type"/>
+                                    <field name="roof_area_sqft"/>
+                                    <field name="usable_area_sqft"/>
+                                    <field name="floor_level"/>
+                                </group>
+                                <group string="Orientation &amp; Integrity">
+                                    <field name="roof_tilt_deg"/>
+                                    <field name="azimuth_deg"/>
+                                    <field name="structural_soundness"/>
+                                    <field name="shadow_profile"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Electrical &amp; BOS Feasibility">
+                            <group>
+                                <group string="Grid Connection &amp; Cabling">
+                                    <field name="service_phase"/>
+                                    <field name="db_distance_meters"/>
+                                    <field name="meter_location"/>
+                                    <field name="cable_tray_required"/>
+                                </group>
+                                <group string="Earthing &amp; Protection">
+                                    <field name="earthing_pit_available"/>
+                                    <field name="chemical_pits_required"/>
+                                    <field name="lightning_arrester_req"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Mandatory Checklist">
+                            <group string="Surveyor Verification Flags">
+                                <field name="check_roof_strength"/>
+                                <field name="check_meter_box"/>
+                                <field name="check_earthing_space"/>
+                                <field name="check_cable_route"/>
+                                <field name="check_client_briefing"/>
+                            </group>
+                        </page>
+
+                        <page string="Automatic Bill of Materials (BOM)">
+                            <field name="bom_line_ids">
+                                <tree editable="bottom">
+                                    <field name="category" widget="badge"/>
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="uom"/>
+                                    <field name="unit_cost" widget="monetary"/>
+                                    <field name="total_cost" widget="monetary"/>
+                                    <field name="notes"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="bom_total_cost" widget="monetary"/>
+                            </group>
+                        </page>
+
+                        <page string="Site Photos &amp; Evidences">
+                            <group>
+                                <group string="Roof View">
+                                    <field name="photo_roof" widget="image" class="oe_avatar" options="{'size': [160, 160]}"/>
+                                    <field name="photo_meter" widget="image" class="oe_avatar" options="{'size': [160, 160]}"/>
+                                </group>
+                                <group string="Obstacles &amp; Ground">
+                                    <field name="photo_obstacle" widget="image" class="oe_avatar" options="{'size': [160, 160]}"/>
+                                    <field name="photo_earthing" widget="image" class="oe_avatar" options="{'size': [160, 160]}"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Review &amp; Notes">
+                            <group>
+                                <field name="engineer_notes" placeholder="Chief engineer feedback and design instructions..."/>
+                                <field name="rejection_reason" invisible="state != 'rejected'"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_solar_package" model="ir.actions.act_window">
+        <field name="name">Solar Packages</field>
+        <field name="res_model">solar.package</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Define pre-engineered Solar Packages!
+            </p>
+            <p>
+                Configure standard kW systems (3kW, 5kW, 10kW, 25kW) with default BOM rules, subsidy caps, and pricing.
+            </p>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_solar_package_tree" model="ir.ui.view">
+        <field name="name">solar.package.tree</field>
+        <field name="model">solar.package</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="system_capacity_kw" widget="badge"/>
+                <field name="system_type"/>
+                <field name="phase"/>
+                <field name="default_panel_wattage"/>
+                <field name="est_monthly_units_kwh"/>
+                <field name="base_price" widget="monetary"/>
+                <field name="max_subsidy_amount" widget="monetary"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_solar_package_form" model="ir.ui.view">
+        <field name="name">solar.package.form</field>
+        <field name="model">solar.package</field>
+        <field name="arch" type="xml">
+            <form string="Solar Package Definition">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Package Name"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. 5 kW Surya Ghar Premium"/>
+                        </h1>
+                        <h3>
+                            <field name="code" placeholder="Code (e.g. PKG-5KW-OG)"/>
+                        </h3>
+                    </div>
+                    <group>
+                        <group string="System Sizing &amp; Electrical Architecture">
+                            <field name="system_capacity_kw"/>
+                            <field name="system_type"/>
+                            <field name="phase"/>
+                            <field name="battery_capacity_kwh" invisible="system_type == 'on_grid'"/>
+                        </group>
+                        <group string="PV Module Technology">
+                            <field name="default_panel_wattage"/>
+                            <field name="panel_technology"/>
+                            <field name="min_roof_area_sqft"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Generation Yield Projections">
+                            <field name="est_monthly_units_kwh"/>
+                            <field name="est_annual_units_kwh"/>
+                        </group>
+                        <group string="Commercial Pricing &amp; Subsidy">
+                            <field name="base_price" widget="monetary"/>
+                            <field name="subsidy_eligible"/>
+                            <field name="max_subsidy_amount" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Technical &amp; Marketing Scope">
+                            <field name="description"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

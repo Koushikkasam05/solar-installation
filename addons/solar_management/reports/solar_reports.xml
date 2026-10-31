@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Site Survey Assessment Report -->
+    <record id="action_report_solar_survey" model="ir.actions.report">
+        <field name="name">Site Feasibility &amp; Survey Report</field>
+        <field name="model">solar.site.survey</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">solar_management.report_solar_survey_document</field>
+        <field name="report_file">solar_management.report_solar_survey_document</field>
+        <field name="print_report_name">'Solar_Survey_' + object.name</field>
+        <field name="binding_model_id" ref="model_solar_site_survey"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Digital Warranty Certificate Report -->
+    <record id="action_report_solar_warranty" model="ir.actions.report">
+        <field name="name">Digital Warranty Certificate</field>
+        <field name="model">solar.warranty.card</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">solar_management.report_solar_warranty_document</field>
+        <field name="report_file">solar_management.report_solar_warranty_document</field>
+        <field name="print_report_name">'Warranty_Certificate_' + object.name</field>
+        <field name="binding_model_id" ref="model_solar_warranty_card"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

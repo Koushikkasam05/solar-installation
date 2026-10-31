@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_solar_installation_project" model="ir.actions.act_window">
+        <field name="name">Installation Projects</field>
+        <field name="res_model">solar.installation.project</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Manage Solar EPC Field Installations!
+            </p>
+            <p>
+                Assign field technicians, execute the 6-phase commissioning checklist, log electrical testing readings, and sync with DISCOM net meters.
+            </p>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="view_solar_installation_project_kanban" model="ir.ui.view">
+        <field name="name">solar.installation.project.kanban</field>
+        <field name="model">solar.installation.project</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" quick_create="false">
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="system_capacity_kw"/>
+                <field name="progress_percent"/>
+                <field name="supervisor_id"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click p-3 rounded border shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong class="text-primary"><field name="name"/></strong>
+                                <span class="badge bg-secondary"><field name="system_capacity_kw"/> kW</span>
+                            </div>
+                            <div class="mb-2">
+                                <i class="fa fa-user me-1 text-muted"/> <field name="customer_id"/>
+                            </div>
+                            <div class="mb-2">
+                                <i class="fa fa-wrench me-1 text-muted"/> <field name="supervisor_id"/>
+                            </div>
+                            <div class="mt-2">
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" t-attf-style="width: #{record.progress_percent.raw_value}%"/>
+                                </div>
+                                <small class="text-muted"><field name="progress_percent"/>% Completed</small>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_solar_installation_project_tree" model="ir.ui.view">
+        <field name="name">solar.installation.project.tree</field>
+        <field name="model">solar.installation.project</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'draft'" decoration-warning="state in ['structure', 'cabling', 'testing']" decoration-success="state == 'commissioned'">
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="sale_order_id"/>
+                <field name="supervisor_id"/>
+                <field name="system_capacity_kw" widget="badge"/>
+                <field name="start_date"/>
+                <field name="progress_percent" widget="progressbar"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'testing'" decoration-success="state == 'commissioned'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_solar_installation_project_form" model="ir.ui.view">
+        <field name="name">solar.installation.project.form</field>
+        <field name="model">solar.installation.project</field>
+        <field name="arch" type="xml">
+            <form string="Solar Installation Project">
+                <header>
+                    <button name="action_schedule" string="Schedule Field Crew" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_start_structure" string="Structure Erection Done" type="object" class="btn-secondary" invisible="state not in ['draft', 'scheduled']"/>
+                    <button name="action_cabling_done" string="Cabling &amp; Earthing Done" type="object" class="btn-secondary" invisible="state != 'structure'"/>
+                    <button name="action_testing_qc" string="Verify Electrical QC" type="object" class="btn-info" invisible="state != 'cabling'"/>
+                    <button name="action_discom_sync" string="DISCOM Net Meter Sync" type="object" class="btn-warning" invisible="state != 'testing'"/>
+                    <button name="action_commission_and_handover" string="Commission &amp; Handover" type="object" class="btn-success" invisible="state != 'discom_sync'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,structure,cabling,testing,discom_sync,commissioned"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-barcode" type="action" name="%(action_solar_serial_registry)d" context="{'search_default_installation_project_id': active_id}">
+                            <field name="serial_count" widget="statinfo" string="Serials"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-certificate" type="action" name="%(action_solar_warranty_card)d" context="{'search_default_installation_project_id': active_id}">
+                            <field name="warranty_count" widget="statinfo" string="Warranties"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Contract &amp; Beneficiary">
+                            <field name="customer_id"/>
+                            <field name="sale_order_id"/>
+                            <field name="survey_id" readonly="1"/>
+                            <field name="system_capacity_kw"/>
+                            <field name="system_type"/>
+                            <field name="roof_type"/>
+                        </group>
+                        <group string="Field Team &amp; Milestone Progress">
+                            <field name="supervisor_id"/>
+                            <field name="technician_ids" widget="many2many_tags"/>
+                            <field name="start_date"/>
+                            <field name="target_completion_date"/>
+                            <field name="actual_commissioning_date" readonly="1"/>
+                            <field name="progress_percent" widget="progressbar"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="6-Phase Commissioning Checklist">
+                            <group string="Mandatory Site Execution Milestones">
+                                <group>
+                                    <field name="phase_1_structure"/>
+                                    <field name="phase_2_modules"/>
+                                    <field name="phase_3_inverter"/>
+                                </group>
+                                <group>
+                                    <field name="phase_4_earthing"/>
+                                    <field name="phase_5_testing"/>
+                                    <field name="phase_6_discom_sync"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Electrical QC &amp; Testing Logs">
+                            <group>
+                                <group string="DC String Voltage &amp; Current">
+                                    <field name="test_string1_voc"/>
+                                    <field name="test_string1_isc"/>
+                                    <field name="test_string2_voc"/>
+                                    <field name="test_string2_isc"/>
+                                </group>
+                                <group string="Earthing &amp; Insulation Verification">
+                                    <field name="test_earth_resistance_ohms"/>
+                                    <field name="test_insulation_resistance_mohm"/>
+                                    <field name="test_grid_voltage"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Serialized Modules &amp; Inverters">
+                            <field name="serial_registry_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="component_category"/>
+                                    <field name="brand_oem"/>
+                                    <field name="model_number"/>
+                                    <field name="spec_rating"/>
+                                    <field name="status" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Commissioning Photo Proofs">
+                            <group>
+                                <group string="Mechanical Mounting">
+                                    <field name="photo_structure_erection" widget="image" class="oe_avatar" options="{'size': [150, 150]}"/>
+                                    <field name="photo_panel_layout" widget="image" class="oe_avatar" options="{'size': [150, 150]}"/>
+                                </group>
+                                <group string="Electrical &amp; Utility">
+                                    <field name="photo_inverter_wiring" widget="image" class="oe_avatar" options="{'size': [150, 150]}"/>
+                                    <field name="photo_earthing_pit" widget="image" class="oe_avatar" options="{'size': [150, 150]}"/>
+                                    <field name="photo_net_meter" widget="image" class="oe_avatar" options="{'size': [150, 150]}"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+</odoo>

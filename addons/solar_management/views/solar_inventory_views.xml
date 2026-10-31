@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_solar_serial_registry" model="ir.actions.act_window">
+        <field name="name">Serialized Components</field>
+        <field name="res_model">solar.serial.registry</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Scan or register serialized solar components!
+            </p>
+            <p>
+                Track panel barcodes, inverter serial numbers, and battery modules across warehouse staging, site dispatch, and warranty claims.
+            </p>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_solar_serial_registry_tree" model="ir.ui.view">
+        <field name="name">solar.serial.registry.tree</field>
+        <field name="model">solar.serial.registry</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="status == 'staged'" decoration-warning="status == 'dispatched'" decoration-success="status == 'commissioned'" decoration-danger="status == 'rma'">
+                <field name="name"/>
+                <field name="component_category" widget="badge"/>
+                <field name="brand_oem"/>
+                <field name="model_number"/>
+                <field name="spec_rating"/>
+                <field name="installation_project_id"/>
+                <field name="partner_id"/>
+                <field name="warranty_years"/>
+                <field name="status" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_solar_serial_registry_form" model="ir.ui.view">
+        <field name="name">solar.serial.registry.form</field>
+        <field name="model">solar.serial.registry</field>
+        <field name="arch" type="xml">
+            <form string="Component Serial Registry">
+                <header>
+                    <field name="status" widget="statusbar" statusbar_visible="staged,dispatched,installed,commissioned"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Component Serial Number / Barcode"/>
+                        <h1>
+                            <field name="name" placeholder="Scan or enter serial (e.g. SN-WAAREE-550W-8812)"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Hardware Classification">
+                            <field name="component_category"/>
+                            <field name="brand_oem"/>
+                            <field name="model_number"/>
+                            <field name="spec_rating"/>
+                        </group>
+                        <group string="Project &amp; Logistics">
+                            <field name="installation_project_id"/>
+                            <field name="partner_id"/>
+                            <field name="dispatch_date"/>
+                            <field name="commissioning_date"/>
+                            <field name="barcode_scanned"/>
+                            <field name="warranty_years"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+</odoo>

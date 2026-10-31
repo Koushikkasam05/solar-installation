@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_solarflow_survey" model="ir.actions.report">
+        <field name="name">Site Feasibility &amp; Survey Report</field>
+        <field name="model">solarflow.survey</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">solarflow_management.report_solarflow_survey_document</field>
+        <field name="report_file">solarflow_management.report_solarflow_survey_document</field>
+        <field name="print_report_name">'SolarFlow_Survey_' + object.name</field>
+        <field name="binding_model_id" ref="model_solarflow_survey"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

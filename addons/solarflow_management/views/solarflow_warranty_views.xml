@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Warranty Search View with Serial Number Lookup and Filters -->
+    <record id="view_solarflow_warranty_search" model="ir.ui.view">
+        <field name="name">solarflow.warranty.search</field>
+        <field name="model">solarflow.warranty</field>
+        <field name="arch" type="xml">
+            <search string="Search Warranties">
+                <field name="name" string="Warranty Reference"/>
+                <field name="lot_id" string="Equipment Serial Number"/>
+                <field name="customer_id" string="Customer"/>
+                <field name="product_id" string="Product / Component"/>
+                <field name="installation_id" string="Installation Reference"/>
+                <separator/>
+                <filter string="Active Coverage" name="filter_active" domain="[('status', '=', 'active')]"/>
+                <filter string="Upcoming" name="filter_upcoming" domain="[('status', '=', 'upcoming')]"/>
+                <filter string="Expired" name="filter_expired" domain="[('status', '=', 'expired')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Customer" name="group_customer" context="{'group_by': 'customer_id'}"/>
+                    <filter string="Product" name="group_product" context="{'group_by': 'product_id'}"/>
+                    <filter string="Coverage Category" name="group_warranty_type" context="{'group_by': 'warranty_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Warranty Tree / List View -->
+    <record id="view_solarflow_warranty_tree" model="ir.ui.view">
+        <field name="name">solarflow.warranty.tree</field>
+        <field name="model">solarflow.warranty</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="status == 'active'" decoration-info="status == 'upcoming'" decoration-muted="status == 'expired'">
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="product_id"/>
+                <field name="lot_id" string="Equipment Serial"/>
+                <field name="installation_id"/>
+                <field name="warranty_type"/>
+                <field name="duration_years"/>
+                <field name="start_date"/>
+                <field name="expiry_date"/>
+                <field name="verification_hash" widget="badge"/>
+                <field name="status" widget="badge" decoration-success="status == 'active'" decoration-info="status == 'upcoming'" decoration-danger="status == 'expired'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Warranty Form View -->
+    <record id="view_solarflow_warranty_form" model="ir.ui.view">
+        <field name="name">solarflow.warranty.form</field>
+        <field name="model">solarflow.warranty</field>
+        <field name="arch" type="xml">
+            <form string="SolarFlow Warranty Certificate">
+                <header>
+                    <button name="action_check_warranty_expiry" string="Trigger Expiry Reminder Check" type="object" class="btn-secondary"/>
+                    <field name="status" widget="statusbar" statusbar_visible="upcoming,active,expired"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Warranty Reference"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Equipment &amp; Customer Link">
+                            <field name="customer_id"/>
+                            <field name="product_id"/>
+                            <field name="lot_id" string="Equipment Serial Number"/>
+                            <field name="installation_id"/>
+                            <field name="sale_order_id"/>
+                            <field name="warranty_type"/>
+                            <field name="manufacturer_details"/>
+                        </group>
+                        <group string="Configurable Policy &amp; Expiry Calculation">
+                            <field name="start_date"/>
+                            <field name="duration_months"/>
+                            <field name="duration_years"/>
+                            <field name="expiry_date"/>
+                            <field name="verification_hash" widget="badge"/>
+                            <field name="warranty_document" filename="name"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Terms &amp; Coverage Clauses">
+                            <field name="terms_clauses" placeholder="Detailed terms, output degradation guarantee limits, RMA conditions..."/>
+                        </page>
+                        <page string="Service History &amp; Claims">
+                            <field name="ticket_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="complaint_date"/>
+                                    <field name="fault_category"/>
+                                    <field name="assigned_technician_id"/>
+                                    <field name="repair_cost"/>
+                                    <field name="warranty_covered" widget="boolean_toggle"/>
+                                    <field name="state" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_solarflow_warranties" model="ir.actions.act_window">
+        <field name="name">Digital Warranties</field>
+        <field name="res_model">solarflow.warranty</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_solarflow_warranty_search"/>
+        <field name="context">{'search_default_filter_active': 1}</field>
+    </record>
+</odoo>
+

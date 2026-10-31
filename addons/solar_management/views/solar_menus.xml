@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root Solar EPC Menu -->
+    <menuitem id="menu_solar_root"
+              name="Solar EPC"
+              web_icon="solar_management,static/description/icon.png"
+              sequence="5"/>
+
+    <!-- Operations & Projects -->
+    <menuitem id="menu_solar_operations"
+              name="Operations"
+              parent="menu_solar_root"
+              sequence="10"/>
+
+    <menuitem id="menu_solar_projects"
+              name="Installation Projects"
+              parent="menu_solar_operations"
+              action="action_solar_installation_project"
+              sequence="10"/>
+
+    <menuitem id="menu_solar_surveys"
+              name="Site Surveys"
+              parent="menu_solar_operations"
+              action="action_solar_site_survey"
+              sequence="20"/>
+
+    <!-- Sales & Pre-Engineering -->
+    <menuitem id="menu_solar_sales_root"
+              name="Sales &amp; CRM"
+              parent="menu_solar_root"
+              sequence="20"/>
+
+    <menuitem id="menu_solar_leads"
+              name="Solar Opportunities"
+              parent="menu_solar_sales_root"
+              action="action_solar_crm_lead"
+              sequence="10"/>
+
+    <menuitem id="menu_solar_quotations"
+              name="Solar Quotations"
+              parent="menu_solar_sales_root"
+              action="action_solar_quotations"
+              sequence="20"/>
+
+    <menuitem id="menu_solar_packages"
+              name="Solar Packages &amp; Pricing"
+              parent="menu_solar_sales_root"
+              action="action_solar_package"
+              sequence="30"/>
+
+    <!-- Inventory & Serialization -->
+    <menuitem id="menu_solar_inventory_root"
+              name="Serialized Inventory"
+              parent="menu_solar_root"
+              sequence="30"/>
+
+    <menuitem id="menu_solar_serials"
+              name="Component Serial Registry"
+              parent="menu_solar_inventory_root"
+              action="action_solar_serial_registry"
+              sequence="10"/>
+
+    <!-- Warranty & After-Sales -->
+    <menuitem id="menu_solar_service_root"
+              name="Warranty &amp; Service"
+              parent="menu_solar_root"
+              sequence="40"/>
+
+    <menuitem id="menu_solar_warranties"
+              name="Digital Warranty Certificates"
+              parent="menu_solar_service_root"
+              action="action_solar_warranty_card"
+              sequence="10"/>
+
+    <menuitem id="menu_solar_tickets"
+              name="Service Tickets &amp; AMC"
+              parent="menu_solar_service_root"
+              action="action_solar_service_ticket"
+              sequence="20"/>
+
+    <menuitem id="menu_solar_amc"
+              name="AMC Contracts"
+              parent="menu_solar_service_root"
+              action="action_solar_amc_contract"
+              sequence="30"/>
+
+    <!-- Financials & Profitability -->
+    <menuitem id="menu_solar_finance_root"
+              name="Project Financials"
+              parent="menu_solar_root"
+              sequence="50"/>
+
+    <menuitem id="menu_solar_costings"
+              name="Job Costing &amp; Margins"
+              parent="menu_solar_finance_root"
+              action="action_solar_project_costing"
+              sequence="10"/>
+
+    <menuitem id="menu_solar_milestones"
+              name="Payment Milestones"
+              parent="menu_solar_finance_root"
+              action="action_solar_payment_milestones"
+              sequence="20"/>
+</odoo>
