@@ -152,6 +152,24 @@ const SolarFlowState = {
       canValidateDispatch: false,
       canManageCosting: false,
       desc: "Executive read-only analytics for revenue, EBITDA margins, and project performance."
+    },
+    qa: {
+      name: "QA Tester",
+      userName: "QA Tester",
+      login: "qa@solarflow.erp",
+      title: "Quality Assurance",
+      avatar: "QA",
+      perm: ["dashboard", "enquiries", "leads", "followups", "surveys", "quotations", "orders", "installations", "schedule", "technicians", "inst_reports", "products", "categories", "warehouses", "stock_avail", "stock_reservations", "inventory", "dispatches", "stock_moves", "warranties", "service", "complaints", "service_history", "invoices", "payments", "expenses", "costing", "fin_reports", "biz_reports", "op_reports", "tech_perf", "sales_perf", "packages"],
+      readOnly: true,
+      canCreate: false,
+      canEdit: false,
+      canDelete: false,
+      canApproveSurveys: false,
+      canConfirmOrders: false,
+      canCompleteInstallation: false,
+      canValidateDispatch: false,
+      canManageCosting: false,
+      desc: "Read-only access to business modules and reports for quality assurance and evaluation."
     }
   },
 
@@ -561,7 +579,8 @@ function applyRole(roleKey) {
   // 2. Filter Navigation Menu Links based on exact permissions
   document.querySelectorAll('.sidebar-nav .nav-link-btn').forEach(btn => {
     const perm = btn.getAttribute('data-perm') || '';
-    if (perm === 'all' || cfg.perm.includes('all')) {
+    const viewName = btn.getAttribute('data-view');
+    if (perm === 'all' || cfg.perm.includes('all') || (roleKey === 'qa' && cfg.perm.includes(viewName))) {
       btn.style.display = 'flex';
     } else {
       const allowedRoles = perm.split(',').map(s => s.trim());
@@ -583,7 +602,7 @@ function applyRole(roleKey) {
   // 3. Financial Costing Access Barrier
   const costingBanner = document.getElementById('costing-restricted-banner');
   const costingContent = document.getElementById('costing-content-panel');
-  const canSeeFinances = (roleKey === 'admin' || roleKey === 'finance' || roleKey === 'director');
+  const canSeeFinances = (roleKey === 'admin' || roleKey === 'finance' || roleKey === 'director' || roleKey === 'qa');
 
   if (costingBanner && costingContent) {
     if (canSeeFinances) {
@@ -637,6 +656,7 @@ function renderRoleDashboard() {
       renderSurveyTechDashboard(container);
       break;
     case 'director':
+    case 'qa':
       renderDirectorDashboard(container);
       break;
     case 'admin':
@@ -1104,20 +1124,28 @@ function renderFinanceDashboard(el) {
 
 // 8. Director / Investor Dashboard (Read-Only)
 function renderDirectorDashboard(el) {
+  const isQa = SolarFlowState.currentRole === 'qa';
+  const title = isQa ? 'QA Evaluation Dashboard (Read-Only)' : 'Executive Business Analytics (Read-Only)';
+  const accessLabel = isQa ? '🔒 Read-Only QA Access' : '🔒 Read-Only Investor Access';
+  const bannerTitle = isQa ? 'Quality Assurance Evaluation Mode' : 'Board of Directors Executive Mode';
+  const bannerText = isQa
+    ? 'Business metrics are available for evaluation. Transaction editing is disabled.'
+    : 'All financial metrics below are dynamically computed from active turnkey solar contracts. Transaction editing is strictly disabled for governance.';
+
   el.innerHTML = `
     <div class="section-header-bar">
       <div>
-        <h1 class="section-title">Executive Business Analytics (Read-Only)</h1>
+        <h1 class="section-title">${title}</h1>
         <p class="section-description">High-level financial summaries, EBITDA margins, and project pipeline health. Modifications are disabled.</p>
       </div>
-      <span class="status-pill pill-neutral">🔒 Read-Only Investor Access</span>
+      <span class="status-pill pill-neutral">${accessLabel}</span>
     </div>
 
     <div class="confidential-financial-banner">
       <div class="banner-shield-icon">📊</div>
       <div>
-        <div class="banner-title">Board of Directors Executive Mode</div>
-        <div class="banner-text">All financial metrics below are dynamically computed from active turnkey solar contracts. Transaction editing is strictly disabled for governance.</div>
+        <div class="banner-title">${bannerTitle}</div>
+        <div class="banner-text">${bannerText}</div>
       </div>
     </div>
 
