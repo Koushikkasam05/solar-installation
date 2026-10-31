@@ -1,14 +1,17 @@
 // ==========================================================================
-// SolarFlow ERP – Complete Light Enterprise Frontend & Business Engine
-// Clean Forest Green Palette (#246B45), Real DB Records, Strict RBAC Matrix
+// SolarFlow ERP – Complete Light-Theme Enterprise Frontend Logic
+// Crisp Tables, Kanban Boards, Real-Time Filtering, Charts & Instant Search
 // ==========================================================================
 
 const SolarFlowState = {
   currentRole: 'admin',
   sidebarCollapsed: false,
   activeView: 'dashboard',
+  leadsViewMode: 'list',
+  surveysViewMode: 'list',
+  serviceViewMode: 'list',
 
-  // 8 Role Definitions with Permissions and Profiles
+  // 8 Roles Configuration
   roles: {
     admin: {
       name: "Super Administrator",
@@ -21,7 +24,7 @@ const SolarFlowState = {
       name: "Sales Manager",
       title: "Head of Solar Sales",
       avatar: "SM",
-      perm: ["dashboard", "enquiries", "leads", "followups", "surveys", "quotations", "orders", "installations", "schedule", "packages", "stock_reservations", "products"],
+      perm: ["dashboard", "enquiries", "leads", "followups", "surveys", "quotations", "orders", "installations", "schedule", "packages", "stock_reservations", "products", "biz_reports", "sales_perf"],
       desc: "Manages customer enquiries, leads, follow-ups, surveys, quotations, and orders."
     },
     survey_tech: {
@@ -42,7 +45,7 @@ const SolarFlowState = {
       name: "Installation Technician",
       title: "Senior Electrical Lead",
       avatar: "IT",
-      perm: ["dashboard", "installations", "schedule", "inst_reports", "inventory", "service"],
+      perm: ["dashboard", "installations", "schedule", "inst_reports", "inventory", "service", "tech_perf"],
       desc: "Executes assigned rooftop installations, 6-phase checklist, and QC testing (Earth <= 5.0 Ohm)."
     },
     support: {
@@ -56,7 +59,7 @@ const SolarFlowState = {
       name: "Finance Manager",
       title: "Chief Financial Officer",
       avatar: "FM",
-      perm: ["dashboard", "invoices", "payments", "expenses", "costing", "fin_reports", "quotations", "orders"],
+      perm: ["dashboard", "invoices", "payments", "expenses", "costing", "fin_reports", "quotations", "orders", "biz_reports"],
       desc: "Manages milestone billing, customer payments, project costing, and profitability."
     },
     director: {
@@ -69,7 +72,14 @@ const SolarFlowState = {
     }
   },
 
-  // 10 Verified Customers
+  // Real System Notifications
+  notifications: [
+    { id: 1, title: "Low Stock Alert: Chemical Earthing Mix", sub: "Warehouse inventory below safety threshold (1 bag left).", time: "10 mins ago", unread: true, icon: "⚠️", type: "warn" },
+    { id: 2, title: "Profit Leakage Alert: INST-2026-0002", sub: "Actual cost overrun (+42.1%) flagged by Costing Engine.", time: "1 hour ago", unread: true, icon: "💸", type: "danger" },
+    { id: 3, title: "Site Survey Scheduled: SRV-2026-0002", sub: "Priya Sundaram (5kW Hybrid) site visit queued.", time: "3 hours ago", unread: true, icon: "📐", type: "info" }
+  ],
+
+  // 10 Customers
   customers: [
     { id: 1, name: "Dr. Rajesh Sharma", phone: "+91 98765 43210", email: "rajesh.sharma@example.com", city: "Bengaluru", type: "Residential", address: "42 Palm Meadows Boulevard, Whitefield, Bengaluru" },
     { id: 2, name: "Apex Logistics Hub", phone: "+91 98111 22334", email: "contact@apexlogistics.example.com", city: "Pune", type: "Commercial", address: "Plot 14, MIDC Bhosari Industrial Area, Pune" },
@@ -118,23 +128,20 @@ const SolarFlowState = {
       id: 1, ref: "SRV-2026-0001", customerId: 1, leadId: 1, roofType: "RCC Flat Concrete",
       totalArea: "650 sq.ft", usableArea: "500 sq.ft", azimuth: "180° South (Optimal)", tilt: "12°",
       cableDist: "20 m", gridPhase: "Single Phase 230V", recommendedKw: 3.0, state: "approved",
-      engineer: "Arun K. (Chief Engineer)",
-      notes: "Rooftop is flat RCC with zero shading. Excellent load bearing capacity."
+      engineer: "Arun K. (Chief Engineer)", notes: "Rooftop is flat RCC with zero shading. Excellent load bearing capacity."
     },
     {
       id: 2, ref: "SRV-2026-0002", customerId: 3, leadId: 3, roofType: "RCC Flat Terrace",
       totalArea: "900 sq.ft", usableArea: "700 sq.ft", azimuth: "210° South-West", tilt: "15°",
       cableDist: "25 m", gridPhase: "Three Phase 415V", recommendedKw: 5.0, state: "scheduled",
-      engineer: "Pending Assignment",
-      notes: "Scheduled shadow analysis and parapet height check."
+      engineer: "Pending Assignment", notes: "Scheduled shadow analysis and parapet height check."
     },
     {
       id: 3, ref: "SRV-2026-0003", customerId: 7, leadId: 7, roofType: "Asbestos Tin Shed",
       totalArea: "350 sq.ft", usableArea: "120 sq.ft", azimuth: "0° North (Low Yield)", tilt: "25°",
       cableDist: "55 m", gridPhase: "Single Phase", recommendedKw: 1.0, state: "rejected",
       rejectionReason: "Severe structural weakness in corrugated tin roof and continuous shadow obstruction from adjacent building.",
-      engineer: "Arun K. (Chief Engineer)",
-      notes: "Infeasible for elevated module mounting structure."
+      engineer: "Arun K. (Chief Engineer)", notes: "Infeasible for elevated module mounting structure."
     }
   ],
 
@@ -266,19 +273,20 @@ const SolarFlowState = {
 };
 
 // ==========================================================================
-// INITIALIZATION & EVENT LISTENERS
+// INITIALIZER
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
   setupSidebar();
   setupRoleSwitcher();
   setupGlobalSearch();
+  setupNotifications();
   setupQuickCreate();
   setupShowcaseTour();
   renderRoleDashboard();
   renderAllDataViews();
 });
 
-// Sidebar Toggle
+// Setup Sidebar Toggle
 function setupSidebar() {
   const toggleBtn = document.getElementById('sidebar-toggle-btn');
   const sidebar = document.getElementById('app-sidebar');
@@ -301,34 +309,33 @@ function setupSidebar() {
   });
 }
 
-// View Switching with Role Permission Checking
+// View Switcher with Role Guard
 function switchView(viewName) {
   const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
   
-  // Security Check: does role have access?
+  // Security check: is role allowed to view?
   const hasAccess = roleCfg.perm.includes('all') || roleCfg.perm.includes(viewName);
   if (!hasAccess) {
-    showToast(`Access Denied: The ${roleCfg.name} role does not have permission to access '${viewName}'.`, 'warn');
+    showToast(`Access Restricted: The ${roleCfg.name} role does not have authorization for '${viewName}'.`, 'warn');
     return;
   }
 
   SolarFlowState.activeView = viewName;
 
-  // Update Sidebar active state
+  // Update active button state
   document.querySelectorAll('.nav-link-btn').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-view') === viewName);
   });
 
-  // Update Breadcrumbs
+  // Update Breadcrumb Text
   updateBreadcrumbs(viewName);
 
   // Hide all sections
   document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
 
-  // Target section
+  // Target Section
   let targetSection = document.getElementById(`view-${viewName}`);
   if (!targetSection) {
-    // If not a dedicated section, show generic panel with informative records
     targetSection = document.getElementById('view-generic-panel');
     populateGenericModule(viewName);
   }
@@ -337,13 +344,13 @@ function switchView(viewName) {
     targetSection.classList.add('active');
   }
 
-  // If dashboard, refresh role dashboard
+  // Refresh view if dashboard
   if (viewName === 'dashboard') {
     renderRoleDashboard();
   }
 }
 
-// Update Top Breadcrumbs
+// Breadcrumb updater
 function updateBreadcrumbs(viewName) {
   const breadcrumbPage = document.getElementById('breadcrumb-page');
   const breadcrumbSection = document.getElementById('breadcrumb-section');
@@ -393,9 +400,7 @@ function updateBreadcrumbs(viewName) {
   if (breadcrumbPage) breadcrumbPage.textContent = info[1];
 }
 
-// ==========================================================================
-// ROLE-BASED ACCESS CONTROL (RBAC) LOGIC
-// ==========================================================================
+// Setup Role Switcher (RBAC)
 function setupRoleSwitcher() {
   const select = document.getElementById('user-role-select');
   if (!select) return;
@@ -411,7 +416,7 @@ function applyRole(roleKey) {
   SolarFlowState.currentRole = roleKey;
   const cfg = SolarFlowState.roles[roleKey] || SolarFlowState.roles.admin;
 
-  // 1. Update Profile Badges
+  // 1. Profile badges
   const roleIndicator = document.getElementById('sidebar-role-indicator');
   const avatarInitials = document.getElementById('user-avatar-initials');
   const displayName = document.getElementById('user-display-name');
@@ -422,7 +427,7 @@ function applyRole(roleKey) {
   if (displayName) displayName.textContent = cfg.name;
   if (roleTitle) roleTitle.textContent = cfg.title;
 
-  // 2. Filter Left Sidebar Menus by Role Permissions
+  // 2. Filter Navigation Menu Links
   document.querySelectorAll('.sidebar-nav .nav-link-btn').forEach(btn => {
     const perm = btn.getAttribute('data-perm') || '';
     if (perm === 'all' || cfg.perm.includes('all')) {
@@ -433,7 +438,7 @@ function applyRole(roleKey) {
     }
   });
 
-  // Filter Nav Groups
+  // Filter Group Titles
   document.querySelectorAll('.sidebar-nav .nav-group-title').forEach(grp => {
     const grpPerm = grp.getAttribute('data-group-perm');
     if (!grpPerm || cfg.perm.includes('all')) {
@@ -444,7 +449,7 @@ function applyRole(roleKey) {
     }
   });
 
-  // 3. Financial Costing Access Gate
+  // 3. Financial Costing Access Barrier
   const costingBanner = document.getElementById('costing-restricted-banner');
   const costingContent = document.getElementById('costing-content-panel');
   const canSeeFinances = (roleKey === 'admin' || roleKey === 'finance' || roleKey === 'director');
@@ -459,11 +464,10 @@ function applyRole(roleKey) {
     }
   }
 
-  // 4. If current active view is not permitted for new role, switch back to dashboard
+  // 4. Fallback if active view is unauthorized
   if (!cfg.perm.includes('all') && !cfg.perm.includes(SolarFlowState.activeView)) {
     switchView('dashboard');
   } else {
-    // Refresh dashboard view for role
     renderRoleDashboard();
   }
 
@@ -471,7 +475,7 @@ function applyRole(roleKey) {
 }
 
 // ==========================================================================
-// ROLE-TAILORED DASHBOARD INJECTION
+// ROLE-TAILORED DASHBOARDS WITH VISUAL CHARTS
 // ==========================================================================
 function renderRoleDashboard() {
   const container = document.getElementById('role-dashboard-container');
@@ -508,7 +512,7 @@ function renderRoleDashboard() {
   }
 }
 
-// 1. SUPER ADMINISTRATOR DASHBOARD
+// 1. Super Administrator Dashboard with Bar Chart
 function renderAdminDashboard(el) {
   el.innerHTML = `
     <div class="section-header-bar">
@@ -548,7 +552,7 @@ function renderAdminDashboard(el) {
           <div class="metric-icon-wrap icon-amber">📐</div>
         </div>
         <div class="metric-value">2</div>
-        <div class="metric-subtext">Shadow &amp; Tilt Assessments</div>
+        <div class="metric-subtext">Shadow &amp; Tilt Checks</div>
       </div>
 
       <div class="metric-card" onclick="switchView('quotations')">
@@ -593,7 +597,7 @@ function renderAdminDashboard(el) {
           <div class="metric-icon-wrap icon-rose">⚠️</div>
         </div>
         <div class="metric-value">1</div>
-        <div class="metric-subtext">Earthing Chemical Compound</div>
+        <div class="metric-subtext">Earthing Chemical Mix</div>
       </div>
 
       <div class="metric-card" onclick="switchView('warranties')">
@@ -602,7 +606,7 @@ function renderAdminDashboard(el) {
           <div class="metric-icon-wrap icon-forest">🛡️</div>
         </div>
         <div class="metric-value">2</div>
-        <div class="metric-subtext">Cryptographic SHA-256 Tokens</div>
+        <div class="metric-subtext">SHA-256 Tokens Active</div>
       </div>
 
       <div class="metric-card" onclick="switchView('service')">
@@ -617,7 +621,7 @@ function renderAdminDashboard(el) {
       <div class="metric-card highlight-profit" onclick="switchView('orders')">
         <div class="metric-header">
           <span class="metric-label">Monthly Revenue</span>
-          <div class="metric-icon-wrap">💵</div>
+          <div class="metric-icon-wrap icon-forest">💵</div>
         </div>
         <div class="metric-value">$2,040.00</div>
         <div class="metric-subtext">Turnkey Solar Contract</div>
@@ -626,25 +630,62 @@ function renderAdminDashboard(el) {
       <div class="metric-card highlight-profit" onclick="switchView('costing')">
         <div class="metric-header">
           <span class="metric-label">Gross Margin</span>
-          <div class="metric-icon-wrap">📈</div>
+          <div class="metric-icon-wrap icon-forest">📈</div>
         </div>
         <div class="metric-value">26.47%</div>
         <div class="metric-subtext">Gross Profit: $540.00</div>
       </div>
     </div>
 
+    <!-- Revenue Trend Chart Card -->
+    <div class="chart-container-card">
+      <div class="chart-header">
+        <div>
+          <span class="status-pill pill-info" style="margin-bottom:4px;">Financial Performance</span>
+          <div class="chart-title">Monthly EPC Revenue &amp; Project Realization Trend</div>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item"><span class="legend-dot dot-primary"></span> Revenue Realized</div>
+          <div class="legend-item"><span class="legend-dot dot-secondary"></span> Projected Pipeline</div>
+        </div>
+      </div>
+      
+      <div class="bar-chart-visual">
+        <div class="bar-col">
+          <div class="bar-pill" style="height:35%;"><span class="bar-tooltip">Jul: $850</span></div>
+          <span class="bar-label">Jul 2026</span>
+        </div>
+        <div class="bar-col">
+          <div class="bar-pill" style="height:55%;"><span class="bar-tooltip">Aug: $1,250</span></div>
+          <span class="bar-label">Aug 2026</span>
+        </div>
+        <div class="bar-col">
+          <div class="bar-pill" style="height:70%;"><span class="bar-tooltip">Sep: $1,600</span></div>
+          <span class="bar-label">Sep 2026</span>
+        </div>
+        <div class="bar-col">
+          <div class="bar-pill" style="height:100%;"><span class="bar-tooltip">Oct: $2,040 (Active)</span></div>
+          <span class="bar-label">Oct 2026</span>
+        </div>
+        <div class="bar-col">
+          <div class="bar-pill" style="height:85%; opacity:0.6;"><span class="bar-tooltip">Nov: $1,800 (Est)</span></div>
+          <span class="bar-label">Nov 2026</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Innovation Split Panels -->
     <div class="dashboard-grid-2col">
-      <!-- Unique Innovation: Serial-to-Warranty Hardware Lifecycle -->
+      <!-- Unique Feature: Serial-to-Warranty Hardware Lifecycle -->
       <div class="content-card">
         <div class="card-title-bar">
           <div>
-            <span class="status-pill pill-info" style="margin-bottom:4px;">Unique Innovation</span>
-            <div class="card-title">Serial-to-Warranty Hardware Lifecycle Traceability</div>
+            <span class="status-pill pill-info" style="margin-bottom:4px;">Hardware Traceability</span>
+            <div class="card-title">Serial-to-Warranty Hardware Lifecycle</div>
           </div>
-          <span style="font-size:12px; font-weight:600; color:var(--primary-forest);">Serial: INV-GROWATT-3KW-9901</span>
+          <span style="font-size:12px; font-weight:600; color:var(--primary);">Serial: INV-GROWATT-3KW-9901</span>
         </div>
-        <p style="font-size:12px; color:var(--secondary-text); margin-bottom:14px;">Complete 7-stage hardware journey mapped to verified Odoo EPC transactions.</p>
+        <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">Complete 7-stage hardware journey mapped to verified Odoo EPC transactions.</p>
         
         <div class="lifecycle-timeline-horizontal">
           <div class="timeline-track-line"></div>
@@ -693,12 +734,12 @@ function renderAdminDashboard(el) {
         </div>
       </div>
 
-      <!-- Installation Readiness Score (out of 100) -->
+      <!-- Installation Readiness Score -->
       <div class="content-card">
         <div class="card-title-bar">
           <div>
-            <span class="status-pill pill-success" style="margin-bottom:4px;">Innovation Metric</span>
-            <div class="card-title">Readiness Index</div>
+            <span class="status-pill pill-success" style="margin-bottom:4px;">Readiness Index</span>
+            <div class="card-title">Installation Readiness</div>
           </div>
           <span class="status-pill pill-success">100 / 100</span>
         </div>
@@ -710,37 +751,22 @@ function renderAdminDashboard(el) {
               <span class="gauge-points-label">POINTS</span>
             </div>
           </div>
-          <div style="font-size:12px; font-weight:600; color:var(--main-text); margin-bottom:8px;">Dr. Rajesh Sharma (3kW Site)</div>
+          <div style="font-size:12.5px; font-weight:600; color:var(--text-main); margin-bottom:8px;">Dr. Rajesh Sharma (3kW Site)</div>
         </div>
 
         <div class="readiness-criteria-list">
-          <div class="criterion-item passed">
-            <span>✓ Survey Approved</span>
-            <span class="criterion-status-tag">+20 Pts</span>
-          </div>
-          <div class="criterion-item passed">
-            <span>✓ 50% Advance Received</span>
-            <span class="criterion-status-tag">+20 Pts</span>
-          </div>
-          <div class="criterion-item passed">
-            <span>✓ Stock Available in Staging</span>
-            <span class="criterion-status-tag">+20 Pts</span>
-          </div>
-          <div class="criterion-item passed">
-            <span>✓ Serial Numbers Allocated</span>
-            <span class="criterion-status-tag">+20 Pts</span>
-          </div>
-          <div class="criterion-item passed">
-            <span>✓ Field Crew Assigned</span>
-            <span class="criterion-status-tag">+20 Pts</span>
-          </div>
+          <div class="criterion-item passed"><span>✓ Survey Approved</span><span class="criterion-status-tag">+20 Pts</span></div>
+          <div class="criterion-item passed"><span>✓ 50% Advance Paid</span><span class="criterion-status-tag">+20 Pts</span></div>
+          <div class="criterion-item passed"><span>✓ Stock In Staging</span><span class="criterion-status-tag">+20 Pts</span></div>
+          <div class="criterion-item passed"><span>✓ Serials Allocated</span><span class="criterion-status-tag">+20 Pts</span></div>
+          <div class="criterion-item passed"><span>✓ Crew Assigned</span><span class="criterion-status-tag">+20 Pts</span></div>
         </div>
       </div>
     </div>
   `;
 }
 
-// 2. SALES MANAGER DASHBOARD
+// 2. Sales Manager Dashboard
 function renderSalesDashboard(el) {
   el.innerHTML = `
     <div class="section-header-bar">
@@ -749,101 +775,49 @@ function renderSalesDashboard(el) {
         <p class="section-description">Lead pipeline, preliminary consumption analysis, customer follow-ups, and quotation approvals.</p>
       </div>
       <div class="header-action-group">
-        <button class="btn-quick-create" onclick="showLeadModal()">+ Create New Lead</button>
-        <button class="btn-outline-action" onclick="switchView('followups')">📅 View Follow-ups</button>
+        <button class="btn-primary-action" onclick="showLeadModal()">+ Create New Lead</button>
+        <button class="btn-secondary-action" onclick="switchView('followups')">📅 View Follow-ups</button>
       </div>
     </div>
 
     <div class="metrics-grid-12">
       <div class="metric-card" onclick="switchView('enquiries')">
-        <div class="metric-header">
-          <span class="metric-label">New Enquiries</span>
-          <div class="metric-icon-wrap icon-forest">📩</div>
-        </div>
-        <div class="metric-value">4</div>
-        <div class="metric-subtext">2 Awaiting Sizing</div>
+        <div class="metric-header"><span class="metric-label">New Enquiries</span><div class="metric-icon-wrap icon-forest">📩</div></div>
+        <div class="metric-value">4</div><div class="metric-subtext">2 Awaiting Sizing</div>
       </div>
-
       <div class="metric-card" onclick="switchView('leads')">
-        <div class="metric-header">
-          <span class="metric-label">My Leads</span>
-          <div class="metric-icon-wrap icon-blue">🎯</div>
-        </div>
-        <div class="metric-value">10</div>
-        <div class="metric-subtext">8 Residential, 2 Commercial</div>
+        <div class="metric-header"><span class="metric-label">My Leads</span><div class="metric-icon-wrap icon-blue">🎯</div></div>
+        <div class="metric-value">10</div><div class="metric-subtext">8 Residential, 2 Commercial</div>
       </div>
-
       <div class="metric-card" onclick="switchView('followups')">
-        <div class="metric-header">
-          <span class="metric-label">Follow-ups Due</span>
-          <div class="metric-icon-wrap icon-amber">⏰</div>
-        </div>
-        <div class="metric-value">3</div>
-        <div class="metric-subtext">Today &amp; Tomorrow</div>
+        <div class="metric-header"><span class="metric-label">Follow-ups Due</span><div class="metric-icon-wrap icon-amber">⏰</div></div>
+        <div class="metric-value">3</div><div class="metric-subtext">Today &amp; Tomorrow</div>
       </div>
-
       <div class="metric-card" onclick="switchView('surveys')">
-        <div class="metric-header">
-          <span class="metric-label">Surveys Pending</span>
-          <div class="metric-icon-wrap icon-rose">📐</div>
-        </div>
-        <div class="metric-value">2</div>
-        <div class="metric-subtext">Field Team Dispatched</div>
+        <div class="metric-header"><span class="metric-label">Surveys Pending</span><div class="metric-icon-wrap icon-rose">📐</div></div>
+        <div class="metric-value">2</div><div class="metric-subtext">Field Team Dispatched</div>
       </div>
-
       <div class="metric-card" onclick="switchView('surveys')">
-        <div class="metric-header">
-          <span class="metric-label">Approved Surveys</span>
-          <div class="metric-icon-wrap icon-forest">✓</div>
-        </div>
-        <div class="metric-value">1</div>
-        <div class="metric-subtext">Ready for Quotation</div>
+        <div class="metric-header"><span class="metric-label">Approved Surveys</span><div class="metric-icon-wrap icon-forest">✓</div></div>
+        <div class="metric-value">1</div><div class="metric-subtext">Ready for Quotation</div>
       </div>
-
       <div class="metric-card" onclick="switchView('quotations')">
-        <div class="metric-header">
-          <span class="metric-label">Quotations Pending</span>
-          <div class="metric-icon-wrap icon-purple">📑</div>
-        </div>
-        <div class="metric-value">1</div>
-        <div class="metric-subtext">Awaiting Customer Sign</div>
+        <div class="metric-header"><span class="metric-label">Quotations Pending</span><div class="metric-icon-wrap icon-purple">📑</div></div>
+        <div class="metric-value">1</div><div class="metric-subtext">Awaiting Customer Sign</div>
       </div>
-
       <div class="metric-card" onclick="switchView('orders')">
-        <div class="metric-header">
-          <span class="metric-label">Confirmed Orders</span>
-          <div class="metric-icon-wrap icon-forest">✅</div>
-        </div>
-        <div class="metric-value">1</div>
-        <div class="metric-subtext">$2,040 Turnkey Contract</div>
+        <div class="metric-header"><span class="metric-label">Confirmed Orders</span><div class="metric-icon-wrap icon-forest">✅</div></div>
+        <div class="metric-value">1</div><div class="metric-subtext">$2,040 Turnkey Contract</div>
       </div>
-
       <div class="metric-card highlight-profit">
-        <div class="metric-header">
-          <span class="metric-label">Conversion Rate</span>
-          <div class="metric-icon-wrap">🏆</div>
-        </div>
-        <div class="metric-value">80.0%</div>
-        <div class="metric-subtext">Surveys to Quotation Ratio</div>
-      </div>
-    </div>
-
-    <!-- Quick Actions Panel -->
-    <div class="content-card" style="margin-top:20px;">
-      <div class="card-title-bar">
-        <div class="card-title">Sales Quick Actions &amp; Workflows</div>
-      </div>
-      <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <button class="btn-action-primary-sm" onclick="showLeadModal()">+ Log Customer Lead</button>
-        <button class="btn-action-sm" onclick="scheduleSurveyFromLead(1)">+ Schedule Site Survey</button>
-        <button class="btn-action-sm" onclick="switchView('packages')">View Configured Packages</button>
-        <button class="btn-action-sm" onclick="switchView('orders')">Verify Advance Payments</button>
+        <div class="metric-header"><span class="metric-label">Conversion Rate</span><div class="metric-icon-wrap icon-forest">🏆</div></div>
+        <div class="metric-value">80.0%</div><div class="metric-subtext">Surveys to Quotation Ratio</div>
       </div>
     </div>
   `;
 }
 
-// 3. WAREHOUSE MANAGER DASHBOARD
+// 3. Warehouse Manager Dashboard
 function renderWarehouseDashboard(el) {
   el.innerHTML = `
     <div class="section-header-bar">
@@ -851,82 +825,31 @@ function renderWarehouseDashboard(el) {
         <h1 class="section-title">Warehouse &amp; Serial Inventory Command</h1>
         <p class="section-description">Serialized PV equipment, stock reservations, single-allocation constraints, and dispatch releases.</p>
       </div>
-      <div class="header-action-group">
-        <button class="btn-action-primary-sm" onclick="showToast('Stock intake logged.', 'success')">+ Receive Equipment</button>
-        <button class="btn-outline-action" onclick="switchView('inventory')">🏷️ View Serial Numbers</button>
-      </div>
+      <button class="btn-primary-action" onclick="showToast('Stock receipt logged.', 'success')">+ Receive Equipment</button>
     </div>
 
     <div class="metrics-grid-12">
       <div class="metric-card" onclick="switchView('inventory')">
-        <div class="metric-header">
-          <span class="metric-label">Total SKUs</span>
-          <div class="metric-icon-wrap icon-forest">📦</div>
-        </div>
-        <div class="metric-value">4</div>
-        <div class="metric-subtext">PV, Inverters, Batteries</div>
+        <div class="metric-header"><span class="metric-label">Total SKUs</span><div class="metric-icon-wrap icon-forest">📦</div></div>
+        <div class="metric-value">4</div><div class="metric-subtext">PV, Inverters, Batteries</div>
       </div>
-
       <div class="metric-card" onclick="switchView('inventory')">
-        <div class="metric-header">
-          <span class="metric-label">Available Stock</span>
-          <div class="metric-icon-wrap icon-blue">📊</div>
-        </div>
-        <div class="metric-value">2</div>
-        <div class="metric-subtext">Ready for Reservation</div>
+        <div class="metric-header"><span class="metric-label">Available Stock</span><div class="metric-icon-wrap icon-blue">📊</div></div>
+        <div class="metric-value">2</div><div class="metric-subtext">Ready for Reservation</div>
       </div>
-
       <div class="metric-card" onclick="switchView('inventory')">
-        <div class="metric-header">
-          <span class="metric-label">Reserved Equipment</span>
-          <div class="metric-icon-wrap icon-amber">🔒</div>
-        </div>
-        <div class="metric-value">2</div>
-        <div class="metric-subtext">Allocated to Projects</div>
+        <div class="metric-header"><span class="metric-label">Reserved Equipment</span><div class="metric-icon-wrap icon-amber">🔒</div></div>
+        <div class="metric-value">2</div><div class="metric-subtext">Allocated to Projects</div>
       </div>
-
       <div class="metric-card" onclick="switchView('inventory')">
-        <div class="metric-header">
-          <span class="metric-label">Low Stock Alert</span>
-          <div class="metric-icon-wrap icon-rose">⚠️</div>
-        </div>
-        <div class="metric-value">1</div>
-        <div class="metric-subtext">Earthing Compound Mix</div>
-      </div>
-
-      <div class="metric-card" onclick="switchView('orders')">
-        <div class="metric-header">
-          <span class="metric-label">Pending Dispatches</span>
-          <div class="metric-icon-wrap icon-purple">🚚</div>
-        </div>
-        <div class="metric-value">0</div>
-        <div class="metric-subtext">All Approved Dispatched</div>
-      </div>
-
-      <div class="metric-card" onclick="switchView('inventory')">
-        <div class="metric-header">
-          <span class="metric-label">Serial Allocation</span>
-          <div class="metric-icon-wrap icon-forest">🏷️</div>
-        </div>
-        <div class="metric-value">100%</div>
-        <div class="metric-subtext">Single-Active Constraint</div>
-      </div>
-    </div>
-
-    <div class="content-card" style="margin-top:20px;">
-      <div class="card-title-bar">
-        <div class="card-title">Warehouse Operational Controls</div>
-      </div>
-      <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <button class="btn-action-primary-sm" onclick="switchView('inventory')">Audit Serial Numbers</button>
-        <button class="btn-action-sm" onclick="showToast('Scanning barcode...', 'info')">📷 Scan Equipment Barcode</button>
-        <button class="btn-action-sm" onclick="showToast('Inter-warehouse transfer logged.', 'success')">🔄 Transfer to Site Staging</button>
+        <div class="metric-header"><span class="metric-label">Low Stock Alert</span><div class="metric-icon-wrap icon-rose">⚠️</div></div>
+        <div class="metric-value">1</div><div class="metric-subtext">Earthing Compound Mix</div>
       </div>
     </div>
   `;
 }
 
-// 4. INSTALLATION TECHNICIAN DASHBOARD
+// 4. Installation Technician Dashboard
 function renderTechnicianDashboard(el) {
   el.innerHTML = `
     <div class="section-header-bar">
@@ -934,63 +857,31 @@ function renderTechnicianDashboard(el) {
         <h1 class="section-title">Field Installation Work Orders</h1>
         <p class="section-description">My assigned rooftop jobs, 6-phase checklist execution, and mandatory electrical safety testing (<5.0&Omega;).</p>
       </div>
-      <span class="status-pill pill-danger">QC Safety Gate: Earth Pit &le; 5.0 &Omega;</span>
+      <span class="status-pill pill-danger">Safety Limit: Earth Pit &le; 5.0 &Omega;</span>
     </div>
 
     <div class="metrics-grid-12">
       <div class="metric-card" onclick="switchView('installations')">
-        <div class="metric-header">
-          <span class="metric-label">My Assigned Jobs</span>
-          <div class="metric-icon-wrap icon-forest">⚡</div>
-        </div>
-        <div class="metric-value">1</div>
-        <div class="metric-subtext">INST-2026-0001 (3kW)</div>
+        <div class="metric-header"><span class="metric-label">My Assigned Jobs</span><div class="metric-icon-wrap icon-forest">⚡</div></div>
+        <div class="metric-value">1</div><div class="metric-subtext">INST-2026-0001 (3kW)</div>
       </div>
-
       <div class="metric-card" onclick="switchView('schedule')">
-        <div class="metric-header">
-          <span class="metric-label">Today's Visits</span>
-          <div class="metric-icon-wrap icon-blue">📅</div>
-        </div>
-        <div class="metric-value">1</div>
-        <div class="metric-subtext">Dr. Rajesh Sharma Site</div>
+        <div class="metric-header"><span class="metric-label">Today's Visits</span><div class="metric-icon-wrap icon-blue">📅</div></div>
+        <div class="metric-value">1</div><div class="metric-subtext">Dr. Rajesh Sharma Site</div>
       </div>
-
       <div class="metric-card" onclick="switchView('installations')">
-        <div class="metric-header">
-          <span class="metric-label">Testing QC Status</span>
-          <div class="metric-icon-wrap icon-forest">✓</div>
-        </div>
-        <div class="metric-value">2.4 &Omega;</div>
-        <div class="metric-subtext">Passed Safety Gate</div>
+        <div class="metric-header"><span class="metric-label">Testing QC Status</span><div class="metric-icon-wrap icon-forest">✓</div></div>
+        <div class="metric-value">2.4 &Omega;</div><div class="metric-subtext">Passed Safety Gate</div>
       </div>
-
       <div class="metric-card highlight-profit" onclick="switchView('installations')">
-        <div class="metric-header">
-          <span class="metric-label">Commissioned Sites</span>
-          <div class="metric-icon-wrap">🏆</div>
-        </div>
-        <div class="metric-value">1</div>
-        <div class="metric-subtext">Customer Accepted (100%)</div>
-      </div>
-    </div>
-
-    <!-- Quick Action Cards for Mobile Field Use -->
-    <div class="content-card" style="margin-top:20px;">
-      <div class="card-title-bar">
-        <div class="card-title">Field Crew Quick Actions</div>
-      </div>
-      <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <button class="btn-action-primary-sm" onclick="switchView('installations')">⚡ Open Active Job (INST-2026-0001)</button>
-        <button class="btn-action-sm" onclick="showToast('Camera opened. Photo attached to work order.', 'info')">📷 Upload Site Photos</button>
-        <button class="btn-action-sm" onclick="showToast('Megger insulation testing logged.', 'success')">🔌 Submit QC Measurements</button>
-        <button class="btn-action-sm" onclick="showToast('OTP customer acceptance requested.', 'info')">✍️ Request Customer Acceptance</button>
+        <div class="metric-header"><span class="metric-label">Commissioned Sites</span><div class="metric-icon-wrap icon-forest">🏆</div></div>
+        <div class="metric-value">1</div><div class="metric-subtext">Customer Accepted (100%)</div>
       </div>
     </div>
   `;
 }
 
-// 5. SUPPORT MANAGER DASHBOARD
+// 5. Support Manager Dashboard
 function renderSupportDashboard(el) {
   el.innerHTML = `
     <div class="section-header-bar">
@@ -998,61 +889,31 @@ function renderSupportDashboard(el) {
         <h1 class="section-title">After-Sales Support &amp; Warranty Helpdesk</h1>
         <p class="section-description">Equipment serial lookup, automatic warranty determination, covered ($0) vs non-covered ticket billing.</p>
       </div>
-      <button class="btn-quick-create" onclick="showTicketModal()">+ Log Service Ticket</button>
+      <button class="btn-primary-action" onclick="showTicketModal()">+ Log Service Ticket</button>
     </div>
 
     <div class="metrics-grid-12">
       <div class="metric-card" onclick="switchView('service')">
-        <div class="metric-header">
-          <span class="metric-label">Open Complaints</span>
-          <div class="metric-icon-wrap icon-rose">⚠️</div>
-        </div>
-        <div class="metric-value">2</div>
-        <div class="metric-subtext">1 Inverter, 1 Grid Surge</div>
+        <div class="metric-header"><span class="metric-label">Open Complaints</span><div class="metric-icon-wrap icon-rose">⚠️</div></div>
+        <div class="metric-value">2</div><div class="metric-subtext">1 Inverter, 1 Grid Surge</div>
       </div>
-
       <div class="metric-card" onclick="switchView('warranties')">
-        <div class="metric-header">
-          <span class="metric-label">Active Warranties</span>
-          <div class="metric-icon-wrap icon-forest">🛡️</div>
-        </div>
-        <div class="metric-value">2</div>
-        <div class="metric-subtext">SHA-256 Certificates</div>
+        <div class="metric-header"><span class="metric-label">Active Warranties</span><div class="metric-icon-wrap icon-forest">🛡️</div></div>
+        <div class="metric-value">2</div><div class="metric-subtext">SHA-256 Certificates</div>
       </div>
-
       <div class="metric-card" onclick="switchView('service')">
-        <div class="metric-header">
-          <span class="metric-label">Covered ($0) Claims</span>
-          <div class="metric-icon-wrap icon-blue">✓</div>
-        </div>
-        <div class="metric-value">1</div>
-        <div class="metric-subtext">OEM Warranty Replaced</div>
+        <div class="metric-header"><span class="metric-label">Covered ($0) Claims</span><div class="metric-icon-wrap icon-blue">✓</div></div>
+        <div class="metric-value">1</div><div class="metric-subtext">OEM Warranty Replaced</div>
       </div>
-
       <div class="metric-card" onclick="switchView('service')">
-        <div class="metric-header">
-          <span class="metric-label">Non-Covered Repairs</span>
-          <div class="metric-icon-wrap icon-amber">💵</div>
-        </div>
-        <div class="metric-value">1</div>
-        <div class="metric-subtext">Billed $85.00 to Client</div>
+        <div class="metric-header"><span class="metric-label">Non-Covered Repairs</span><div class="metric-icon-wrap icon-amber">💵</div></div>
+        <div class="metric-value">1</div><div class="metric-subtext">Billed $85.00 to Client</div>
       </div>
-    </div>
-
-    <div class="content-card" style="margin-top:20px;">
-      <div class="card-title-bar">
-        <div class="card-title">Serial Number Instant Warranty Lookup</div>
-      </div>
-      <div style="display:flex; gap:10px; max-width:500px;">
-        <input type="text" id="serial-lookup-input" class="form-input" placeholder="Enter Serial Number (e.g. INV-GROWATT-3KW-9901)">
-        <button class="btn-action-primary-sm" onclick="lookupSerialQuick()">Lookup</button>
-      </div>
-      <div id="serial-lookup-result" style="margin-top:12px; font-size:13px;"></div>
     </div>
   `;
 }
 
-// 6. SURVEY TECHNICIAN DASHBOARD
+// 6. Survey Technician Dashboard
 function renderSurveyTechDashboard(el) {
   el.innerHTML = `
     <div class="section-header-bar">
@@ -1064,38 +925,18 @@ function renderSurveyTechDashboard(el) {
 
     <div class="metrics-grid-12">
       <div class="metric-card" onclick="switchView('surveys')">
-        <div class="metric-header">
-          <span class="metric-label">Assigned Surveys</span>
-          <div class="metric-icon-wrap icon-forest">📐</div>
-        </div>
-        <div class="metric-value">2</div>
-        <div class="metric-subtext">SRV-0001, SRV-0002</div>
+        <div class="metric-header"><span class="metric-label">Assigned Surveys</span><div class="metric-icon-wrap icon-forest">📐</div></div>
+        <div class="metric-value">2</div><div class="metric-subtext">SRV-0001, SRV-0002</div>
       </div>
-
       <div class="metric-card" onclick="switchView('surveys')">
-        <div class="metric-header">
-          <span class="metric-label">Submitted for Approval</span>
-          <div class="metric-icon-wrap icon-blue">📩</div>
-        </div>
-        <div class="metric-value">1</div>
-        <div class="metric-subtext">SRV-0001 Approved</div>
-      </div>
-    </div>
-
-    <div class="content-card" style="margin-top:20px;">
-      <div class="card-title-bar">
-        <div class="card-title">Site Assessment Field Tools</div>
-      </div>
-      <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <button class="btn-action-primary-sm" onclick="switchView('surveys')">📐 Open My Site Surveys</button>
-        <button class="btn-action-sm" onclick="showToast('Rooftop panoramic photo uploaded.', 'success')">📷 Upload Rooftop Photos</button>
-        <button class="btn-action-sm" onclick="showToast('DB meter distance logged.', 'info')">📏 Log Cable Distance</button>
+        <div class="metric-header"><span class="metric-label">Submitted for Approval</span><div class="metric-icon-wrap icon-blue">📩</div></div>
+        <div class="metric-value">1</div><div class="metric-subtext">SRV-0001 Approved</div>
       </div>
     </div>
   `;
 }
 
-// 7. FINANCE MANAGER DASHBOARD
+// 7. Finance Manager Dashboard
 function renderFinanceDashboard(el) {
   el.innerHTML = `
     <div class="section-header-bar">
@@ -1108,56 +949,26 @@ function renderFinanceDashboard(el) {
 
     <div class="metrics-grid-12">
       <div class="metric-card" onclick="switchView('orders')">
-        <div class="metric-header">
-          <span class="metric-label">Billed Revenue</span>
-          <div class="metric-icon-wrap icon-forest">💵</div>
-        </div>
-        <div class="metric-value">$2,040.00</div>
-        <div class="metric-subtext">3kW Turnkey Contract</div>
+        <div class="metric-header"><span class="metric-label">Billed Revenue</span><div class="metric-icon-wrap icon-forest">💵</div></div>
+        <div class="metric-value">$2,040.00</div><div class="metric-subtext">3kW Turnkey Contract</div>
       </div>
-
       <div class="metric-card" onclick="switchView('orders')">
-        <div class="metric-header">
-          <span class="metric-label">50% Advance Met</span>
-          <div class="metric-icon-wrap icon-blue">💳</div>
-        </div>
-        <div class="metric-value">$1,020.00</div>
-        <div class="metric-subtext">Dispatch Permission Unlocked</div>
+        <div class="metric-header"><span class="metric-label">50% Advance Met</span><div class="metric-icon-wrap icon-blue">💳</div></div>
+        <div class="metric-value">$1,020.00</div><div class="metric-subtext">Dispatch Permission Unlocked</div>
       </div>
-
       <div class="metric-card" onclick="switchView('costing')">
-        <div class="metric-header">
-          <span class="metric-label">Actual Project Cost</span>
-          <div class="metric-icon-wrap icon-amber">💸</div>
-        </div>
-        <div class="metric-value">$1,500.00</div>
-        <div class="metric-subtext">Hardware, Labour &amp; Transport</div>
+        <div class="metric-header"><span class="metric-label">Actual Project Cost</span><div class="metric-icon-wrap icon-amber">💸</div></div>
+        <div class="metric-value">$1,500.00</div><div class="metric-subtext">Hardware, Labour &amp; Transport</div>
       </div>
-
       <div class="metric-card highlight-profit" onclick="switchView('costing')">
-        <div class="metric-header">
-          <span class="metric-label">Gross Margin</span>
-          <div class="metric-icon-wrap">📈</div>
-        </div>
-        <div class="metric-value">26.47%</div>
-        <div class="metric-subtext">Gross Profit: $540.00</div>
-      </div>
-    </div>
-
-    <div class="content-card" style="margin-top:20px;">
-      <div class="card-title-bar">
-        <div class="card-title">Financial Review Actions</div>
-      </div>
-      <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <button class="btn-action-primary-sm" onclick="switchView('costing')">💰 Review Job Costing Sheets</button>
-        <button class="btn-action-sm" onclick="switchView('orders')">🧾 Reconcile Invoices</button>
-        <button class="btn-action-sm" onclick="showToast('Subsidy disbursement batch exported.', 'success')">🏛️ Verify PM Surya Ghar Subsidy</button>
+        <div class="metric-header"><span class="metric-label">Gross Margin</span><div class="metric-icon-wrap icon-forest">📈</div></div>
+        <div class="metric-value">26.47%</div><div class="metric-subtext">Gross Profit: $540.00</div>
       </div>
     </div>
   `;
 }
 
-// 8. DIRECTOR / INVESTOR DASHBOARD (READ-ONLY)
+// 8. Director / Investor Dashboard (Read-Only)
 function renderDirectorDashboard(el) {
   el.innerHTML = `
     <div class="section-header-bar">
@@ -1178,39 +989,20 @@ function renderDirectorDashboard(el) {
 
     <div class="metrics-grid-12">
       <div class="metric-card highlight-profit" onclick="switchView('costing')">
-        <div class="metric-header">
-          <span class="metric-label">Total EPC Revenue</span>
-          <div class="metric-icon-wrap">💵</div>
-        </div>
-        <div class="metric-value">$2,040.00</div>
-        <div class="metric-subtext">Commercial &amp; Residential</div>
+        <div class="metric-header"><span class="metric-label">Total EPC Revenue</span><div class="metric-icon-wrap icon-forest">💵</div></div>
+        <div class="metric-value">$2,040.00</div><div class="metric-subtext">Commercial &amp; Residential</div>
       </div>
-
       <div class="metric-card highlight-profit" onclick="switchView('costing')">
-        <div class="metric-header">
-          <span class="metric-label">Gross Profit</span>
-          <div class="metric-icon-wrap">📈</div>
-        </div>
-        <div class="metric-value">$540.00</div>
-        <div class="metric-subtext">Gross Margin: 26.47%</div>
+        <div class="metric-header"><span class="metric-label">Gross Profit</span><div class="metric-icon-wrap icon-forest">📈</div></div>
+        <div class="metric-value">$540.00</div><div class="metric-subtext">Gross Margin: 26.47%</div>
       </div>
-
       <div class="metric-card" onclick="switchView('installations')">
-        <div class="metric-header">
-          <span class="metric-label">Active Projects</span>
-          <div class="metric-icon-wrap icon-forest">⚡</div>
-        </div>
-        <div class="metric-value">10</div>
-        <div class="metric-subtext">1 Completed, 9 Staging</div>
+        <div class="metric-header"><span class="metric-label">Active Projects</span><div class="metric-icon-wrap icon-forest">⚡</div></div>
+        <div class="metric-value">10</div><div class="metric-subtext">1 Completed, 9 Staging</div>
       </div>
-
       <div class="metric-card" onclick="switchView('inventory')">
-        <div class="metric-header">
-          <span class="metric-label">Warehoused Stock Value</span>
-          <div class="metric-icon-wrap icon-blue">🏢</div>
-        </div>
-        <div class="metric-value">$8,950.00</div>
-        <div class="metric-subtext">Tier-1 Modules &amp; Inverters</div>
+        <div class="metric-header"><span class="metric-label">Warehoused Stock Value</span><div class="metric-icon-wrap icon-blue">🏢</div></div>
+        <div class="metric-value">$8,950.00</div><div class="metric-subtext">Tier-1 Modules &amp; Inverters</div>
       </div>
     </div>
   `;
@@ -1236,16 +1028,29 @@ function renderAllDataViews() {
 }
 
 // 1. Enquiries Table
-function renderEnquiries() {
+function renderEnquiries(filterQuery = '', filterStatus = 'all') {
   const tbody = document.getElementById('enquiries-table-body');
   if (!tbody) return;
-  tbody.innerHTML = SolarFlowState.enquiries.map(enq => {
+
+  let list = SolarFlowState.enquiries;
+  if (filterStatus !== 'all') {
+    list = list.filter(e => e.status === filterStatus);
+  }
+  if (filterQuery) {
+    const q = filterQuery.toLowerCase();
+    list = list.filter(e => {
+      const cust = SolarFlowState.customers.find(c => c.id === e.customerId) || {};
+      return e.ref.toLowerCase().includes(q) || (cust.name || '').toLowerCase().includes(q);
+    });
+  }
+
+  tbody.innerHTML = list.map(enq => {
     const cust = SolarFlowState.customers.find(c => c.id === enq.customerId) || {};
     return `
       <tr>
         <td><strong class="table-record-ref" onclick="openCustomerProfile(${cust.id})">${enq.ref}</strong></td>
         <td><strong>${cust.name || 'Unknown'}</strong></td>
-        <td style="color:var(--secondary-text);">${cust.phone || ''}</td>
+        <td style="color:var(--text-muted);">${cust.phone || ''}</td>
         <td>${cust.city || 'Bengaluru'}</td>
         <td>${enq.propertyType}</td>
         <td><span class="status-pill pill-info">${enq.sanctionedLoad}</span></td>
@@ -1261,17 +1066,30 @@ function renderEnquiries() {
   }).join('');
 }
 
-// 2. Leads Table
-function renderLeads() {
+// 2. Leads Table & Kanban Board
+function renderLeads(filterQuery = '', filterType = 'all') {
   const tbody = document.getElementById('leads-table-body');
   if (!tbody) return;
-  tbody.innerHTML = SolarFlowState.leads.map(lead => {
+
+  let list = SolarFlowState.leads;
+  if (filterType !== 'all') {
+    list = list.filter(l => l.type === filterType);
+  }
+  if (filterQuery) {
+    const q = filterQuery.toLowerCase();
+    list = list.filter(l => {
+      const cust = SolarFlowState.customers.find(c => c.id === l.customerId) || {};
+      return l.ref.toLowerCase().includes(q) || (cust.name || '').toLowerCase().includes(q);
+    });
+  }
+
+  tbody.innerHTML = list.map(lead => {
     const cust = SolarFlowState.customers.find(c => c.id === lead.customerId) || {};
     return `
       <tr>
         <td><strong class="table-record-ref" onclick="openCustomerProfile(${cust.id})">${lead.ref}</strong></td>
-        <td>${cust.name || 'Unknown'}</td>
-        <td style="color:var(--secondary-text);">${cust.phone || ''}</td>
+        <td><strong>${cust.name || 'Unknown'}</strong></td>
+        <td style="color:var(--text-muted);">${cust.phone || ''}</td>
         <td>${lead.monthlyKwh} kWh</td>
         <td>$${lead.tariff.toFixed(2)}</td>
         <td><span class="status-pill pill-warning">${lead.sizedKw} kW</span></td>
@@ -1284,6 +1102,68 @@ function renderLeads() {
       </tr>
     `;
   }).join('');
+
+  renderLeadsKanban(list);
+}
+
+function renderLeadsKanban(leadsList) {
+  const kanban = document.getElementById('leads-kanban-container');
+  if (!kanban) return;
+
+  const cols = [
+    { id: 'draft', title: 'New Leads', status: 'draft' },
+    { id: 'scheduled', title: 'Survey Scheduled', status: 'scheduled' },
+    { id: 'approved', title: 'Approved & Qualified', status: 'approved' },
+    { id: 'rejected', title: 'Rejected', status: 'rejected' }
+  ];
+
+  kanban.innerHTML = cols.map(c => {
+    const items = leadsList.filter(l => l.status === c.status);
+    return `
+      <div class="kanban-column">
+        <div class="kanban-column-header">
+          <span class="kanban-column-title">${c.title}</span>
+          <span class="kanban-column-count">${items.length}</span>
+        </div>
+        <div class="kanban-card-list">
+          ${items.map(lead => {
+            const cust = SolarFlowState.customers.find(cu => cu.id === lead.customerId) || {};
+            return `
+              <div class="kanban-card" onclick="openCustomerProfile(${cust.id})">
+                <div class="kanban-card-ref">${lead.ref}</div>
+                <div class="kanban-card-title">${cust.name}</div>
+                <div style="font-size:12px; color:var(--text-muted);">${lead.sizedKw} kW • ${lead.type.toUpperCase()}</div>
+                <div class="kanban-card-meta">
+                  <span>${cust.city}</span>
+                  <span class="status-pill pill-warning">${lead.monthlyKwh} kWh</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function setLeadsViewMode(mode) {
+  SolarFlowState.leadsViewMode = mode;
+  const tbl = document.getElementById('leads-table-container');
+  const kan = document.getElementById('leads-kanban-container');
+  const btnList = document.getElementById('leads-view-list');
+  const btnKanban = document.getElementById('leads-view-kanban');
+
+  if (mode === 'list') {
+    if (tbl) tbl.style.display = 'block';
+    if (kan) kan.style.display = 'none';
+    if (btnList) btnList.classList.add('active');
+    if (btnKanban) btnKanban.classList.remove('active');
+  } else {
+    if (tbl) tbl.style.display = 'none';
+    if (kan) kan.style.display = 'grid';
+    if (btnList) btnList.classList.remove('active');
+    if (btnKanban) btnKanban.classList.add('active');
+  }
 }
 
 // 3. Follow-ups Table
@@ -1298,7 +1178,7 @@ function renderFollowups() {
         <td><strong class="table-record-ref" onclick="openCustomerProfile(${cust.id})">${cust.name}</strong></td>
         <td>${f.salesRep}</td>
         <td><span class="status-pill pill-info">${f.type}</span></td>
-        <td style="font-size:12px; color:var(--secondary-text);">${f.summary}</td>
+        <td style="font-size:12.5px; color:var(--text-muted);">${f.summary}</td>
         <td><span class="status-pill ${f.priority === 'High' ? 'pill-danger' : 'pill-warning'}">${f.priority}</span></td>
         <td><span class="status-pill pill-success">${f.status}</span></td>
       </tr>
@@ -1306,16 +1186,29 @@ function renderFollowups() {
   }).join('');
 }
 
-// 4. Surveys Table
-function renderSurveys() {
+// 4. Surveys Table & Kanban
+function renderSurveys(filterQuery = '', filterStatus = 'all') {
   const tbody = document.getElementById('surveys-table-body');
   if (!tbody) return;
-  tbody.innerHTML = SolarFlowState.surveys.map(s => {
+
+  let list = SolarFlowState.surveys;
+  if (filterStatus !== 'all') {
+    list = list.filter(s => s.state === filterStatus);
+  }
+  if (filterQuery) {
+    const q = filterQuery.toLowerCase();
+    list = list.filter(s => {
+      const cust = SolarFlowState.customers.find(c => c.id === s.customerId) || {};
+      return s.ref.toLowerCase().includes(q) || (cust.name || '').toLowerCase().includes(q);
+    });
+  }
+
+  tbody.innerHTML = list.map(s => {
     const cust = SolarFlowState.customers.find(c => c.id === s.customerId) || {};
     return `
       <tr>
         <td><strong class="table-record-ref" onclick="openCustomerProfile(${cust.id})">${s.ref}</strong></td>
-        <td>${cust.name || 'Unknown'}</td>
+        <td><strong>${cust.name || 'Unknown'}</strong></td>
         <td>${s.roofType}</td>
         <td>${s.totalArea}</td>
         <td><strong>${s.usableArea}</strong></td>
@@ -1334,6 +1227,68 @@ function renderSurveys() {
       </tr>
     `;
   }).join('');
+
+  renderSurveysKanban(list);
+}
+
+function renderSurveysKanban(surveysList) {
+  const kanban = document.getElementById('surveys-kanban-container');
+  if (!kanban) return;
+
+  const cols = [
+    { id: 'scheduled', title: 'Scheduled', status: 'scheduled' },
+    { id: 'in_progress', title: 'In Progress', status: 'in_progress' },
+    { id: 'approved', title: 'Approved', status: 'approved' },
+    { id: 'rejected', title: 'Rejected', status: 'rejected' }
+  ];
+
+  kanban.innerHTML = cols.map(c => {
+    const items = surveysList.filter(s => s.state === c.status);
+    return `
+      <div class="kanban-column">
+        <div class="kanban-column-header">
+          <span class="kanban-column-title">${c.title}</span>
+          <span class="kanban-column-count">${items.length}</span>
+        </div>
+        <div class="kanban-card-list">
+          ${items.map(s => {
+            const cust = SolarFlowState.customers.find(cu => cu.id === s.customerId) || {};
+            return `
+              <div class="kanban-card" onclick="openCustomerProfile(${cust.id})">
+                <div class="kanban-card-ref">${s.ref}</div>
+                <div class="kanban-card-title">${cust.name}</div>
+                <div style="font-size:12px; color:var(--text-muted);">${s.roofType} • ${s.usableArea}</div>
+                <div class="kanban-card-meta">
+                  <span class="status-pill pill-info">${s.recommendedKw} kW</span>
+                  <span>${s.azimuth}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function setSurveysViewMode(mode) {
+  SolarFlowState.surveysViewMode = mode;
+  const tbl = document.getElementById('surveys-table-container');
+  const kan = document.getElementById('surveys-kanban-container');
+  const btnList = document.getElementById('surveys-view-list');
+  const btnKanban = document.getElementById('surveys-view-kanban');
+
+  if (mode === 'list') {
+    if (tbl) tbl.style.display = 'block';
+    if (kan) kan.style.display = 'none';
+    if (btnList) btnList.classList.add('active');
+    if (btnKanban) btnKanban.classList.remove('active');
+  } else {
+    if (tbl) tbl.style.display = 'none';
+    if (kan) kan.style.display = 'grid';
+    if (btnList) btnList.classList.remove('active');
+    if (btnKanban) btnKanban.classList.add('active');
+  }
 }
 
 // 5. Quotations Table
@@ -1402,7 +1357,7 @@ function renderPackages() {
       <div class="package-header">
         <span class="package-capacity-pill">${p.capacity} kW • ${p.type.toUpperCase()}</span>
         <h3 class="card-title">${p.name}</h3>
-        <span style="font-size:11px; color:var(--secondary-text);">${p.code}</span>
+        <span style="font-size:11px; color:var(--text-muted);">${p.code}</span>
       </div>
 
       <ul class="bom-item-list">
@@ -1415,7 +1370,7 @@ function renderPackages() {
       </ul>
 
       <div class="package-price-wrap">
-        <span style="font-size:11px; color:var(--secondary-text); display:block;">Dynamic Auto-BOM Net Hardware Total:</span>
+        <span style="font-size:11px; color:var(--text-muted); display:block;">Dynamic Auto-BOM Net Hardware Total:</span>
         <div class="package-price">$${p.totalPrice.toLocaleString()}</div>
       </div>
 
@@ -1436,15 +1391,15 @@ function renderInstallations() {
           <div>
             <span class="status-pill pill-success" style="margin-bottom:4px;">Commissioned Project</span>
             <div class="card-title">${inst.ref} – ${cust.name} (${inst.capacity} kW ${inst.type.toUpperCase()})</div>
-            <div style="font-size:12px; color:var(--secondary-text); margin-top:2px;">Lead Technician: <strong>${inst.technician}</strong></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Lead Technician: <strong>${inst.technician}</strong></div>
           </div>
           <div style="text-align:right;">
             <span class="status-pill pill-success">✓ Completed &amp; Accepted</span>
-            <div style="font-size:11px; color:var(--secondary-text); margin-top:4px;">Commissioned: ${inst.scheduledDate}</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Commissioned: ${inst.scheduledDate}</div>
           </div>
         </div>
 
-        <!-- Smart Button Drilldown Navigation -->
+        <!-- Smart Button Navigation Row -->
         <div class="smart-button-bar">
           <button class="smart-button" onclick="openCustomerProfile(${cust.id})">👤 Customer 360°</button>
           <button class="smart-button" onclick="switchView('orders')">📑 Order (SO-2026-0001)</button>
@@ -1468,8 +1423,8 @@ function renderInstallations() {
         </div>
 
         <!-- Electrical QC Safety Limit -->
-        <div style="background-color:#F8FAF8; border:1px solid var(--border-color); border-radius:var(--radius-md); padding:12px; margin-bottom:16px;">
-          <h4 style="font-size:13px; font-weight:700; margin-bottom:6px; color:var(--primary-forest);">Electrical QC Safety Readings (PASSED):</h4>
+        <div style="background-color:#F8FAF8; border:1px solid var(--border); border-radius:var(--radius-md); padding:12px; margin-bottom:16px;">
+          <h4 style="font-size:13px; font-weight:700; margin-bottom:6px; color:var(--primary);">Electrical QC Safety Readings (PASSED):</h4>
           <div style="display:flex; gap:20px; flex-wrap:wrap; font-size:13px;">
             <div>Open Circuit Voc: <strong>${inst.qc.voc} V</strong></div>
             <div>Short Circuit Isc: <strong>${inst.qc.isc} A</strong></div>
@@ -1480,8 +1435,8 @@ function renderInstallations() {
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div style="font-size:12px; color:var(--secondary-text);">Customer Acceptance Sign-off: <strong>${inst.acceptanceSignature}</strong></div>
-          <button class="btn-action-primary-sm" onclick="showToast('Issued 2 Digital Warranties with SHA-256 tokens.', 'success')">🛡️ View Warranties</button>
+          <div style="font-size:12px; color:var(--text-muted);">Customer Acceptance Sign-off: <strong>${inst.acceptanceSignature}</strong></div>
+          <button class="btn-action-primary-sm" onclick="switchView('warranties')">🛡️ View Issued Warranties</button>
         </div>
       </div>
     `;
@@ -1509,15 +1464,25 @@ function renderSchedule() {
 }
 
 // 10. Serialized Inventory Table
-function renderInventory() {
+function renderInventory(filterQuery = '', filterStatus = 'all') {
   const tbody = document.getElementById('inventory-table-body');
   if (!tbody) return;
-  tbody.innerHTML = SolarFlowState.inventory.map(item => {
+
+  let list = SolarFlowState.inventory;
+  if (filterStatus !== 'all') {
+    list = list.filter(i => i.status === filterStatus);
+  }
+  if (filterQuery) {
+    const q = filterQuery.toLowerCase();
+    list = list.filter(i => i.serial.toLowerCase().includes(q) || i.product.toLowerCase().includes(q));
+  }
+
+  tbody.innerHTML = list.map(item => {
     const cust = SolarFlowState.customers.find(c => c.id === item.customerId) || {};
     return `
       <tr>
         <td><strong class="table-record-ref">${item.serial}</strong></td>
-        <td>${item.product}</td>
+        <td><strong>${item.product}</strong></td>
         <td>${item.oem}</td>
         <td><span class="status-pill ${item.status === 'installed' ? 'pill-success' : 'pill-info'}">${item.status.toUpperCase()}</span></td>
         <td>${item.project || 'In Staging'}</td>
@@ -1547,14 +1512,14 @@ function renderWarranties() {
         <td><span class="status-pill pill-info">${w.duration}</span></td>
         <td>${w.startDate}</td>
         <td><strong>${w.expiryDate}</strong></td>
-        <td><code style="font-size:11px; color:var(--primary-forest);">${w.token}</code></td>
+        <td><code style="font-size:11px; color:var(--primary);">${w.token}</code></td>
         <td><span class="status-pill pill-success">${w.status.toUpperCase()}</span></td>
       </tr>
     `;
   }).join('');
 }
 
-// 12. Service Tickets Table
+// 12. Service Tickets Table & Kanban
 function renderService() {
   const tbody = document.getElementById('service-table-body');
   if (!tbody) return;
@@ -1565,7 +1530,7 @@ function renderService() {
         <td><strong>${t.ref}</strong></td>
         <td><strong class="table-record-ref" onclick="openCustomerProfile(${cust.id})">${cust.name}</strong></td>
         <td><code>${t.serial}</code></td>
-        <td style="font-size:12px;">${t.faultLabel}</td>
+        <td style="font-size:12.5px;">${t.faultLabel}</td>
         <td>${t.technician}</td>
         <td>$${t.repairCost.toFixed(2)}</td>
         <td>${t.warrantyCovered ? '<span class="status-pill pill-success">✓ Covered ($0)</span>' : '<span class="status-pill pill-warning">Non-OEM Fault</span>'}</td>
@@ -1578,6 +1543,68 @@ function renderService() {
       </tr>
     `;
   }).join('');
+
+  renderServiceKanban();
+}
+
+function renderServiceKanban() {
+  const kanban = document.getElementById('service-kanban-container');
+  if (!kanban) return;
+
+  const cols = [
+    { id: 'new', title: 'New Tickets', state: 'new' },
+    { id: 'in_progress', title: 'In Progress', state: 'in_progress' },
+    { id: 'resolved', title: 'Resolved ($0 Covered)', state: 'resolved' },
+    { id: 'closed', title: 'Closed (Billed)', state: 'closed' }
+  ];
+
+  kanban.innerHTML = cols.map(c => {
+    const items = SolarFlowState.serviceTickets.filter(t => t.state === c.state);
+    return `
+      <div class="kanban-column">
+        <div class="kanban-column-header">
+          <span class="kanban-column-title">${c.title}</span>
+          <span class="kanban-column-count">${items.length}</span>
+        </div>
+        <div class="kanban-card-list">
+          ${items.map(t => {
+            const cust = SolarFlowState.customers.find(cu => cu.id === t.customerId) || {};
+            return `
+              <div class="kanban-card" onclick="openCustomerProfile(${cust.id})">
+                <div class="kanban-card-ref">${t.ref}</div>
+                <div class="kanban-card-title">${cust.name}</div>
+                <div style="font-size:12px; color:var(--text-muted);">${t.serial}</div>
+                <div class="kanban-card-meta">
+                  <span class="status-pill ${t.warrantyCovered ? 'pill-success' : 'pill-warning'}">Charge: $${t.customerCharge.toFixed(2)}</span>
+                  <span>${t.technician.split(' ')[0]}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function setServiceViewMode(mode) {
+  SolarFlowState.serviceViewMode = mode;
+  const tbl = document.getElementById('service-table-container');
+  const kan = document.getElementById('service-kanban-container');
+  const btnList = document.getElementById('service-view-list');
+  const btnKanban = document.getElementById('service-view-kanban');
+
+  if (mode === 'list') {
+    if (tbl) tbl.style.display = 'block';
+    if (kan) kan.style.display = 'none';
+    if (btnList) btnList.classList.add('active');
+    if (btnKanban) btnKanban.classList.remove('active');
+  } else {
+    if (tbl) tbl.style.display = 'none';
+    if (kan) kan.style.display = 'grid';
+    if (btnList) btnList.classList.remove('active');
+    if (btnKanban) btnKanban.classList.add('active');
+  }
 }
 
 // 13. Project Costing Table
@@ -1605,31 +1632,197 @@ function renderCosting() {
   }).join('');
 }
 
-// Generic Module Populator for submenus without dedicated tables
+// Generic fallback handler
 function populateGenericModule(mod) {
   const title = document.getElementById('generic-panel-title');
   const desc = document.getElementById('generic-panel-desc');
   const content = document.getElementById('generic-panel-content');
 
   if (title) title.textContent = mod.replace(/_/g, ' ').toUpperCase();
-  if (desc) desc.textContent = `Enterprise records and operational data for ${mod}.`;
+  if (desc) desc.textContent = `Operational records and synchronized Odoo datasets for ${mod}.`;
 
   if (content) {
     content.innerHTML = `
-      <div style="padding:20px; text-align:center;">
-        <span style="font-size:32px;">📑</span>
-        <h3 style="margin-top:10px; margin-bottom:6px;">Connected ${mod.replace(/_/g, ' ').toUpperCase()} Module</h3>
-        <p style="color:var(--secondary-text); font-size:13px; max-width:500px; margin:0 auto 16px auto;">
-          This view connects directly with SolarFlow's native Odoo models and records.
+      <div style="padding:24px; text-align:center;">
+        <span style="font-size:36px;">📑</span>
+        <h3 style="margin-top:12px; margin-bottom:6px; font-size:16px;">Connected ${mod.replace(/_/g, ' ').toUpperCase()} Module</h3>
+        <p style="color:var(--text-muted); font-size:13px; max-width:520px; margin:0 auto 16px auto;">
+          This view connects directly with SolarFlow's native Odoo Community models and verified PostgreSQL database records.
         </p>
-        <button class="btn-action-primary-sm" onclick="switchView('dashboard')">Return to Dashboard</button>
+        <button class="btn-primary-action" onclick="switchView('dashboard')">Return to Command Center</button>
       </div>
     `;
   }
 }
 
 // ==========================================================================
-// SMART BUTTON CUSTOMER 360° PROFILE MODAL
+// SEARCH & FILTERS ON ALL VIEWS
+// ==========================================================================
+function filterEnquiriesTable(query) {
+  const status = document.getElementById('filter-enquiry-status').value;
+  renderEnquiries(query, status);
+}
+
+function filterEnquiriesByStatus(status) {
+  const q = document.getElementById('search-enquiries').value;
+  renderEnquiries(q, status);
+}
+
+function filterLeadsTable(query) {
+  const type = document.getElementById('filter-lead-type').value;
+  renderLeads(query, type);
+}
+
+function filterLeadsByType(type) {
+  const q = document.getElementById('search-leads').value;
+  renderLeads(q, type);
+}
+
+function filterSurveysTable(query) {
+  const status = document.getElementById('filter-survey-status').value;
+  renderSurveys(query, status);
+}
+
+function filterSurveysByStatus(status) {
+  const q = document.getElementById('search-surveys').value;
+  renderSurveys(q, status);
+}
+
+function filterInventoryTable(query) {
+  const status = document.getElementById('filter-serial-status').value;
+  renderInventory(query, status);
+}
+
+function filterInventoryByStatus(status) {
+  const q = document.getElementById('search-inventory').value;
+  renderInventory(q, status);
+}
+
+// Global Instant Search Popover
+function setupGlobalSearch() {
+  const input = document.getElementById('global-search-input');
+  const popover = document.getElementById('search-results-popover');
+  const content = document.getElementById('search-results-content');
+  if (!input || !popover || !content) return;
+
+  input.addEventListener('input', (e) => {
+    const val = e.target.value.toLowerCase().trim();
+    if (!val || val.length < 2) {
+      popover.classList.remove('active');
+      return;
+    }
+
+    // Matching records
+    const matchedCusts = SolarFlowState.customers.filter(c => c.name.toLowerCase().includes(val) || c.phone.includes(val));
+    const matchedSerials = SolarFlowState.inventory.filter(i => i.serial.toLowerCase().includes(val));
+    const matchedLeads = SolarFlowState.leads.filter(l => l.ref.toLowerCase().includes(val));
+
+    let html = '';
+    if (matchedCusts.length > 0) {
+      html += `<div class="search-result-group-title">Customers (${matchedCusts.length})</div>`;
+      matchedCusts.forEach(c => {
+        html += `
+          <div class="search-result-item" onclick="openCustomerProfile(${c.id}); hideGlobalSearch();">
+            <div><strong>${c.name}</strong> <span style="font-size:11px; color:var(--text-muted);">${c.city}</span></div>
+            <span class="status-pill pill-info">${c.phone}</span>
+          </div>
+        `;
+      });
+    }
+
+    if (matchedSerials.length > 0) {
+      html += `<div class="search-result-group-title">Equipment Serials (${matchedSerials.length})</div>`;
+      matchedSerials.forEach(s => {
+        html += `
+          <div class="search-result-item" onclick="switchView('inventory'); hideGlobalSearch();">
+            <div><code>${s.serial}</code> <span style="font-size:11px; color:var(--text-muted);">${s.product}</span></div>
+            <span class="status-pill pill-success">${s.status.toUpperCase()}</span>
+          </div>
+        `;
+      });
+    }
+
+    if (matchedLeads.length > 0) {
+      html += `<div class="search-result-group-title">Leads (${matchedLeads.length})</div>`;
+      matchedLeads.forEach(l => {
+        html += `
+          <div class="search-result-item" onclick="switchView('leads'); hideGlobalSearch();">
+            <div><strong>${l.ref}</strong> <span style="font-size:11px; color:var(--text-muted);">${l.sizedKw} kW</span></div>
+            <span class="status-pill pill-warning">${l.status.toUpperCase()}</span>
+          </div>
+        `;
+      });
+    }
+
+    if (!html) {
+      html = `<div style="padding:14px; text-align:center; color:var(--text-muted); font-size:12.5px;">No records found matching "${val}".</div>`;
+    }
+
+    content.innerHTML = html;
+    popover.classList.add('active');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.global-search-wrap')) {
+      popover.classList.remove('active');
+    }
+  });
+}
+
+function hideGlobalSearch() {
+  const popover = document.getElementById('search-results-popover');
+  if (popover) popover.classList.remove('active');
+}
+
+// ==========================================================================
+// NOTIFICATIONS DRAWER
+// ==========================================================================
+function setupNotifications() {
+  const btn = document.getElementById('btn-notifications');
+  const drawer = document.getElementById('notifications-drawer');
+  if (!btn || !drawer) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    drawer.classList.toggle('active');
+    renderNotificationsDrawer();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#notifications-drawer') && !e.target.closest('#btn-notifications')) {
+      drawer.classList.remove('active');
+    }
+  });
+}
+
+function renderNotificationsDrawer() {
+  const list = document.getElementById('drawer-notifications-list');
+  if (!list) return;
+
+  list.innerHTML = SolarFlowState.notifications.map(n => `
+    <div class="drawer-item ${n.unread ? 'unread' : ''}">
+      <div class="drawer-icon-wrap" style="background-color:${n.type === 'danger' ? 'var(--danger-bg)' : n.type === 'warn' ? 'var(--warning-bg)' : 'var(--primary-subtle)'};">
+        ${n.icon}
+      </div>
+      <div class="drawer-item-content">
+        <div class="drawer-item-title">${n.title}</div>
+        <div class="drawer-item-sub">${n.sub}</div>
+        <div class="drawer-item-time">${n.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function markAllNotificationsRead() {
+  SolarFlowState.notifications.forEach(n => n.unread = false);
+  const counter = document.getElementById('notification-counter');
+  if (counter) counter.style.display = 'none';
+  renderNotificationsDrawer();
+  showToast("All notifications marked as read.", "info");
+}
+
+// ==========================================================================
+// PROFILE PAGES (CUSTOMER 360° & USER CREDENTIALS)
 // ==========================================================================
 function openCustomerProfile(customerId) {
   const cust = SolarFlowState.customers.find(c => c.id === customerId);
@@ -1650,17 +1843,18 @@ function openCustomerProfile(customerId) {
 
   if (modalBody) {
     modalBody.innerHTML = `
-      <div style="background-color:#F8FAF8; border:1px solid var(--border-color); border-radius:var(--radius-md); padding:12px; margin-bottom:16px;">
+      <div style="background-color:#F8FAF8; border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:16px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <h4 style="font-size:15px; font-weight:700;">${cust.name}</h4>
-            <div style="font-size:12px; color:var(--secondary-text);">${cust.address}</div>
+            <h4 style="font-size:16px; font-weight:700; color:var(--text-main);">${cust.name}</h4>
+            <div style="font-size:12.5px; color:var(--text-muted);">${cust.address}</div>
           </div>
           <span class="status-pill pill-info">${cust.type}</span>
         </div>
-        <div style="margin-top:8px; font-size:12px; display:flex; gap:16px;">
-          <span>📞 ${cust.phone}</span>
-          <span>✉️ ${cust.email}</span>
+        <div style="margin-top:10px; font-size:12.5px; display:flex; gap:20px;">
+          <span>📞 <strong>${cust.phone}</strong></span>
+          <span>✉️ <strong>${cust.email}</strong></span>
+          <span>📍 <strong>${cust.city}</strong></span>
         </div>
       </div>
 
@@ -1677,9 +1871,9 @@ function openCustomerProfile(customerId) {
 
       <!-- Active Equipment & Warranties -->
       <h4 style="font-size:13px; font-weight:700; margin-bottom:8px;">Allocated Hardware &amp; Active Warranties:</h4>
-      <div style="font-size:12px; display:flex; flex-direction:column; gap:6px;">
+      <div style="font-size:12.5px; display:flex; flex-direction:column; gap:6px;">
         ${serials.map(s => `
-          <div style="display:flex; justify-content:space-between; padding:6px 10px; background-color:#FFFFFF; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+          <div style="display:flex; justify-content:space-between; padding:8px 12px; background-color:#FFFFFF; border:1px solid var(--border); border-radius:var(--radius-sm);">
             <span>🏷️ <strong>${s.serial}</strong> (${s.product})</span>
             <span class="status-pill pill-success">Active Warranty</span>
           </div>
@@ -1688,10 +1882,59 @@ function openCustomerProfile(customerId) {
     `;
   }
 
+  const submitBtn = document.getElementById('modal-submit-btn');
+  if (submitBtn) {
+    submitBtn.textContent = "Close Profile";
+    submitBtn.onclick = closeModal;
+  }
+
   openModal();
 }
 
-// Modal Handlers
+function showUserProfileModal() {
+  const role = SolarFlowState.currentRole;
+  const cfg = SolarFlowState.roles[role] || SolarFlowState.roles.admin;
+
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+
+  if (modalTitle) modalTitle.textContent = "User Credentials & Role Permissions";
+  if (modalBody) {
+    modalBody.innerHTML = `
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px; padding:12px; background-color:#FAFCFA; border:1px solid var(--border); border-radius:var(--radius-md);">
+        <div class="user-avatar-circle" style="width:48px; height:48px; font-size:18px;">${cfg.avatar}</div>
+        <div>
+          <h3 style="font-size:16px;">${cfg.name}</h3>
+          <span style="font-size:12px; color:var(--text-muted);">${cfg.title} • Active Session</span>
+        </div>
+      </div>
+
+      <div style="font-size:13px; margin-bottom:12px;">
+        <strong>Role Responsibilities:</strong>
+        <p style="color:var(--text-muted); font-size:12.5px; margin-top:2px;">${cfg.desc}</p>
+      </div>
+
+      <div>
+        <strong>Permitted Modules &amp; Subsystems:</strong>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+          ${(cfg.perm.includes('all') ? ['All EPC Modules', 'Financial Costing', 'User Administration', 'System Configuration'] : cfg.perm).map(p => `
+            <span class="status-pill pill-info">${p.toUpperCase()}</span>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  const submitBtn = document.getElementById('modal-submit-btn');
+  if (submitBtn) {
+    submitBtn.textContent = "Done";
+    submitBtn.onclick = closeModal;
+  }
+
+  openModal();
+}
+
+// Modal Open / Close Helpers
 function openModal() {
   const modal = document.getElementById('modal-container');
   if (modal) modal.style.display = 'flex';
@@ -1703,80 +1946,8 @@ function closeModal() {
 }
 
 // ==========================================================================
-// WORKFLOW ACTIONS & VALIDATIONS
+// QUICK CREATE & FORM MODALS
 // ==========================================================================
-function scheduleSurveyFromLead(leadId) {
-  showToast(`Site survey scheduled for Lead #${leadId}. Assigned to Survey Crew.`, 'success');
-  switchView('surveys');
-}
-
-function approveSurvey(surveyId) {
-  const s = SolarFlowState.surveys.find(item => item.id === surveyId);
-  if (s) {
-    s.state = 'approved';
-    showToast(`Site Survey ${s.ref} approved by Chief Engineer Arun K. Quotations unlocked.`, 'success');
-    renderSurveys();
-  }
-}
-
-function generateQuotationFromSurvey(surveyId) {
-  showToast(`Quotation generated from Survey #${surveyId} with dynamic Auto-BOM components.`, 'success');
-  switchView('quotations');
-}
-
-function confirmQuotationOrder(quoteId) {
-  showToast(`Quotation QT-2026-0002 confirmed by customer. 50% advance invoice issued.`, 'success');
-  switchView('orders');
-}
-
-function lookupSerialQuick() {
-  const input = document.getElementById('serial-lookup-input');
-  const result = document.getElementById('serial-lookup-result');
-  if (!input || !result) return;
-
-  const q = input.value.trim().toUpperCase();
-  const match = SolarFlowState.inventory.find(i => i.serial.toUpperCase().includes(q));
-
-  if (match) {
-    const cust = SolarFlowState.customers.find(c => c.id === match.customerId) || {};
-    result.innerHTML = `
-      <div style="padding:10px; background-color:var(--light-green); border:1px solid var(--success-border); border-radius:var(--radius-sm);">
-        ✅ <strong>Verified Equipment Found:</strong> ${match.serial}<br>
-        Product: ${match.product} (${match.oem})<br>
-        Owner: <strong>${cust.name}</strong> • Status: <span class="status-pill pill-success">${match.status.toUpperCase()}</span><br>
-        Warranty Policy: <strong>${match.warrantyYears} Years OEM Replacement</strong> (Active)
-      </div>
-    `;
-  } else {
-    result.innerHTML = `<span style="color:var(--danger-text);">❌ No matching serialized equipment found for "${input.value}".</span>`;
-  }
-}
-
-// Global Search
-function setupGlobalSearch() {
-  const input = document.getElementById('global-search-input');
-  if (!input) return;
-
-  input.addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase().trim();
-    if (!term) return;
-
-    // Search customers, serials, leads
-    const matchCust = SolarFlowState.customers.find(c => c.name.toLowerCase().includes(term) || c.phone.includes(term));
-    const matchSerial = SolarFlowState.inventory.find(i => i.serial.toLowerCase().includes(term));
-    const matchLead = SolarFlowState.leads.find(l => l.ref.toLowerCase().includes(term));
-
-    if (matchCust) {
-      showToast(`Found Customer: ${matchCust.name} (${matchCust.city})`, 'info');
-    } else if (matchSerial) {
-      showToast(`Found Equipment Serial: ${matchSerial.serial}`, 'info');
-    } else if (matchLead) {
-      showToast(`Found Lead Record: ${matchLead.ref}`, 'info');
-    }
-  });
-}
-
-// Quick Create Modal
 function setupQuickCreate() {
   const btn = document.getElementById('btn-quick-create');
   if (!btn) return;
@@ -1794,17 +1965,17 @@ function showLeadModal() {
     modalBody.innerHTML = `
       <div class="form-grid-2">
         <div>
-          <label class="form-label">Customer Name</label>
+          <label class="form-label">Customer Name <span class="req">*</span></label>
           <input type="text" id="new-cust-name" class="form-input" placeholder="e.g. Vikramaditya Rao">
         </div>
         <div>
-          <label class="form-label">Phone Number</label>
+          <label class="form-label">Phone Number <span class="req">*</span></label>
           <input type="text" id="new-cust-phone" class="form-input" placeholder="+91 98765 00000">
         </div>
       </div>
       <div class="form-grid-2">
         <div>
-          <label class="form-label">Monthly Consumption (kWh)</label>
+          <label class="form-label">Monthly Consumption (kWh) <span class="req">*</span></label>
           <input type="number" id="new-monthly-kwh" class="form-input" placeholder="450" value="450">
         </div>
         <div>
@@ -1818,13 +1989,14 @@ function showLeadModal() {
       </div>
       <div class="form-group-full">
         <label class="form-label">Site Address &amp; Roof Notes</label>
-        <textarea id="new-notes" class="form-textarea" rows="2" placeholder="RCC flat roof, shadow-free..."></textarea>
+        <textarea id="new-notes" class="form-textarea" rows="2" placeholder="RCC flat roof, shadow-free parapet..."></textarea>
       </div>
     `;
   }
 
   const submitBtn = document.getElementById('modal-submit-btn');
   if (submitBtn) {
+    submitBtn.textContent = "Save & Size System";
     submitBtn.onclick = () => {
       showToast("New Solar Lead SF/LEAD/2026/0011 created successfully. Automated sizing complete.", "success");
       closeModal();
@@ -1843,7 +2015,7 @@ function showTicketModal() {
   if (modalBody) {
     modalBody.innerHTML = `
       <div class="form-group-full">
-        <label class="form-label">Equipment Serial Number</label>
+        <label class="form-label">Equipment Serial Number <span class="req">*</span></label>
         <input type="text" class="form-input" value="INV-GROWATT-3KW-9901">
       </div>
       <div class="form-grid-2">
@@ -1865,13 +2037,14 @@ function showTicketModal() {
       </div>
       <div class="form-group-full">
         <label class="form-label">Symptom Description</label>
-        <textarea class="form-textarea" rows="2" placeholder="Inverter alarm code AL04..."></textarea>
+        <textarea class="form-textarea" rows="2" placeholder="Inverter alarm code AL04 logged..."></textarea>
       </div>
     `;
   }
 
   const submitBtn = document.getElementById('modal-submit-btn');
   if (submitBtn) {
+    submitBtn.textContent = "Submit Complaint";
     submitBtn.onclick = () => {
       showToast("Service ticket created. Warranty status verified: Covered ($0.00 charge).", "success");
       closeModal();
@@ -1882,8 +2055,38 @@ function showTicketModal() {
   openModal();
 }
 
+// Action helpers
+function scheduleSurveyFromLead(leadId) {
+  showToast(`Site survey scheduled for Lead #${leadId}. Assigned to Survey Crew.`, 'success');
+  switchView('surveys');
+}
+
+function approveSurvey(surveyId) {
+  const s = SolarFlowState.surveys.find(item => item.id === surveyId);
+  if (s) {
+    s.state = 'approved';
+    showToast(`Site Survey ${s.ref} approved by Chief Engineer Arun K. Quotations unlocked.`, 'success');
+    renderSurveys();
+  }
+}
+
+function generateQuotationFromSurvey(surveyId) {
+  showToast(`Quotation generated from Survey #${surveyId} with dynamic Auto-BOM components.`, 'success');
+  switchView('quotations');
+}
+
+function confirmQuotationOrder(quoteId) {
+  showToast(`Quotation confirmed by customer. 50% advance invoice issued to unlock dispatch.`, 'success');
+  switchView('orders');
+}
+
 function triggerWarrantyReminderCheck() {
   showToast("Warranty Expiry Engine: 2 Active Warranties analyzed. 0 expiring within 30 days.", "info");
+}
+
+// CSV Exporting
+function exportTableToCSV(moduleName) {
+  showToast(`Exported ${moduleName.toUpperCase()} records to CSV successfully.`, 'success');
 }
 
 // ==========================================================================

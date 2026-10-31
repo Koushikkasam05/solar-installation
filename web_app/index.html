@@ -6,13 +6,13 @@
   <title>SolarFlow ERP – Solar Installation Management System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
   <div id="solarflow-app">
     <!-- ==================================================================== -->
-    <!-- COLLAPSIBLE LEFT SIDEBAR                                             -->
+    <!-- 1. ENTERPRISE COLLAPSIBLE SIDEBAR                                    -->
     <!-- ==================================================================== -->
     <aside class="sidebar" id="app-sidebar">
       <div class="sidebar-header">
@@ -44,7 +44,7 @@
         </button>
       </div>
 
-      <!-- Navigation Tree Filtered By Active Role -->
+      <!-- Navigation Hierarchy Filtered By Role -->
       <nav class="sidebar-nav" id="sidebar-nav-tree">
         <!-- 1. Overview -->
         <div class="nav-group-title">Overview</div>
@@ -232,7 +232,7 @@
     </aside>
 
     <!-- ==================================================================== -->
-    <!-- APP MAIN WRAPPER & TOP NAVIGATION                                    -->
+    <!-- 2. APP MAIN WRAPPER & TOP NAVIGATION                                 -->
     <!-- ==================================================================== -->
     <div class="app-main-wrapper" id="app-main-wrapper">
       <!-- Fixed Enterprise Header -->
@@ -240,38 +240,54 @@
         <div class="header-left">
           <!-- Breadcrumb Navigation -->
           <div class="breadcrumbs">
-            <span class="breadcrumb-root">SolarFlow ERP</span>
+            <span class="breadcrumb-root" onclick="switchView('dashboard')">SolarFlow ERP</span>
             <span class="breadcrumb-separator">/</span>
             <span class="breadcrumb-root" id="breadcrumb-section">Overview</span>
             <span class="breadcrumb-separator">/</span>
             <span class="breadcrumb-current" id="breadcrumb-page">Dashboard</span>
           </div>
 
-          <!-- Global Search Input -->
+          <!-- Global Search Input with Instant Popover -->
           <div class="global-search-wrap">
             <span class="search-icon">🔍</span>
-            <input type="text" id="global-search-input" class="search-input" placeholder="Search customer, phone, serial, quotation...">
+            <input type="text" id="global-search-input" class="search-input" placeholder="Search customer, phone, serial, quotation..." autocomplete="off">
+            
+            <!-- Instant Search Dropdown Popover -->
+            <div id="search-results-popover" class="search-results-popover">
+              <div id="search-results-content"></div>
+            </div>
           </div>
         </div>
 
         <div class="header-right">
           <!-- 3kW Showcase Tour Button -->
-          <button class="btn-outline-action" id="btn-showcase-tour" title="Run 1-Click Interactive 3kW Showcase Tour">
+          <button class="btn-secondary-action" id="btn-showcase-tour" title="Run 1-Click Interactive 3kW Showcase Tour">
             <span>▶ 3kW Turnkey Showcase</span>
           </button>
 
           <!-- Quick Create Action Menu -->
           <div class="quick-create-dropdown">
-            <button class="btn-quick-create" id="btn-quick-create">
+            <button class="btn-primary-action" id="btn-quick-create">
               <span>+ Quick Create</span>
             </button>
           </div>
 
-          <!-- Notification Bell -->
-          <button class="notification-btn" id="btn-notifications" title="System Notifications & Alerts">
+          <!-- Notification Bell Trigger -->
+          <button class="notification-bell-btn" id="btn-notifications" title="System Notifications & Alerts">
             <span>🔔</span>
-            <span class="notification-badge" id="notification-counter">3</span>
+            <span class="notification-count-badge" id="notification-counter">3</span>
           </button>
+
+          <!-- Notifications Popover Drawer -->
+          <div id="notifications-drawer" class="notifications-drawer">
+            <div class="drawer-header">
+              <span class="drawer-title">Notifications &amp; Alerts</span>
+              <button class="drawer-mark-read" onclick="markAllNotificationsRead()">Mark all as read</button>
+            </div>
+            <div class="drawer-item-list" id="drawer-notifications-list">
+              <!-- Dynamically Populated Notifications -->
+            </div>
+          </div>
 
           <!-- Active Role Switcher (RBAC Matrix) -->
           <div class="role-badge-selector">
@@ -289,11 +305,11 @@
           </div>
 
           <!-- User Profile Badge -->
-          <div class="user-profile-btn" id="user-profile-badge">
+          <div class="user-profile-badge" id="user-profile-badge" onclick="showUserProfileModal()">
             <div class="user-avatar-circle" id="user-avatar-initials">SA</div>
-            <div>
-              <div class="user-name-text" id="user-display-name">Solar Admin</div>
-              <div class="user-role-text" id="user-role-title">Chief Executive</div>
+            <div class="user-info-text">
+              <div class="user-name" id="user-display-name">Solar Admin</div>
+              <div class="user-role-label" id="user-role-title">Chief Executive</div>
             </div>
           </div>
         </div>
@@ -305,17 +321,16 @@
       <!-- Main Content Container -->
       <main class="main-content">
         <!-- ================================================================ -->
-        <!-- 1. DASHBOARD VIEW (ROLE-TAILORED)                                -->
+        <!-- VIEW 1: DASHBOARD (ROLE-TAILORED WITH CHARTS)                     -->
         <!-- ================================================================ -->
         <section id="view-dashboard" class="view-section active">
-          <!-- Dynamically Injected Role-Tailored Dashboard -->
           <div id="role-dashboard-container">
-            <!-- Populated via JS based on Active Role -->
+            <!-- Dynamically populated via JS based on Active Role -->
           </div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- 2. CUSTOMER ENQUIRIES & LEADS                                    -->
+        <!-- VIEW 2: CUSTOMER ENQUIRIES                                        -->
         <!-- ================================================================ -->
         <section id="view-enquiries" class="view-section">
           <div class="section-header-bar">
@@ -323,18 +338,23 @@
               <h1 class="section-title">Customer Enquiries &amp; Initial Contact</h1>
               <p class="section-description">Incoming residential and commercial solar enquiries awaiting preliminary sizing and lead qualification.</p>
             </div>
-            <button class="btn-quick-create" onclick="showLeadModal()">+ New Customer Enquiry</button>
+            <button class="btn-primary-action" onclick="showLeadModal()">+ New Customer Enquiry</button>
           </div>
 
           <div class="table-panel">
             <div class="table-toolbar">
               <div class="table-filter-group">
-                <select class="filter-select" id="filter-enquiry-status">
+                <div class="table-inline-search">
+                  <span class="table-search-icon">🔍</span>
+                  <input type="text" id="search-enquiries" class="table-search-input" placeholder="Filter enquiries..." oninput="filterEnquiriesTable(this.value)">
+                </div>
+                <select class="filter-select" id="filter-enquiry-status" onchange="filterEnquiriesByStatus(this.value)">
                   <option value="all">All Enquiries</option>
-                  <option value="new">New Inquiries</option>
                   <option value="qualified">Qualified</option>
+                  <option value="new">New Inquiries</option>
                 </select>
               </div>
+              <button class="btn-action-sm" onclick="exportTableToCSV('enquiries')">📥 Export CSV</button>
             </div>
             <div class="table-responsive-wrapper">
               <table class="enterprise-data-table">
@@ -355,19 +375,50 @@
                 </tbody>
               </table>
             </div>
+            <div class="table-pagination-footer">
+              <span>Showing 1 to 4 of 4 customer enquiries</span>
+              <div class="pagination-controls">
+                <button class="pagination-btn active">1</button>
+              </div>
+            </div>
           </div>
         </section>
 
+        <!-- ================================================================ -->
+        <!-- VIEW 3: SOLAR LEADS (WITH LIST / KANBAN SWITCH)                   -->
+        <!-- ================================================================ -->
         <section id="view-leads" class="view-section">
           <div class="section-header-bar">
             <div>
-              <h1 class="section-title">Solar Leads &amp; Consumption Sizing</h1>
-              <p class="section-description">Qualified solar leads with historical monthly kWh consumption and mathematical sizing calculations.</p>
+              <h1 class="section-title">Solar Customer Leads &amp; Consumption Sizing</h1>
+              <p class="section-description">Qualified solar leads with monthly kWh consumption and mathematical sizing calculations.</p>
             </div>
-            <button class="btn-quick-create" onclick="showLeadModal()">+ New Solar Lead</button>
+            <div class="header-action-group">
+              <div class="view-mode-toggle">
+                <button class="toggle-btn active" id="leads-view-list" onclick="setLeadsViewMode('list')">☰ Table</button>
+                <button class="toggle-btn" id="leads-view-kanban" onclick="setLeadsViewMode('kanban')">▦ Kanban</button>
+              </div>
+              <button class="btn-primary-action" onclick="showLeadModal()">+ New Solar Lead</button>
+            </div>
           </div>
 
-          <div class="table-panel">
+          <!-- Table Mode -->
+          <div id="leads-table-container" class="table-panel">
+            <div class="table-toolbar">
+              <div class="table-filter-group">
+                <div class="table-inline-search">
+                  <span class="table-search-icon">🔍</span>
+                  <input type="text" id="search-leads" class="table-search-input" placeholder="Search leads..." oninput="filterLeadsTable(this.value)">
+                </div>
+                <select class="filter-select" id="filter-lead-type" onchange="filterLeadsByType(this.value)">
+                  <option value="all">All System Types</option>
+                  <option value="on_grid">Grid-Tied On-Grid</option>
+                  <option value="hybrid">Smart Hybrid</option>
+                  <option value="off_grid">Standalone Off-Grid</option>
+                </select>
+              </div>
+              <button class="btn-action-sm" onclick="exportTableToCSV('leads')">📥 Export CSV</button>
+            </div>
             <div class="table-responsive-wrapper">
               <table class="enterprise-data-table">
                 <thead>
@@ -389,16 +440,30 @@
                 </tbody>
               </table>
             </div>
+            <div class="table-pagination-footer">
+              <span>Showing 1 to 10 of 10 solar leads</span>
+              <div class="pagination-controls">
+                <button class="pagination-btn active">1</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kanban Mode -->
+          <div id="leads-kanban-container" class="kanban-board-container" style="display:none;">
+            <!-- Dynamically Populated Kanban Columns -->
           </div>
         </section>
 
+        <!-- ================================================================ -->
+        <!-- VIEW 4: FOLLOW-UPS                                               -->
+        <!-- ================================================================ -->
         <section id="view-followups" class="view-section">
           <div class="section-header-bar">
             <div>
               <h1 class="section-title">Sales Follow-ups &amp; Action Schedules</h1>
               <p class="section-description">Scheduled customer calls, site visit follow-ups, and proposal reviews.</p>
             </div>
-            <button class="btn-action-primary-sm" onclick="showToast('Follow-up scheduled with customer.', 'success')">+ Schedule Follow-up</button>
+            <button class="btn-primary-action" onclick="showToast('Follow-up schedule modal opened.', 'info')">+ Schedule Follow-up</button>
           </div>
 
           <div class="table-panel">
@@ -424,7 +489,7 @@
         </section>
 
         <!-- ================================================================ -->
-        <!-- 3. SITE SURVEYS                                                  -->
+        <!-- VIEW 5: SITE SURVEYS                                             -->
         <!-- ================================================================ -->
         <section id="view-surveys" class="view-section">
           <div class="section-header-bar">
@@ -433,11 +498,31 @@
               <p class="section-description">Shadow analysis, pitch &amp; azimuth verification, cable distance, and chief engineer approval gates.</p>
             </div>
             <div class="header-action-group">
+              <div class="view-mode-toggle">
+                <button class="toggle-btn active" id="surveys-view-list" onclick="setSurveysViewMode('list')">☰ Table</button>
+                <button class="toggle-btn" id="surveys-view-kanban" onclick="setSurveysViewMode('kanban')">▦ Kanban</button>
+              </div>
               <span class="status-pill pill-info">Engineering Rule: Valid Roof Area Required</span>
             </div>
           </div>
 
-          <div class="table-panel">
+          <!-- Surveys Table -->
+          <div id="surveys-table-container" class="table-panel">
+            <div class="table-toolbar">
+              <div class="table-filter-group">
+                <div class="table-inline-search">
+                  <span class="table-search-icon">🔍</span>
+                  <input type="text" id="search-surveys" class="table-search-input" placeholder="Search surveys..." oninput="filterSurveysTable(this.value)">
+                </div>
+                <select class="filter-select" id="filter-survey-status" onchange="filterSurveysByStatus(this.value)">
+                  <option value="all">All States</option>
+                  <option value="approved">Approved</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+              <button class="btn-action-sm" onclick="exportTableToCSV('surveys')">📥 Export CSV</button>
+            </div>
             <div class="table-responsive-wrapper">
               <table class="enterprise-data-table">
                 <thead>
@@ -461,10 +546,15 @@
               </table>
             </div>
           </div>
+
+          <!-- Surveys Kanban -->
+          <div id="surveys-kanban-container" class="kanban-board-container" style="display:none;">
+            <!-- Dynamically Populated Kanban Columns -->
+          </div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- 4. QUOTATIONS & SALES ORDERS                                     -->
+        <!-- VIEW 6: QUOTATIONS & SALES ORDERS                                -->
         <!-- ================================================================ -->
         <section id="view-quotations" class="view-section">
           <div class="section-header-bar">
@@ -472,7 +562,7 @@
               <h1 class="section-title">Turnkey Solar Quotations &amp; Proposals</h1>
               <p class="section-description">Proposals generated from approved surveys with automatic BOM component pricing and PM Surya Ghar subsidy offsets.</p>
             </div>
-            <button class="btn-action-primary-sm" onclick="showToast('Select an approved survey to generate quotation.', 'info')">+ Generate from Survey</button>
+            <button class="btn-secondary-action" onclick="showToast('Select an approved survey to generate quotation.', 'info')">+ Generate from Survey</button>
           </div>
 
           <div class="table-panel">
@@ -536,7 +626,7 @@
         </section>
 
         <!-- ================================================================ -->
-        <!-- 5. PACKAGES & DYNAMIC AUTO-BOM                                   -->
+        <!-- VIEW 7: SOLAR PACKAGES & DYNAMIC AUTO-BOM                        -->
         <!-- ================================================================ -->
         <section id="view-packages" class="view-section">
           <div class="section-header-bar">
@@ -553,7 +643,7 @@
         </section>
 
         <!-- ================================================================ -->
-        <!-- 6. OPERATIONS & INSTALLATIONS                                    -->
+        <!-- VIEW 8: INSTALLATION PROJECTS & COMMISSIONING QC                  -->
         <!-- ================================================================ -->
         <section id="view-installations" class="view-section">
           <div class="section-header-bar">
@@ -565,7 +655,7 @@
           </div>
 
           <div id="installations-container">
-            <!-- Populated via JS -->
+            <!-- Populated via JS with detailed project cards and readiness score gauges -->
           </div>
         </section>
 
@@ -600,7 +690,7 @@
         </section>
 
         <!-- ================================================================ -->
-        <!-- 7. INVENTORY & SERIAL TRACKING                                   -->
+        <!-- VIEW 9: INVENTORY & SERIAL TRACKING                              -->
         <!-- ================================================================ -->
         <section id="view-inventory" class="view-section">
           <div class="section-header-bar">
@@ -612,6 +702,19 @@
           </div>
 
           <div class="table-panel">
+            <div class="table-toolbar">
+              <div class="table-filter-group">
+                <div class="table-inline-search">
+                  <span class="table-search-icon">🔍</span>
+                  <input type="text" id="search-inventory" class="table-search-input" placeholder="Search serial numbers..." oninput="filterInventoryTable(this.value)">
+                </div>
+                <select class="filter-select" id="filter-serial-status" onchange="filterInventoryByStatus(this.value)">
+                  <option value="all">All Statuses</option>
+                  <option value="installed">Mounted &amp; Installed</option>
+                  <option value="available">In Warehouse (Available)</option>
+                </select>
+              </div>
+            </div>
             <div class="table-responsive-wrapper">
               <table class="enterprise-data-table">
                 <thead>
@@ -636,7 +739,7 @@
         </section>
 
         <!-- ================================================================ -->
-        <!-- 8. AFTER-SALES: WARRANTIES & SERVICE                             -->
+        <!-- VIEW 10: DIGITAL WARRANTIES & SHA-256 CERTIFICATES               -->
         <!-- ================================================================ -->
         <section id="view-warranties" class="view-section">
           <div class="section-header-bar">
@@ -644,7 +747,35 @@
               <h1 class="section-title">Digital Warranty Certificates &amp; SHA-256 Verification</h1>
               <p class="section-description">Automated warranty activation upon customer sign-off: Inverter (2-Yr), Battery (2-Yr), Solar Panel (20-Yr).</p>
             </div>
-            <button class="btn-action-primary-sm" onclick="triggerWarrantyReminderCheck()">⚡ Check 30-Day Expiry Engine</button>
+            <button class="btn-primary-action" onclick="triggerWarrantyReminderCheck()">⚡ Check 30-Day Expiry Engine</button>
+          </div>
+
+          <!-- Digital Warranty Certificate Showcase Card -->
+          <div class="warranty-cert-card" id="warranty-cert-preview">
+            <div class="cert-seal">🛡️</div>
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); font-weight:700;">Official Certificate of Coverage</div>
+            <h2 style="font-size:20px; color:var(--primary); margin:6px 0 2px 0;">Solar Inverter Replacement Warranty</h2>
+            <div style="font-size:12.5px; color:var(--text-muted);">Growatt 3kW Dual MPPT Grid-Tie Inverter • Serial: <strong>INV-GROWATT-3KW-9901</strong></div>
+            
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-top:16px;">
+              <div>
+                <span style="font-size:11px; color:var(--text-muted); display:block;">Customer Beneficiary:</span>
+                <strong style="font-size:13px;">Dr. Rajesh Sharma</strong>
+              </div>
+              <div>
+                <span style="font-size:11px; color:var(--text-muted); display:block;">Effective Period:</span>
+                <strong style="font-size:13px;">2026-10-31 to 2028-10-31 (24 Mo)</strong>
+              </div>
+              <div>
+                <span style="font-size:11px; color:var(--text-muted); display:block;">OEM Warranty Partner:</span>
+                <strong style="font-size:13px;">Growatt Solar New Energy</strong>
+              </div>
+            </div>
+
+            <div class="cert-token-box">
+              <span>SHA-256 Token: <strong>A89F34CD10BC91EAF998231B99451</strong></span>
+              <span class="status-pill pill-success">✓ Cryptographically Valid</span>
+            </div>
           </div>
 
           <div class="table-panel">
@@ -671,16 +802,26 @@
           </div>
         </section>
 
+        <!-- ================================================================ -->
+        <!-- VIEW 11: AFTER-SALES SERVICE & COMPLAINTS                        -->
+        <!-- ================================================================ -->
         <section id="view-service" class="view-section">
           <div class="section-header-bar">
             <div>
               <h1 class="section-title">After-Sales Service Management &amp; Covered Repair Billing</h1>
               <p class="section-description">Serial lookup automatically checks warranty status. Covered OEM faults bill $0.00; non-covered bill parts + labour.</p>
             </div>
-            <button class="btn-quick-create" onclick="showTicketModal()">+ Log Service Complaint</button>
+            <div class="header-action-group">
+              <div class="view-mode-toggle">
+                <button class="toggle-btn active" id="service-view-list" onclick="setServiceViewMode('list')">☰ Table</button>
+                <button class="toggle-btn" id="service-view-kanban" onclick="setServiceViewMode('kanban')">▦ Kanban</button>
+              </div>
+              <button class="btn-primary-action" onclick="showTicketModal()">+ Log Service Complaint</button>
+            </div>
           </div>
 
-          <div class="table-panel">
+          <!-- Table View -->
+          <div id="service-table-container" class="table-panel">
             <div class="table-responsive-wrapper">
               <table class="enterprise-data-table">
                 <thead>
@@ -704,10 +845,15 @@
               </table>
             </div>
           </div>
+
+          <!-- Kanban View -->
+          <div id="service-kanban-container" class="kanban-board-container" style="display:none;">
+            <!-- Dynamically Populated Kanban Columns -->
+          </div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- 9. FINANCE: JOB COSTING & PROFITABILITY                          -->
+        <!-- VIEW 12: FINANCE & JOB COSTING PROFITABILITY                     -->
         <!-- ================================================================ -->
         <section id="view-costing" class="view-section">
           <div class="section-header-bar">
@@ -756,6 +902,96 @@
           </div>
         </section>
 
+        <!-- ================================================================ -->
+        <!-- VIEW 13: BUSINESS REPORTS & ANALYTICS                            -->
+        <!-- ================================================================ -->
+        <section id="view-biz_reports" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Executive Business &amp; Financial Analytics</h1>
+              <p class="section-description">Comprehensive performance metrics, revenue realization, and technician delivery benchmarks.</p>
+            </div>
+            <button class="btn-action-sm" onclick="exportTableToCSV('reports')">📥 Export Executive Pack</button>
+          </div>
+
+          <div class="chart-container-card">
+            <div class="chart-header">
+              <div class="chart-title">Quarterly Revenue vs. Realized EPC Costs ($ USD)</div>
+              <div class="chart-legend">
+                <div class="legend-item"><span class="legend-dot dot-primary"></span> Billed Revenue</div>
+                <div class="legend-item"><span class="legend-dot dot-secondary"></span> EPC Cost of Delivery</div>
+                <div class="legend-item"><span class="legend-dot dot-amber"></span> Gross Profit</div>
+              </div>
+            </div>
+            <div class="bar-chart-visual">
+              <div class="bar-col">
+                <div class="bar-pill" style="height:45%;">
+                  <span class="bar-tooltip">$1,200</span>
+                </div>
+                <span class="bar-label">Q1 (Jan-Mar)</span>
+              </div>
+              <div class="bar-col">
+                <div class="bar-pill" style="height:65%;">
+                  <span class="bar-tooltip">$1,850</span>
+                </div>
+                <span class="bar-label">Q2 (Apr-Jun)</span>
+              </div>
+              <div class="bar-col">
+                <div class="bar-pill" style="height:85%;">
+                  <span class="bar-tooltip">$2,450</span>
+                </div>
+                <span class="bar-label">Q3 (Jul-Sep)</span>
+              </div>
+              <div class="bar-col">
+                <div class="bar-pill" style="height:100%;">
+                  <span class="bar-tooltip">$3,000</span>
+                </div>
+                <span class="bar-label">Q4 (Oct-Dec)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Technician Performance Leaderboard -->
+          <div class="content-card">
+            <div class="card-title-bar">
+              <div class="card-title">Technician Crew Quality &amp; Safety Leaderboard</div>
+              <span class="status-pill pill-success">Target: Earth &le; 5.0 &Omega;</span>
+            </div>
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Lead Electrician</th>
+                    <th>Commissioned Sites</th>
+                    <th>Average Earth Pit</th>
+                    <th>Insulation Megger</th>
+                    <th>Customer Rating</th>
+                    <th>Safety Compliance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Ramesh Electrician (Senior Lead)</strong></td>
+                    <td>1 Project</td>
+                    <td><strong style="color:var(--success-text);">2.4 &Omega;</strong></td>
+                    <td>25.0 M&Omega;</td>
+                    <td>⭐⭐⭐⭐⭐ 5.0</td>
+                    <td><span class="status-pill pill-success">100% Passed</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Suresh Technician</strong></td>
+                    <td>0 Projects</td>
+                    <td>Pending</td>
+                    <td>Pending</td>
+                    <td>New Crew</td>
+                    <td><span class="status-pill pill-neutral">Standby</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <!-- General Fallback Section for other submenus -->
         <section id="view-generic-panel" class="view-section">
           <div class="section-header-bar">
@@ -772,7 +1008,7 @@
     </div>
 
     <!-- ==================================================================== -->
-    <!-- MODAL DIALOGS CONTAINER                                              -->
+    <!-- 3. MODAL DIALOGS CONTAINER                                           -->
     <!-- ==================================================================== -->
     <div id="modal-container" class="modal-overlay" style="display:none;">
       <div class="modal-dialog-box">
@@ -784,8 +1020,8 @@
           <!-- Dynamically Injected Form -->
         </div>
         <div class="modal-footer-bar" id="modal-footer">
-          <button class="btn-action-sm" onclick="closeModal()">Cancel</button>
-          <button class="btn-action-primary-sm" id="modal-submit-btn">Submit</button>
+          <button class="btn-secondary-action" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary-action" id="modal-submit-btn">Submit</button>
         </div>
       </div>
     </div>
