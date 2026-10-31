@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Solar quotation | SolarFlow</title>
+  <link rel="stylesheet" href="app.css"><link rel="stylesheet" href="quotation.css">
+</head>
+<body>
+  <header class="module-header"><a href="index.html" class="module-brand">☀ SolarFlow ERP</a><a href="index.html" class="back-link">← Dashboard</a></header>
+  <main class="module-layout">
+    <section class="module-card">
+      <div class="module-heading"><div><p class="eyebrow">SOLAR ESTIMATION</p><h1>Automatic quotation</h1><p>Server-calculated estimate using configured catalogue prices.</p></div><span class="estimate-badge">Indicative estimate</span></div>
+      <div class="form-grid">
+        <label>Customer name<input id="customerName" required placeholder="Customer name"></label>
+        <label>Phone<input id="customerPhone" placeholder="+91"></label>
+        <label>Customer type<select id="customerType"><option>Residential</option><option>Commercial</option></select></label>
+        <label>System type<select id="systemType"><option>On-grid</option><option>Hybrid</option><option>Off-grid</option></select></label>
+        <label>Required capacity (kW)<input id="capacity" type="number" min="0" step="0.1" value="5"></label>
+        <label>Installation rate (₹/kW)<input id="installationRate" type="number" min="0" value="3500"></label>
+        <label>Transportation (₹)<input id="transportation" type="number" min="0" value="5000"></label>
+        <label class="check-label"><input id="earthing" type="checkbox" checked> Include earthing</label>
+        <label class="check-label"><input id="subsidy" type="checkbox"> Check indicative subsidy eligibility</label>
+      </div>
+      <div class="section-title"><h2>Product selection</h2><button class="secondary-button" id="addProduct">+ Add product</button></div>
+      <div id="productRows" class="product-rows"></div>
+      <div class="notice">Only calculated server values are used. Subsidy eligibility is indicative and depends on current policy and authority approval.</div>
+      <div class="actions"><button class="primary-button" id="recalculate">Recalculate Estimate</button><button class="secondary-button" id="saveQuote">Save quotation</button></div>
+    </section>
+    <aside class="module-card quotation-summary">
+      <p class="eyebrow">ESTIMATE SUMMARY</p><h2>₹ <span id="finalAmount">0</span></h2>
+      <div id="summaryRows"></div>
+      <div class="summary-actions"><button class="secondary-button" id="viewQuote">View quotation</button><button class="primary-button" id="downloadPdf" disabled>Download PDF</button></div>
+      <a id="requestVisit" class="visit-button" href="survey.html">Request Site Visit</a>
+    </aside>
+  </main>
+  <script src="quotation.js"></script>
+</body>
+</html>
