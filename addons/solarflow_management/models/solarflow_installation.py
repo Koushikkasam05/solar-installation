@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError, ValidationError, AccessError
 
 class SolarFlowInstallation(models.Model):
     _name = 'solarflow.installation'
@@ -234,6 +234,14 @@ class SolarFlowInstallation(models.Model):
         7. Require customer acceptance before completion.
         8. Store installation photographs.
         """
+        # Security Enforcement: Only Installation Technician, Sales Manager, or Super Administrator
+        if not (self.env.user.has_group('solarflow_management.group_solarflow_technician') or
+                self.env.user.has_group('solarflow_management.group_solarflow_sales_manager') or
+                self.env.user.has_group('solarflow_management.group_solarflow_admin')):
+            raise AccessError(_("Security Violation: You do not have permission to complete and handover installation projects."))
+        if self.env.user.has_group('solarflow_management.group_solarflow_director') and not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            raise AccessError(_("Security Violation: Director / Investor role has strict read-only access and cannot complete installations."))
+
         for inst in self:
             # Rule 6: Validate Testing Results
             if inst.test_voc <= 0:
@@ -396,4 +404,9 @@ class SolarFlowInstallation(models.Model):
                     'leakage_threshold_pct': 10.0,
                 })
                 inst.cost_id = costing.id
+
+    def unlink(self):
+        if not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            raise AccessError(_("Security Violation: Only Super Administrators have permission to delete Installation records."))
+        return super(SolarFlowInstallation, self).unlink()
 

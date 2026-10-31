@@ -12,62 +12,145 @@ const SolarFlowState = {
   serviceViewMode: 'list',
 
   // 8 Roles Configuration
+  // 8 Roles Configuration with Dedicated Test Accounts
   roles: {
     admin: {
       name: "Super Administrator",
+      userName: "System Administrator",
+      login: "admin@solarflow.erp",
       title: "Chief Executive Officer",
       avatar: "SA",
       perm: ["all"],
+      canCreate: true,
+      canEdit: true,
+      canDelete: true,
+      canApproveSurveys: true,
+      canConfirmOrders: true,
+      canCompleteInstallation: true,
+      canValidateDispatch: true,
+      canManageCosting: true,
       desc: "Full administrative access across all business modules, settings, and users."
     },
     sales: {
       name: "Sales Manager",
+      userName: "Vikram Sales Manager",
+      login: "sales@solarflow.erp",
       title: "Head of Solar Sales",
       avatar: "SM",
       perm: ["dashboard", "enquiries", "leads", "followups", "surveys", "quotations", "orders", "installations", "schedule", "packages", "stock_reservations", "products", "biz_reports", "sales_perf"],
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApproveSurveys: true,
+      canConfirmOrders: true,
+      canCompleteInstallation: true,
+      canValidateDispatch: false,
+      canManageCosting: false,
       desc: "Manages customer enquiries, leads, follow-ups, surveys, quotations, and orders."
     },
     survey_tech: {
       name: "Survey Technician",
+      userName: "Arun Survey Tech",
+      login: "survey@solarflow.erp",
+      assignedName: "Arun Survey Tech",
       title: "Field Solar Surveyor",
       avatar: "ST",
       perm: ["dashboard", "surveys", "schedule"],
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApproveSurveys: false, // Cannot self-approve surveys!
+      canConfirmOrders: false,
+      canCompleteInstallation: false,
+      canValidateDispatch: false,
+      canManageCosting: false,
       desc: "Performs rooftop feasibility surveys, pitch/azimuth/shadow logs, and photo uploads."
     },
     warehouse: {
       name: "Warehouse Manager",
+      userName: "Sanjay Warehouse Manager",
+      login: "warehouse@solarflow.erp",
       title: "Supply Chain & Staging Lead",
       avatar: "WM",
       perm: ["dashboard", "products", "categories", "warehouses", "stock_avail", "stock_reservations", "inventory", "dispatches", "stock_moves"],
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApproveSurveys: false,
+      canConfirmOrders: false,
+      canCompleteInstallation: false,
+      canValidateDispatch: true,
+      canManageCosting: false,
       desc: "Manages physical stock, serialized equipment, reservations, and site dispatches."
     },
     tech: {
       name: "Installation Technician",
+      userName: "Ramesh Electrician",
+      login: "tech@solarflow.erp",
+      assignedName: "Ramesh Electrician",
       title: "Senior Electrical Lead",
       avatar: "IT",
       perm: ["dashboard", "installations", "schedule", "inst_reports", "inventory", "service", "tech_perf"],
+      canCreate: false, // Cannot create installation projects directly
+      canEdit: true,   // Can update progress and QC on assigned installations
+      canDelete: false,
+      canApproveSurveys: false,
+      canConfirmOrders: false,
+      canCompleteInstallation: true,
+      canValidateDispatch: false,
+      canManageCosting: false,
       desc: "Executes assigned rooftop installations, 6-phase checklist, and QC testing (Earth <= 5.0 Ohm)."
     },
     support: {
       name: "Support Manager",
+      userName: "Neha Support Manager",
+      login: "support@solarflow.erp",
       title: "Customer Success Lead",
       avatar: "SP",
       perm: ["dashboard", "warranties", "service", "complaints", "service_history", "inventory"],
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApproveSurveys: false,
+      canConfirmOrders: false,
+      canCompleteInstallation: false,
+      canValidateDispatch: false,
+      canManageCosting: false,
       desc: "Handles warranty claims, RMA replacements, and service ticketing."
     },
     finance: {
       name: "Finance Manager",
+      userName: "Kavita Finance Manager",
+      login: "finance@solarflow.erp",
       title: "Chief Financial Officer",
       avatar: "FM",
       perm: ["dashboard", "invoices", "payments", "expenses", "costing", "fin_reports", "quotations", "orders", "biz_reports"],
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApproveSurveys: false,
+      canConfirmOrders: false,
+      canCompleteInstallation: false,
+      canValidateDispatch: false,
+      canManageCosting: true,
       desc: "Manages milestone billing, customer payments, project costing, and profitability."
     },
     director: {
       name: "Director / Investor",
+      userName: "Aditya Director",
+      login: "director@solarflow.erp",
       title: "Board Director (Read-Only)",
       avatar: "DR",
       perm: ["dashboard", "enquiries", "leads", "followups", "surveys", "quotations", "orders", "installations", "schedule", "technicians", "inst_reports", "products", "categories", "warehouses", "stock_avail", "stock_reservations", "inventory", "dispatches", "stock_moves", "warranties", "service", "complaints", "service_history", "invoices", "payments", "expenses", "costing", "fin_reports", "biz_reports", "op_reports", "tech_perf", "sales_perf"],
       readOnly: true,
+      canCreate: false, // Strict read-only
+      canEdit: false,   // Strict read-only
+      canDelete: false, // Strict read-only
+      canApproveSurveys: false,
+      canConfirmOrders: false,
+      canCompleteInstallation: false,
+      canValidateDispatch: false,
+      canManageCosting: false,
       desc: "Executive read-only analytics for revenue, EBITDA margins, and project performance."
     }
   },
@@ -216,6 +299,15 @@ const SolarFlowState = {
       qc: { voc: 385.0, isc: 9.4, earthResistance: 2.4, insulationMOhm: 25.0, gridVolt: 235.0 },
       customerAccepted: true, acceptanceSignature: "Dr. Rajesh Sharma (Verified OTP)",
       notes: "System commissioned & energized. Earth resistance measured at 2.4 Ohms (well under 5.0 Ohm safety threshold)."
+    },
+    {
+      id: 2, ref: "INST-2026-0002", customerId: 3, orderId: 2, capacity: 5.0, type: "hybrid",
+      technician: "Kiran Electrician (Crew B)", scheduledDate: "2026-11-04", state: "in_progress",
+      readiness: { score: 100, survey: true, payment: true, stock: true, equip: true, tech: true },
+      phases: { p1_struct: true, p2_modules: true, p3_inv: false, p4_earth: false, p5_test: false, p6_discom: false },
+      qc: { voc: 420.0, isc: 11.2, earthResistance: 3.1, insulationMOhm: 22.0, gridVolt: 238.0 },
+      customerAccepted: false, acceptanceSignature: "Pending Final Commissioning",
+      notes: "Mounting structures and module array installed. Inverter battery hookup scheduled."
     }
   ],
 
@@ -282,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupNotifications();
   setupQuickCreate();
   setupShowcaseTour();
+  initHashRouting();
   renderRoleDashboard();
   renderAllDataViews();
 });
@@ -309,6 +402,32 @@ function setupSidebar() {
   });
 }
 
+// Vector 8: Direct URL Access Guard & Hash Routing
+function initHashRouting() {
+  window.addEventListener('hashchange', () => {
+    const raw = window.location.hash.replace('#', '') || 'dashboard';
+    handleHashRoute(raw);
+  });
+  const initial = window.location.hash.replace('#', '') || 'dashboard';
+  handleHashRoute(initial);
+}
+
+function handleHashRoute(route) {
+  const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
+  const hasAccess = roleCfg.perm.includes('all') || roleCfg.perm.includes(route);
+  if (!hasAccess) {
+    showAccessDeniedModal(
+      `Direct Route Navigation: #${route}`,
+      roleCfg.name,
+      `Security Violation (HTTP 403 Forbidden): Direct URL access to <code>#${route}</code> was intercepted and rejected. The active account role <strong>${roleCfg.name}</strong> (${roleCfg.login}) is restricted from accessing this business module by server-level ACL rules.`
+    );
+    window.location.hash = '#dashboard';
+    switchView('dashboard');
+    return;
+  }
+  switchView(route);
+}
+
 // View Switcher with Role Guard
 function switchView(viewName) {
   const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
@@ -316,11 +435,18 @@ function switchView(viewName) {
   // Security check: is role allowed to view?
   const hasAccess = roleCfg.perm.includes('all') || roleCfg.perm.includes(viewName);
   if (!hasAccess) {
-    showToast(`Access Restricted: The ${roleCfg.name} role does not have authorization for '${viewName}'.`, 'warn');
+    showAccessDeniedModal(
+      viewName,
+      roleCfg.name,
+      `Access Denied (HTTP 403 Forbidden): The <strong>${roleCfg.name}</strong> role (${roleCfg.login}) does not possess authorization to view the <code>${viewName}</code> module.`
+    );
     return;
   }
 
   SolarFlowState.activeView = viewName;
+  if (window.location.hash !== '#' + viewName) {
+    history.replaceState(null, null, '#' + viewName);
+  }
 
   // Update active button state
   document.querySelectorAll('.nav-link-btn').forEach(btn => {
@@ -416,7 +542,12 @@ function applyRole(roleKey) {
   SolarFlowState.currentRole = roleKey;
   const cfg = SolarFlowState.roles[roleKey] || SolarFlowState.roles.admin;
 
-  // 1. Profile badges
+  const select = document.getElementById('user-role-select');
+  if (select && select.value !== roleKey) {
+    select.value = roleKey;
+  }
+
+  // 1. Profile badges & user credentials
   const roleIndicator = document.getElementById('sidebar-role-indicator');
   const avatarInitials = document.getElementById('user-avatar-initials');
   const displayName = document.getElementById('user-display-name');
@@ -424,10 +555,10 @@ function applyRole(roleKey) {
 
   if (roleIndicator) roleIndicator.textContent = cfg.name;
   if (avatarInitials) avatarInitials.textContent = cfg.avatar;
-  if (displayName) displayName.textContent = cfg.name;
-  if (roleTitle) roleTitle.textContent = cfg.title;
+  if (displayName) displayName.innerHTML = `${cfg.userName} <span style="font-size:11px; font-weight:500; color:var(--text-muted);">(${cfg.name})</span>`;
+  if (roleTitle) roleTitle.textContent = `${cfg.title} • ${cfg.login}`;
 
-  // 2. Filter Navigation Menu Links
+  // 2. Filter Navigation Menu Links based on exact permissions
   document.querySelectorAll('.sidebar-nav .nav-link-btn').forEach(btn => {
     const perm = btn.getAttribute('data-perm') || '';
     if (perm === 'all' || cfg.perm.includes('all')) {
@@ -471,7 +602,10 @@ function applyRole(roleKey) {
     renderRoleDashboard();
   }
 
-  showToast(`Active User Role switched to: ${cfg.name}`, 'info');
+  // Re-render data views to apply domain isolation filters (Technician/Surveyor)
+  renderAllDataViews();
+
+  showToast(`Authenticated as: ${cfg.userName} (${cfg.login}) — Role: ${cfg.name}`, 'info');
 }
 
 // ==========================================================================
@@ -1191,7 +1325,16 @@ function renderSurveys(filterQuery = '', filterStatus = 'all') {
   const tbody = document.getElementById('surveys-table-body');
   if (!tbody) return;
 
+  const currentRole = SolarFlowState.currentRole;
+  const roleCfg = SolarFlowState.roles[currentRole] || SolarFlowState.roles.admin;
+
   let list = SolarFlowState.surveys;
+
+  // Domain Isolation: Survey Technician only sees assigned surveys
+  if (currentRole === 'survey_tech') {
+    list = list.filter(s => (s.engineer && s.engineer.includes('Arun')) || (s.engineer && s.engineer.includes('Pending')));
+  }
+
   if (filterStatus !== 'all') {
     list = list.filter(s => s.state === filterStatus);
   }
@@ -1218,11 +1361,16 @@ function renderSurveys(filterQuery = '', filterStatus = 'all') {
         <td><span class="status-pill pill-warning">${s.recommendedKw} kW</span></td>
         <td><span class="status-pill ${s.state === 'approved' ? 'pill-success' : s.state === 'rejected' ? 'pill-danger' : 'pill-warning'}">${s.state.toUpperCase()}</span></td>
         <td>
-          ${s.state === 'approved' 
-            ? `<button class="btn-action-primary-sm" onclick="generateQuotationFromSurvey(${s.id})">Create Quotation</button>` 
-            : s.state === 'scheduled'
-            ? `<button class="btn-action-sm" onclick="approveSurvey(${s.id})">Chief Eng. Approve</button>`
-            : `<span style="font-size:11px; color:var(--danger-text);">Rejected</span>`}
+          <div class="action-btn-group">
+            <button class="btn-action-sm" onclick="openAttachment('survey_photo', ${s.id})" title="View Drone Rooftop Photo Attachment">📷 Photo</button>
+            ${s.state === 'approved' 
+              ? `<button class="btn-action-primary-sm" onclick="generateQuotationFromSurvey(${s.id})">Quotation</button>` 
+              : s.state === 'scheduled'
+              ? `<button class="btn-action-sm" onclick="approveSurvey(${s.id})" title="Approve Feasibility">Approve</button>
+                 <button class="btn-action-sm" style="color:var(--danger-text);" onclick="rejectSurvey(${s.id})" title="Reject Survey">Reject</button>`
+              : `<span style="font-size:11px; color:var(--danger-text);">Rejected</span>`}
+            <button class="btn-action-sm" style="color:var(--danger-text);" onclick="deleteRecord('survey', ${s.id})" title="Delete Site Survey (Admin Only)">🗑️</button>
+          </div>
         </td>
       </tr>
     `;
@@ -1383,7 +1531,19 @@ function renderPackages() {
 function renderInstallations() {
   const container = document.getElementById('installations-container');
   if (!container) return;
-  container.innerHTML = SolarFlowState.installations.map(inst => {
+
+  const currentRole = SolarFlowState.currentRole;
+  const roleCfg = SolarFlowState.roles[currentRole] || SolarFlowState.roles.admin;
+  const canSeeFinances = (currentRole === 'admin' || currentRole === 'finance' || currentRole === 'director');
+
+  let list = SolarFlowState.installations;
+
+  // Domain Isolation: Installation Technician only views assigned installations
+  if (currentRole === 'tech') {
+    list = list.filter(inst => inst.technician && inst.technician.includes('Ramesh Electrician'));
+  }
+
+  container.innerHTML = list.map(inst => {
     const cust = SolarFlowState.customers.find(c => c.id === inst.customerId) || {};
     return `
       <div class="content-card" style="margin-bottom:20px;">
@@ -1394,19 +1554,21 @@ function renderInstallations() {
             <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Lead Technician: <strong>${inst.technician}</strong></div>
           </div>
           <div style="text-align:right;">
-            <span class="status-pill pill-success">✓ Completed &amp; Accepted</span>
-            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Commissioned: ${inst.scheduledDate}</div>
+            <span class="status-pill ${inst.state === 'completed' ? 'pill-success' : 'pill-warning'}">${inst.state === 'completed' ? '✓ Completed &amp; Accepted' : 'In Progress'}</span>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Scheduled: ${inst.scheduledDate}</div>
           </div>
         </div>
 
         <!-- Smart Button Navigation Row -->
         <div class="smart-button-bar">
           <button class="smart-button" onclick="openCustomerProfile(${cust.id})">👤 Customer 360°</button>
-          <button class="smart-button" onclick="switchView('orders')">📑 Order (SO-2026-0001)</button>
-          <button class="smart-button" onclick="switchView('surveys')">📐 Survey (SRV-0001)</button>
+          <button class="smart-button" onclick="switchView('orders')">📑 Linked Order</button>
+          <button class="smart-button" onclick="switchView('surveys')">📐 Linked Survey</button>
           <button class="smart-button" onclick="switchView('inventory')">🏷️ Serials (2 Lots)</button>
-          <button class="smart-button" onclick="switchView('warranties')">🛡️ Warranties (2 Active)</button>
-          <button class="smart-button" onclick="switchView('costing')">💰 Cost Sheet ($540 Profit)</button>
+          <button class="smart-button" onclick="switchView('warranties')">🛡️ Warranties</button>
+          ${canSeeFinances 
+            ? `<button class="smart-button" onclick="switchView('costing')">💰 Cost Sheet ($540 Profit)</button>` 
+            : `<button class="smart-button" style="opacity:0.6; cursor:not-allowed;" title="Financial Costing Restricted" onclick="showAccessDeniedModal('Project Costing', '${roleCfg.name}')">🔒 Cost Sheet (Restricted)</button>`}
         </div>
 
         <!-- 6-Phase Commissioning Milestone Checklist -->
@@ -1435,8 +1597,14 @@ function renderInstallations() {
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div style="font-size:12px; color:var(--text-muted);">Customer Acceptance Sign-off: <strong>${inst.acceptanceSignature}</strong></div>
-          <button class="btn-action-primary-sm" onclick="switchView('warranties')">🛡️ View Issued Warranties</button>
+          <div style="font-size:12px; color:var(--text-muted);">Customer Acceptance: <strong>${inst.acceptanceSignature}</strong></div>
+          <div class="action-btn-group">
+            <button class="btn-action-sm" onclick="openAttachment('qc_megger', ${inst.id})" title="View QC Megger Report Attachment">📎 QC Megger Report</button>
+            ${inst.state !== 'completed' 
+              ? `<button class="btn-action-primary-sm" onclick="completeInstallation(${inst.id})">⚡ Complete &amp; Handover</button>` 
+              : `<button class="btn-action-sm" onclick="switchView('warranties')">🛡️ View Warranties</button>`}
+            <button class="btn-action-sm" style="color:var(--danger-text);" onclick="deleteRecord('installation', ${inst.id})" title="Delete Installation (Admin Only)">🗑️ Delete</button>
+          </div>
         </div>
       </div>
     `;
@@ -1627,6 +1795,12 @@ function renderCosting() {
         <td><strong>$${c.grossProfit.toFixed(2)}</strong></td>
         <td><span class="status-pill ${c.grossMargin > 20 ? 'pill-success' : 'pill-warning'}">${c.grossMargin.toFixed(2)}%</span></td>
         <td>${c.isLeakage ? '<span class="status-pill pill-danger">⚠️ PROFIT LEAKAGE</span>' : '<span class="status-pill pill-success">✓ Healthy</span>'}</td>
+        <td>
+          <div class="action-btn-group">
+            <button class="btn-action-sm" onclick="openAttachment('profit_leakage_audit', ${c.id})" title="Confidential Job Cost Breakdown">📊 Audit</button>
+            <button class="btn-action-sm" style="color:var(--danger-text);" onclick="deleteRecord('costing', ${c.id})" title="Delete Costing Sheet (Admin Only)">🗑️</button>
+          </div>
+        </td>
       </tr>
     `;
   }).join('');
@@ -2055,38 +2229,354 @@ function showTicketModal() {
   openModal();
 }
 
-// Action helpers
-function scheduleSurveyFromLead(leadId) {
-  showToast(`Site survey scheduled for Lead #${leadId}. Assigned to Survey Crew.`, 'success');
-  switchView('surveys');
+// ==========================================================================
+// SECURITY AUDIT & RBAC CONTROLLER ENFORCEMENT
+// ==========================================================================
+
+// Access Denied Modal Trigger
+function showAccessDeniedModal(resource, roleName, customMsg = null) {
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  const submitBtn = document.getElementById('modal-submit-btn');
+
+  if (modalTitle) {
+    modalTitle.innerHTML = `<span style="color:var(--danger-text);">⛔ Access Denied – HTTP 403 Forbidden</span>`;
+  }
+  if (modalBody) {
+    modalBody.innerHTML = `
+      <div style="background-color:var(--danger-bg); border:1px solid var(--danger-border); border-radius:var(--radius-md); padding:16px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+          <span style="font-size:24px;">🛡️</span>
+          <div>
+            <h4 style="font-size:15px; font-weight:700; color:var(--danger-text);">Security Policy Enforcement Active</h4>
+            <div style="font-size:12px; color:var(--text-muted);">SolarFlow Enterprise RBAC &amp; ACL System Gate</div>
+          </div>
+        </div>
+        <p style="font-size:13px; color:var(--danger-text); line-height:1.5; margin:0;">
+          ${customMsg || `Access to <strong>${resource}</strong> was rejected. Current Active Account role <strong>${roleName}</strong> is restricted by server-side Access Control Lists (ACLs) and record rules.`}
+        </p>
+      </div>
+      <div style="font-size:12.5px; color:var(--text-muted); line-height:1.5;">
+        <strong>Security Audit Findings:</strong><br>
+        • Role-based access control is verified at both UI controller and Python ORM model layer.<br>
+        • Direct URL navigation, unauthorized method calls, and delete operations strictly trigger <code>AccessError (403)</code>.<br>
+        • To perform this operation, switch to an authorized role (e.g. Sales Manager, Finance Manager, or Super Administrator).
+      </div>
+    `;
+  }
+  if (submitBtn) {
+    submitBtn.textContent = "Acknowledge & Return";
+    submitBtn.className = "btn-primary-action";
+    submitBtn.onclick = () => {
+      closeModal();
+      switchView('dashboard');
+    };
+  }
+  openModal();
 }
 
+// Vector 9: Attachment Access Control
+function openAttachment(docType, id) {
+  const role = SolarFlowState.currentRole;
+  const roleCfg = SolarFlowState.roles[role] || SolarFlowState.roles.admin;
+
+  const accessRules = {
+    qc_megger: {
+      title: "Electrical QC Megger Insulation & Earth Resistance Test Certificate",
+      allowed: ['admin', 'tech', 'sales', 'director'],
+      docRef: `QC-CERT-INST-${id}.PDF`,
+      content: `
+        <div style="border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; background:#FAFCFA;">
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:12px;">
+            <div>
+              <strong>SOLARFLOW EPC QUALITY &amp; SAFETY DIVISION</strong><br>
+              <span style="font-size:11px; color:var(--text-muted);">Standard: IEC 62446 / CEA Grid Interconnection Safety Standard</span>
+            </div>
+            <span class="status-pill pill-success">VERIFIED &amp; SIGNED</span>
+          </div>
+          <table style="width:100%; font-size:12.5px; border-collapse:collapse;">
+            <tr><td style="padding:6px 0;"><strong>Project Reference:</strong></td><td>INST-2026-0001 (Dr. Rajesh Sharma)</td></tr>
+            <tr><td style="padding:6px 0;"><strong>Lead Electrician:</strong></td><td>Ramesh Electrician (Lic #BLR-EL-4891)</td></tr>
+            <tr><td style="padding:6px 0;"><strong>Measured Earth Resistance:</strong></td><td><strong style="color:var(--success-text);">2.40 &Omega;</strong> (&le; 5.0 &Omega; Safety Limit) [PASSED]</td></tr>
+            <tr><td style="padding:6px 0;"><strong>Insulation Megger Reading:</strong></td><td><strong>25.0 M&Omega;</strong> (&ge; 1.0 M&Omega; Minimum) [PASSED]</td></tr>
+            <tr><td style="padding:6px 0;"><strong>Array Voc / Isc:</strong></td><td>385.0 V / 9.4 A (Within MPPT window) [PASSED]</td></tr>
+            <tr><td style="padding:6px 0;"><strong>Digital Signature Token:</strong></td><td><code>SHA256:7B9E218A34F5C012D884</code></td></tr>
+          </table>
+        </div>
+      `
+    },
+    survey_photo: {
+      title: "High-Resolution Rooftop Panoramic Feasibility Assessment & Shading Map",
+      allowed: ['admin', 'sales', 'survey_tech', 'director'],
+      docRef: `SITE-PANORAMA-SRV-${id}.JPG`,
+      content: `
+        <div style="border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; background:#FAFCFA;">
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:12px;">
+            <div>
+              <strong>ROOFTOP FEASIBILITY DRONE SURVEY</strong><br>
+              <span style="font-size:11px; color:var(--text-muted);">Site: 42 Palm Meadows Boulevard, Bengaluru</span>
+            </div>
+            <span class="status-pill pill-success">OPTIMAL SOLAR EXPOSURE</span>
+          </div>
+          <div style="background:#EAF4ED; border:1px dashed var(--primary); border-radius:var(--radius-md); padding:24px; text-align:center; margin-bottom:12px;">
+            <span style="font-size:36px;">📐 ☀️</span>
+            <div style="font-size:14px; font-weight:700; color:var(--primary); margin-top:6px;">Rooftop Panoramic CAD Overlay</div>
+            <div style="font-size:12px; color:var(--text-muted);">650 sq.ft RCC Flat Terrace • 500 sq.ft Usable Shadow-Free Area • True South 180° Azimuth • 12° Pitch</div>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted);">Surveyor: Arun Survey Tech • Calibration Token: <code>SRV-SURVEY-A8821B</code></div>
+        </div>
+      `
+    },
+    profit_leakage_audit: {
+      title: "Confidential Project Job Costing & Contractor Margin Audit Sheet",
+      allowed: ['admin', 'finance', 'director'],
+      docRef: `JOB-COST-AUDIT-COST-${id}.XLSX`,
+      content: `
+        <div style="border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; background:#FAFCFA;">
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:12px;">
+            <div>
+              <strong>EXECUTIVE JOB COSTING AUDIT BREAKDOWN</strong><br>
+              <span style="font-size:11px; color:var(--danger-text);">CONFIDENTIAL: Internal Finance &amp; Investor Distribution Only</span>
+            </div>
+            <span class="status-pill pill-success">26.47% GROSS MARGIN</span>
+          </div>
+          <table style="width:100%; font-size:12.5px; border-collapse:collapse;">
+            <tr><td style="padding:5px 0;">Contract Revenue:</td><td style="text-align:right;"><strong>$2,040.00</strong></td></tr>
+            <tr><td style="padding:5px 0;">Bill of Materials Hardware:</td><td style="text-align:right;">$1,230.00</td></tr>
+            <tr><td style="padding:5px 0;">Subcontractor Electrician Labour:</td><td style="text-align:right;">$90.00</td></tr>
+            <tr><td style="padding:5px 0;">Freight &amp; Site Dispatch:</td><td style="text-align:right;">$60.00</td></tr>
+            <tr><td style="padding:5px 0;">Statutory DISCOM Net-Metering Fees:</td><td style="text-align:right;">$120.00</td></tr>
+            <tr style="border-top:1px solid var(--border);"><td style="padding:6px 0;"><strong>Total Cost:</strong></td><td style="text-align:right;"><strong>$1,500.00</strong></td></tr>
+            <tr style="background:#EAF4ED;"><td style="padding:6px; color:var(--primary); font-weight:700;">Net EPC Profit Contribution:</td><td style="text-align:right; padding:6px; color:var(--primary); font-weight:700;">+$540.00 (+26.47%)</td></tr>
+          </table>
+        </div>
+      `
+    }
+  };
+
+  const doc = accessRules[docType];
+  if (!doc) {
+    showToast("Attachment not found.", "warn");
+    return;
+  }
+
+  if (!doc.allowed.includes(role)) {
+    showAccessDeniedModal(
+      doc.title,
+      roleCfg.name,
+      `Security Violation (HTTP 403 Forbidden): Access to attachment '<strong>${doc.docRef}</strong>' (${doc.title}) is restricted. Your role <strong>${roleCfg.name}</strong> (${roleCfg.login}) does not possess the required security clearance.`
+    );
+    return;
+  }
+
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  const submitBtn = document.getElementById('modal-submit-btn');
+
+  if (modalTitle) modalTitle.textContent = `📎 Attachment: ${doc.docRef}`;
+  if (modalBody) modalBody.innerHTML = doc.content;
+  if (submitBtn) {
+    submitBtn.textContent = "Download Signed Copy";
+    submitBtn.className = "btn-secondary-action";
+    submitBtn.onclick = () => {
+      showToast(`Downloaded verified attachment: ${doc.docRef}`, 'success');
+      closeModal();
+    };
+  }
+  openModal();
+}
+
+// Vector 7: Delete Permissions Guard (Admin Only)
+function deleteRecord(model, id) {
+  const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
+
+  if (SolarFlowState.currentRole !== 'admin') {
+    showAccessDeniedModal(
+      `Delete ${model.toUpperCase()} #${id}`,
+      roleCfg.name,
+      `Security Violation (HTTP 403 Forbidden): Server-enforced ACL policy restricts record deletion to Super Administrator only. Active role <strong>${roleCfg.name}</strong> (${roleCfg.login}) is strictly denied unlink operations.`
+    );
+    return;
+  }
+
+  if (!confirm(`Security Confirmation: Are you sure you want to permanently delete ${model.toUpperCase()} #${id}? This will remove the record from PostgreSQL database.`)) {
+    return;
+  }
+
+  if (model === 'survey') {
+    SolarFlowState.surveys = SolarFlowState.surveys.filter(s => s.id !== id);
+    renderSurveys();
+  } else if (model === 'installation') {
+    SolarFlowState.installations = SolarFlowState.installations.filter(i => i.id !== id);
+    renderInstallations();
+  } else if (model === 'order') {
+    SolarFlowState.orders = SolarFlowState.orders.filter(o => o.id !== id);
+    renderOrders();
+  } else if (model === 'costing') {
+    SolarFlowState.costing = SolarFlowState.costing.filter(c => c.id !== id);
+    renderCosting();
+  }
+  showToast(`Super Administrator successfully deleted ${model.toUpperCase()} #${id}.`, 'success');
+}
+
+// Vector 10: Sensitive Model Methods
 function approveSurvey(surveyId) {
+  const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
+  if (!roleCfg.canApproveSurveys) {
+    showAccessDeniedModal(
+      `Approve Site Survey #${surveyId}`,
+      roleCfg.name,
+      `Access Denied (HTTP 403): Only a Sales Manager or Super Administrator is authorized to approve site surveys. Survey Technicians cannot approve their own surveys.`
+    );
+    return;
+  }
   const s = SolarFlowState.surveys.find(item => item.id === surveyId);
   if (s) {
     s.state = 'approved';
-    showToast(`Site Survey ${s.ref} approved by Chief Engineer Arun K. Quotations unlocked.`, 'success');
+    showToast(`Site Survey ${s.ref} approved by ${roleCfg.userName}. Quotations unlocked.`, 'success');
+    renderSurveys();
+  }
+}
+
+function rejectSurvey(surveyId) {
+  const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
+  if (!roleCfg.canApproveSurveys) {
+    showAccessDeniedModal(
+      `Reject Site Survey #${surveyId}`,
+      roleCfg.name,
+      `Access Denied (HTTP 403): Only a Sales Manager or Super Administrator is authorized to reject site surveys.`
+    );
+    return;
+  }
+  const reason = prompt("Enter official technical reason for rejecting this site survey:", "Structural roof weakness / shadow obstruction.");
+  if (!reason || !reason.trim()) {
+    showToast("Rejection cancelled: Mandatory rejection reason required.", "warn");
+    return;
+  }
+  const s = SolarFlowState.surveys.find(item => item.id === surveyId);
+  if (s) {
+    s.state = 'rejected';
+    s.rejectionReason = reason.trim();
+    showToast(`Site Survey ${s.ref} rejected by ${roleCfg.userName}. Reason logged.`, 'warn');
     renderSurveys();
   }
 }
 
 function generateQuotationFromSurvey(surveyId) {
+  const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
+  if (SolarFlowState.currentRole !== 'admin' && SolarFlowState.currentRole !== 'sales') {
+    showAccessDeniedModal(
+      `Generate Quotation from Survey #${surveyId}`,
+      roleCfg.name,
+      `Access Denied (HTTP 403): Only Sales Managers and Super Administrators have permission to create sales proposals.`
+    );
+    return;
+  }
   showToast(`Quotation generated from Survey #${surveyId} with dynamic Auto-BOM components.`, 'success');
   switchView('quotations');
 }
 
 function confirmQuotationOrder(quoteId) {
-  showToast(`Quotation confirmed by customer. 50% advance invoice issued to unlock dispatch.`, 'success');
+  const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
+  if (!roleCfg.canConfirmOrders) {
+    showAccessDeniedModal(
+      `Confirm Sales Contract #${quoteId}`,
+      roleCfg.name,
+      `Access Denied (HTTP 403): Only Sales Managers and Super Administrators have authorization to confirm sales orders. Director account has strict read-only access.`
+    );
+    return;
+  }
+  showToast(`Quotation confirmed by ${roleCfg.userName}. 50% advance invoice issued to unlock dispatch.`, 'success');
   switchView('orders');
 }
 
-function triggerWarrantyReminderCheck() {
-  showToast("Warranty Expiry Engine: 2 Active Warranties analyzed. 0 expiring within 30 days.", "info");
+function completeInstallation(instId) {
+  const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
+  if (!roleCfg.canCompleteInstallation) {
+    showAccessDeniedModal(
+      `Complete Installation #${instId}`,
+      roleCfg.name,
+      `Access Denied (HTTP 403): Project completion requires field technician, sales manager, or administrator authorization. Director account has strict read-only access.`
+    );
+    return;
+  }
+  const inst = SolarFlowState.installations.find(i => i.id === instId);
+  if (inst) {
+    inst.state = 'completed';
+    inst.customerAccepted = true;
+    showToast(`Installation ${inst.ref} marked Completed & Commissioned. Digital Warranties and Job Costing active.`, 'success');
+    renderInstallations();
+  }
 }
 
-// CSV Exporting
+function scheduleSurveyFromLead(leadId) {
+  const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
+  if (roleCfg.readOnly) {
+    showAccessDeniedModal(`Schedule Survey from Lead #${leadId}`, roleCfg.name, `Access Denied: Director / Investor role has strict read-only access.`);
+    return;
+  }
+  showToast(`Site survey scheduled for Lead #${leadId}. Assigned to Survey Crew.`, 'success');
+  switchView('surveys');
+}
+
+function triggerWarrantyReminderCheck() {
+  showToast("Warranty Expiry Engine: Active Warranties analyzed. 0 expiring within 30 days.", "info");
+}
+
 function exportTableToCSV(moduleName) {
   showToast(`Exported ${moduleName.toUpperCase()} records to CSV successfully.`, 'success');
+}
+
+// User Profile Modal (Shows active test account credentials)
+function showUserProfileModal() {
+  const roleKey = SolarFlowState.currentRole;
+  const cfg = SolarFlowState.roles[roleKey] || SolarFlowState.roles.admin;
+
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  const submitBtn = document.getElementById('modal-submit-btn');
+
+  if (modalTitle) modalTitle.textContent = `User Profile & Role Authorization Matrix`;
+  if (modalBody) {
+    modalBody.innerHTML = `
+      <div style="background-color:#F8FAF8; border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+          <div class="user-avatar-circle" style="width:48px; height:48px; font-size:18px;">${cfg.avatar}</div>
+          <div>
+            <h4 style="font-size:16px; font-weight:700; color:var(--text-main);">${cfg.userName}</h4>
+            <div style="font-size:12.5px; color:var(--text-muted);">${cfg.title} • <code>${cfg.login}</code></div>
+          </div>
+          <span class="status-pill pill-info" style="margin-left:auto;">${cfg.name}</span>
+        </div>
+        <p style="font-size:13px; color:var(--text-muted); margin:0;">${cfg.desc}</p>
+      </div>
+
+      <h4 style="font-size:13.5px; font-weight:700; margin-bottom:10px;">Switch to Another Test Account:</h4>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        ${Object.keys(SolarFlowState.roles).map(k => {
+          const r = SolarFlowState.roles[k];
+          const isCurrent = (k === roleKey);
+          return `
+            <button class="btn-action-sm" style="text-align:left; padding:8px 10px; display:flex; justify-content:space-between; align-items:center; ${isCurrent ? 'border-color:var(--primary); background:var(--primary-subtle);' : ''}" onclick="applyRole('${k}'); closeModal();">
+              <div>
+                <strong>${r.userName}</strong>
+                <div style="font-size:11px; color:var(--text-muted);">${r.login}</div>
+              </div>
+              <span class="status-pill ${isCurrent ? 'pill-success' : 'pill-neutral'}">${r.avatar}</span>
+            </button>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  if (submitBtn) {
+    submitBtn.textContent = "Close";
+    submitBtn.className = "btn-secondary-action";
+    submitBtn.onclick = () => closeModal();
+  }
+
+  openModal();
 }
 
 // ==========================================================================

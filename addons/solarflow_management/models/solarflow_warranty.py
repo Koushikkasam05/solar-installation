@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError, UserError, AccessError
 from dateutil.relativedelta import relativedelta
 import hashlib
 
@@ -181,3 +181,8 @@ class SolarFlowWarranty(models.Model):
                 user_id=wrnt.installation_id.supervisor_id.id or self.env.uid
             )
         return True
+
+    def unlink(self):
+        if not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            raise AccessError(_("Security Violation: Only Super Administrators have permission to delete Warranty records."))
+        return super(SolarFlowWarranty, self).unlink()

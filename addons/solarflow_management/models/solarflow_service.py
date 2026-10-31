@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError, UserError, AccessError
 
 class SolarFlowServiceTicket(models.Model):
     _name = 'solarflow.service.ticket'
@@ -260,6 +260,9 @@ class SolarFlowServiceTicket(models.Model):
 
     def action_close(self):
         """Rule 9: Record customer confirmation before closure."""
+        if self.env.user.has_group('solarflow_management.group_solarflow_director') and not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            raise AccessError(_("Security Violation: Director / Investor role has strict read-only access."))
+
         for ticket in self:
             if not ticket.customer_confirmation:
                 raise ValidationError(_("Customer Confirmation Sign-Off is required before closing Service Ticket '%s'.") % ticket.name)
@@ -267,6 +270,11 @@ class SolarFlowServiceTicket(models.Model):
                 'state': 'closed',
                 'customer_confirmation_date': fields.Date.today()
             })
+
+    def unlink(self):
+        if not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            raise AccessError(_("Security Violation: Only Super Administrators have permission to delete Service Tickets."))
+        return super(SolarFlowServiceTicket, self).unlink()
 
 
 class SolarFlowServicePartLine(models.Model):

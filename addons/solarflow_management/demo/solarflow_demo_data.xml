@@ -525,7 +525,71 @@
             <field name="estimated_other_expenses">100.0</field>
             <field name="other_expenses">120.0</field>
             <field name="leakage_threshold_pct">10.0</field>
-            <field name="notes">Unplanned trenching and copper price surge created cost overrun (+40%), exceeding 10% threshold.</field>
+        <!-- ================================================================= -->
+        <!-- 8 DEDICATED ROLE TEST ACCOUNTS                                     -->
+        <!-- ================================================================= -->
+        <!-- 1. Super Administrator -->
+        <record id="user_solarflow_test_admin" model="res.users">
+            <field name="name">Super Administrator</field>
+            <field name="login">admin@solarflow.erp</field>
+            <field name="email">admin@solarflow.erp</field>
+            <field name="groups_id" eval="[(6, 0, [ref('solarflow_management.group_solarflow_admin'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- 2. Sales Manager -->
+        <record id="user_solarflow_test_sales" model="res.users">
+            <field name="name">Vikram Sales Manager</field>
+            <field name="login">sales@solarflow.erp</field>
+            <field name="email">sales@solarflow.erp</field>
+            <field name="groups_id" eval="[(6, 0, [ref('solarflow_management.group_solarflow_sales_manager'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- 3. Survey Technician -->
+        <record id="user_solarflow_test_survey" model="res.users">
+            <field name="name">Arun Survey Tech</field>
+            <field name="login">survey@solarflow.erp</field>
+            <field name="email">survey@solarflow.erp</field>
+            <field name="groups_id" eval="[(6, 0, [ref('solarflow_management.group_solarflow_survey_technician'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- 4. Warehouse Manager -->
+        <record id="user_solarflow_test_warehouse" model="res.users">
+            <field name="name">Sanjay Warehouse Manager</field>
+            <field name="login">warehouse@solarflow.erp</field>
+            <field name="email">warehouse@solarflow.erp</field>
+            <field name="groups_id" eval="[(6, 0, [ref('solarflow_management.group_solarflow_warehouse_manager'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- 5. Installation Technician -->
+        <record id="user_solarflow_test_tech" model="res.users">
+            <field name="name">Ramesh Electrician</field>
+            <field name="login">tech@solarflow.erp</field>
+            <field name="email">tech@solarflow.erp</field>
+            <field name="groups_id" eval="[(6, 0, [ref('solarflow_management.group_solarflow_technician'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- 6. Support Manager -->
+        <record id="user_solarflow_test_support" model="res.users">
+            <field name="name">Neha Support Manager</field>
+            <field name="login">support@solarflow.erp</field>
+            <field name="email">support@solarflow.erp</field>
+            <field name="groups_id" eval="[(6, 0, [ref('solarflow_management.group_solarflow_support_manager'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- 7. Finance Manager -->
+        <record id="user_solarflow_test_finance" model="res.users">
+            <field name="name">Kavita Finance Manager</field>
+            <field name="login">finance@solarflow.erp</field>
+            <field name="email">finance@solarflow.erp</field>
+            <field name="groups_id" eval="[(6, 0, [ref('solarflow_management.group_solarflow_finance_manager'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- 8. Director / Investor -->
+        <record id="user_solarflow_test_director" model="res.users">
+            <field name="name">Aditya Director</field>
+            <field name="login">director@solarflow.erp</field>
+            <field name="email">director@solarflow.erp</field>
+            <field name="groups_id" eval="[(6, 0, [ref('solarflow_management.group_solarflow_director'), ref('base.group_user')])]"/>
         </record>
     </data>
 </odoo>

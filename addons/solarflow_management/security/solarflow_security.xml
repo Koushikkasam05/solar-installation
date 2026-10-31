@@ -63,7 +63,7 @@
         <field name="name">Director / Investor</field>
         <field name="category_id" ref="module_solarflow_category"/>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-        <field name="comment">Executive read-only access to business performance dashboards, revenue, EBITDA gross margins, project profitability, and operational reports.</field>
+        <field name="comment">Executive read-only access to business performance dashboards, revenue, EBITDA gross margins, project profitability, and operational reports. Cannot create, edit or delete business records.</field>
     </record>
 
     <!-- 8. Super Administrator (Full System Access) -->
@@ -131,14 +131,13 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Rule 3: Managers, Directors & Admins view all installations -->
-    <record id="rule_solarflow_installation_admin_director" model="ir.rule">
-        <field name="name">Administrator, Director &amp; Managers: View All Installations</field>
+    <!-- Rule 3: Managers & Admins view all installations (Full Access) -->
+    <record id="rule_solarflow_installation_admin_managers" model="ir.rule">
+        <field name="name">Administrator &amp; Managers: Manage All Installations</field>
         <field name="model_id" ref="model_solarflow_installation"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="groups" eval="[
             (4, ref('group_solarflow_admin')),
-            (4, ref('group_solarflow_director')),
             (4, ref('group_solarflow_sales_manager')),
             (4, ref('group_solarflow_support_manager')),
             (4, ref('group_solarflow_warehouse_manager')),
@@ -150,19 +149,42 @@
         <field name="perm_unlink" eval="True"/>
     </record>
 
-    <!-- Rule 4: Restrict Financial Costing & Profitability to Finance Manager, Director, and Admin -->
-    <record id="rule_solarflow_cost_finance_director_admin" model="ir.rule">
-        <field name="name">Project Costing: Finance, Director and Administrator Only</field>
+    <!-- Rule 4: Director: Read-Only Installations (Strictly No Write/Create/Unlink) -->
+    <record id="rule_solarflow_installation_director_readonly" model="ir.rule">
+        <field name="name">Director: View All Installations Read-Only</field>
+        <field name="model_id" ref="model_solarflow_installation"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_solarflow_director'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Rule 5: Project Costing: Finance Manager & Admin (Manage Access) -->
+    <record id="rule_solarflow_cost_finance_admin" model="ir.rule">
+        <field name="name">Project Costing: Finance and Administrator Manage</field>
         <field name="model_id" ref="model_solarflow_project_cost"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="groups" eval="[
             (4, ref('group_solarflow_finance_manager')),
-            (4, ref('group_solarflow_director')),
             (4, ref('group_solarflow_admin'))
         ]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Rule 6: Project Costing: Director Read-Only (Strictly No Write/Create/Unlink) -->
+    <record id="rule_solarflow_cost_director_readonly" model="ir.rule">
+        <field name="name">Project Costing: Director View Read-Only</field>
+        <field name="model_id" ref="model_solarflow_project_cost"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_solarflow_director'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
     </record>
 </odoo>

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError, ValidationError, AccessError
 
 class StockLot(models.Model):
     _inherit = 'stock.lot'
@@ -184,6 +184,11 @@ class StockPicking(models.Model):
         2. Require appropriate serial numbers before dispatch for tracked products.
         3. Updates allocated lots to dispatched and connects to installation and customer.
         """
+        # Security Enforcement: Only Warehouse Manager or Super Administrator
+        if not (self.env.user.has_group('solarflow_management.group_solarflow_warehouse_manager') or
+                self.env.user.has_group('solarflow_management.group_solarflow_admin')):
+            raise AccessError(_("Security Violation: Only Warehouse Managers or Super Administrators have permission to validate stock dispatches."))
+
         for picking in self:
             # Check Payment Policy for outgoing dispatches
             if picking.picking_type_code == 'outgoing' and picking.is_solar_dispatch:

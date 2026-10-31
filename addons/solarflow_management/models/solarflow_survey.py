@@ -220,10 +220,17 @@ class SolarFlowSurvey(models.Model):
                 rec.lead_id.survey_status = 'completed'
 
     def action_approve(self):
-        # Validation Rule 3: Only authorized users can approve
-        if not (self.env.user.has_group('solarflow_management.group_solarflow_engineer') or
-                self.env.user.has_group('solarflow_management.group_solarflow_manager')):
-            raise AccessError(_("Only a Solar Design Engineer or SolarFlow Manager is authorized to approve surveys."))
+        # Security Enforcement: Only Sales Manager or Super Administrator can approve surveys
+        is_authorized = (
+            self.env.user.has_group('solarflow_management.group_solarflow_sales_manager') or
+            self.env.user.has_group('solarflow_management.group_solarflow_admin') or
+            self.env.user.has_group('solarflow_management.group_solarflow_engineer') or
+            self.env.user.has_group('solarflow_management.group_solarflow_manager')
+        )
+        if self.env.user.has_group('solarflow_management.group_solarflow_survey_technician') and not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            is_authorized = False
+        if not is_authorized:
+            raise AccessError(_("Security Violation: Only a Sales Manager or Super Administrator is authorized to approve site surveys."))
 
         for rec in self:
             if rec.state != 'submitted':
@@ -250,10 +257,17 @@ class SolarFlowSurvey(models.Model):
         }
 
     def action_reject(self, reason=None):
-        # Validation Rule 3: Only authorized users can reject
-        if not (self.env.user.has_group('solarflow_management.group_solarflow_engineer') or
-                self.env.user.has_group('solarflow_management.group_solarflow_manager')):
-            raise AccessError(_("Only a Solar Design Engineer or SolarFlow Manager is authorized to reject surveys."))
+        # Security Enforcement: Only Sales Manager or Super Administrator can reject surveys
+        is_authorized = (
+            self.env.user.has_group('solarflow_management.group_solarflow_sales_manager') or
+            self.env.user.has_group('solarflow_management.group_solarflow_admin') or
+            self.env.user.has_group('solarflow_management.group_solarflow_engineer') or
+            self.env.user.has_group('solarflow_management.group_solarflow_manager')
+        )
+        if self.env.user.has_group('solarflow_management.group_solarflow_survey_technician') and not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            is_authorized = False
+        if not is_authorized:
+            raise AccessError(_("Security Violation: Only a Sales Manager or Super Administrator is authorized to reject site surveys."))
 
         for rec in self:
             rejection_text = reason or rec.rejection_reason
@@ -320,11 +334,20 @@ class SolarFlowSurvey(models.Model):
     def action_create_sales_quotation(self):
         """Validation Rule 4: Quotation must not proceed using an unapproved survey."""
         self.ensure_one()
+        if not (self.env.user.has_group('solarflow_management.group_solarflow_sales_manager') or
+                self.env.user.has_group('solarflow_management.group_solarflow_admin')):
+            raise AccessError(_("Security Violation: Only Sales Managers and Super Administrators can generate sales quotations from site surveys."))
+
         if self.state != 'approved':
             raise UserError(_("A quotation must not proceed using an unapproved survey! Please approve survey %s first.") % self.name)
 
         # Call the sales order creation helper
         return self.env['sale.order'].action_create_from_survey(self)
+
+    def unlink(self):
+        if not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            raise AccessError(_("Security Violation: Only Super Administrators have permission to delete Site Survey records."))
+        return super(SolarFlowSurvey, self).unlink()
 
 
 class SolarFlowBomLine(models.Model):

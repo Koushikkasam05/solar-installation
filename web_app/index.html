@@ -304,6 +304,11 @@
             </select>
           </div>
 
+          <!-- Executive Read-Only Indicator -->
+          <div id="executive-readonly-badge" class="status-pill pill-warning" style="display:none; font-weight:700; align-items:center; gap:4px;">
+            <span>🔒</span><span>Read-Only Executive Mode</span>
+          </div>
+
           <!-- User Profile Badge -->
           <div class="user-profile-badge" id="user-profile-badge" onclick="showUserProfileModal()">
             <div class="user-avatar-circle" id="user-avatar-initials">SA</div>
@@ -891,6 +896,7 @@
                       <th>Gross Profit</th>
                       <th>Gross Margin (%)</th>
                       <th>Budget Health</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody id="costing-table-body">

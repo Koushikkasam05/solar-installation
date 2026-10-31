@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError, UserError, AccessError
 
 class SolarFlowPackage(models.Model):
     _name = 'solarflow.package'
@@ -135,6 +135,11 @@ class SolarFlowPackage(models.Model):
                 pkg.max_subsidy_amount = 940.0
             else:
                 pkg.max_subsidy_amount = 940.0
+
+    def unlink(self):
+        if not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            raise AccessError(_("Security Violation: Only Super Administrators have permission to delete Solar Packages."))
+        return super(SolarFlowPackage, self).unlink()
 
 
 class SolarFlowPackageLine(models.Model):

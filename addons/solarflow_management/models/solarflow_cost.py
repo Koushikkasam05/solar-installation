@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError, UserError, AccessError
 
 class SolarFlowProjectCost(models.Model):
     _name = 'solarflow.project.cost'
@@ -230,6 +230,9 @@ class SolarFlowProjectCost(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        if not (self.env.user.has_group('solarflow_management.group_solarflow_finance_manager') or
+                self.env.user.has_group('solarflow_management.group_solarflow_admin')):
+            raise AccessError(_("Security Violation: Only Finance Managers and Super Administrators have permission to create Project Costing sheets."))
         for vals in vals_list:
             if vals.get('name', _('New')) == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('solarflow.project.cost.seq') or _('COST-NEW')
@@ -240,11 +243,19 @@ class SolarFlowProjectCost(models.Model):
         return records
 
     def write(self, vals):
+        if not (self.env.user.has_group('solarflow_management.group_solarflow_finance_manager') or
+                self.env.user.has_group('solarflow_management.group_solarflow_admin')):
+            raise AccessError(_("Security Violation: Only Finance Managers and Super Administrators have permission to modify Project Costing sheets."))
         res = super(SolarFlowProjectCost, self).write(vals)
         for rec in self:
             if rec.is_profit_leakage and not rec.alert_notified:
                 rec.action_notify_profit_leakage()
         return res
+
+    def unlink(self):
+        if not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            raise AccessError(_("Security Violation: Only Super Administrators have permission to delete Project Costing records."))
+        return super(SolarFlowProjectCost, self).unlink()
 
     # -------------------------------------------------------------------------
     # COMPUTATIONS

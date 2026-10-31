@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError, ValidationError, AccessError
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -176,6 +176,13 @@ class SaleOrder(models.Model):
         - Confirmed sales orders must have valid customer and product details.
         - Spawns Solar Installation record.
         """
+        # Security Enforcement: Only Sales Manager or Super Administrator
+        if not (self.env.user.has_group('solarflow_management.group_solarflow_sales_manager') or
+                self.env.user.has_group('solarflow_management.group_solarflow_admin')):
+            raise AccessError(_("Security Violation: Only Sales Managers or Super Administrators have permission to confirm sales orders."))
+        if self.env.user.has_group('solarflow_management.group_solarflow_director') and not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+            raise AccessError(_("Security Violation: Director / Investor role has strict read-only access and cannot confirm orders."))
+
         for order in self:
             if order.is_solar_order:
                 if not order.order_line:
@@ -209,6 +216,10 @@ class SaleOrder(models.Model):
     @api.model
     def action_create_from_survey(self, survey):
         """Creates a quotation from an approved site survey."""
+        if not (self.env.user.has_group('solarflow_management.group_solarflow_sales_manager') or
+                self.env.user.has_group('solarflow_management.group_solarflow_admin')):
+            raise AccessError(_("Security Violation: Only Sales Managers or Super Administrators can generate sales quotations."))
+
         if survey.state != 'approved':
             raise UserError(_("Survey must be approved before quotation creation."))
 
@@ -244,3 +255,9 @@ class SaleOrder(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def unlink(self):
+        for order in self:
+            if order.is_solar_order and not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
+                raise AccessError(_("Security Violation: Only Super Administrators have permission to delete SolarFlow Sales Orders."))
+        return super(SaleOrder, self).unlink()
