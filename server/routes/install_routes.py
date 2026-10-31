@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """SolarFlow ERP - Field Installations & 6-Phase QC Testing Routes."""
-from datetime import datetime
+from datetime import datetime, date
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
 from server.helpers import calculate_readiness_score, get_next_ref

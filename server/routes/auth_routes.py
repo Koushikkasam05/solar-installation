@@ -3,7 +3,7 @@
 import hashlib
 from flask import Blueprint, jsonify, request, session
 from server.database import query_db, execute_db
-from server.auth import login_required
+from server.auth import login_required, ROLE_PERMISSIONS
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -69,5 +69,8 @@ def current_user():
     })
 
 
-# ══════════════════════════════════════════════════════════════════════
-
+@auth_bp.route('/api/users', methods=['GET'])
+def get_users():
+    """Return system users list for User Management."""
+    rows = query_db("SELECT id, username, full_name, email, role, title, is_active, created_at FROM users ORDER BY id ASC")
+    return jsonify(rows)

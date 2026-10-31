@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """SolarFlow ERP - Customer Pipeline & CRM Leads Routes."""
-from datetime import datetime
+from datetime import datetime, date
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
 from server.helpers import calculate_recommended_capacity, calculate_feasibility_score, calculate_auto_bom, calculate_subsidy, get_next_ref

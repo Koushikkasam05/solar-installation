@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="app.css">
+  <!-- Chart.js CDN for interactive visual analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div id="solarflow-app">
@@ -18,7 +20,7 @@
       <div class="sidebar-header">
         <a href="javascript:void(0)" class="brand-wrapper" onclick="switchView('dashboard')">
           <div class="sun-badge-logo">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="5"></circle>
               <line x1="12" y1="1" x2="12" y2="3"></line>
               <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -44,181 +46,126 @@
         </button>
       </div>
 
-      <!-- Navigation Hierarchy Filtered By Role -->
+      <!-- Navigation Tree Filtered By Role -->
       <nav class="sidebar-nav" id="sidebar-nav-tree">
-        <!-- 1. Overview -->
-        <div class="nav-group-title">Overview</div>
+        <div class="nav-group-title">Main Navigation</div>
+
+        <!-- 1. Dashboard -->
         <button class="nav-link-btn active" data-view="dashboard" data-perm="all">
-          <span class="nav-icon">📊</span>
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+          </span>
           <span class="nav-text">Dashboard</span>
         </button>
 
-        <!-- 2. Sales Management -->
-        <div class="nav-group-title" data-group-perm="admin,sales,director">Sales Management</div>
-        <button class="nav-link-btn" data-view="enquiries" data-perm="admin,sales,director">
-          <span class="nav-icon">📩</span>
-          <span class="nav-text">Customer Enquiries</span>
-          <span class="badge-pill" id="badge-enquiries-count">4</span>
+        <!-- 2. Customers -->
+        <button class="nav-link-btn" data-view="customers" data-perm="all">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </span>
+          <span class="nav-text">Customers</span>
+          <span class="badge-pill" id="badge-customers-count">10</span>
         </button>
+
+        <!-- 3. Leads -->
         <button class="nav-link-btn" data-view="leads" data-perm="admin,sales,director">
-          <span class="nav-icon">🎯</span>
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+          </span>
           <span class="nav-text">Leads</span>
           <span class="badge-pill" id="badge-leads-count">10</span>
         </button>
-        <button class="nav-link-btn" data-view="followups" data-perm="admin,sales,director">
-          <span class="nav-icon">⏰</span>
-          <span class="nav-text">Follow-ups</span>
-          <span class="badge-pill" id="badge-followups-count">3</span>
-        </button>
-        <button class="nav-link-btn" data-view="surveys" data-perm="admin,sales,director">
-          <span class="nav-icon">📐</span>
+
+        <!-- 4. Site Surveys -->
+        <button class="nav-link-btn" data-view="surveys" data-perm="admin,sales,tech,director">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </span>
           <span class="nav-text">Site Surveys</span>
+          <span class="badge-pill" id="badge-surveys-count">5</span>
         </button>
+
+        <!-- 5. Solar Packages -->
+        <button class="nav-link-btn" data-view="packages" data-perm="admin,sales,warehouse,director">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>
+          </span>
+          <span class="nav-text">Solar Packages</span>
+        </button>
+
+        <!-- 6. Quotations -->
         <button class="nav-link-btn" data-view="quotations" data-perm="admin,sales,finance,director">
-          <span class="nav-icon">📑</span>
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </span>
           <span class="nav-text">Quotations</span>
         </button>
-        <button class="nav-link-btn" data-view="orders" data-perm="admin,sales,finance,director">
-          <span class="nav-icon">✅</span>
-          <span class="nav-text">Sales Orders</span>
-        </button>
 
-        <!-- 3. Operations -->
-        <div class="nav-group-title" data-group-perm="admin,tech,sales,director">Operations</div>
-        <button class="nav-link-btn" data-view="installations" data-perm="admin,tech,sales,director">
-          <span class="nav-icon">⚡</span>
-          <span class="nav-text">Installation Projects</span>
-        </button>
-        <button class="nav-link-btn" data-view="schedule" data-perm="admin,tech,sales,director">
-          <span class="nav-icon">📅</span>
-          <span class="nav-text">Installation Schedule</span>
-        </button>
-        <button class="nav-link-btn" data-view="technicians" data-perm="admin,sales,director">
-          <span class="nav-icon">👷</span>
-          <span class="nav-text">Technician Management</span>
-        </button>
-        <button class="nav-link-btn" data-view="inst_reports" data-perm="admin,tech,sales,director">
-          <span class="nav-icon">📋</span>
-          <span class="nav-text">Installation Reports</span>
-        </button>
-
-        <!-- 4. Inventory -->
-        <div class="nav-group-title" data-group-perm="admin,warehouse,director">Inventory</div>
-        <button class="nav-link-btn" data-view="products" data-perm="admin,warehouse,sales,director">
-          <span class="nav-icon">📦</span>
-          <span class="nav-text">Products</span>
-        </button>
-        <button class="nav-link-btn" data-view="categories" data-perm="admin,warehouse,director">
-          <span class="nav-icon">🗂️</span>
-          <span class="nav-text">Categories</span>
-        </button>
-        <button class="nav-link-btn" data-view="warehouses" data-perm="admin,warehouse,director">
-          <span class="nav-icon">🏢</span>
-          <span class="nav-text">Warehouses</span>
-        </button>
-        <button class="nav-link-btn" data-view="stock_avail" data-perm="admin,warehouse,director">
-          <span class="nav-icon">📊</span>
-          <span class="nav-text">Stock Availability</span>
-        </button>
-        <button class="nav-link-btn" data-view="stock_reservations" data-perm="admin,warehouse,sales,director">
-          <span class="nav-icon">🔒</span>
-          <span class="nav-text">Stock Reservations</span>
-        </button>
-        <button class="nav-link-btn" data-view="inventory" data-perm="admin,warehouse,tech,support,director">
-          <span class="nav-icon">🏷️</span>
-          <span class="nav-text">Serial Numbers</span>
-        </button>
-        <button class="nav-link-btn" data-view="dispatches" data-perm="admin,warehouse,director">
-          <span class="nav-icon">🚚</span>
-          <span class="nav-text">Dispatch</span>
-        </button>
-        <button class="nav-link-btn" data-view="stock_moves" data-perm="admin,warehouse,director">
-          <span class="nav-icon">🔄</span>
-          <span class="nav-text">Stock Movement History</span>
-        </button>
-
-        <!-- 5. After-Sales -->
-        <div class="nav-group-title" data-group-perm="admin,support,tech,director">After-Sales</div>
-        <button class="nav-link-btn" data-view="warranties" data-perm="admin,support,director">
-          <span class="nav-icon">🛡️</span>
-          <span class="nav-text">Warranty Management</span>
-        </button>
-        <button class="nav-link-btn" data-view="service" data-perm="admin,support,tech,director">
-          <span class="nav-icon">🔧</span>
-          <span class="nav-text">Service Tickets</span>
-        </button>
-        <button class="nav-link-btn" data-view="complaints" data-perm="admin,support,director">
-          <span class="nav-icon">⚠️</span>
-          <span class="nav-text">Customer Complaints</span>
-        </button>
-        <button class="nav-link-btn" data-view="service_history" data-perm="admin,support,director">
-          <span class="nav-icon">📜</span>
-          <span class="nav-text">Service History</span>
-        </button>
-
-        <!-- 6. Finance -->
-        <div class="nav-group-title" data-group-perm="admin,finance,director">Finance</div>
-        <button class="nav-link-btn" data-view="invoices" data-perm="admin,finance,director">
-          <span class="nav-icon">🧾</span>
-          <span class="nav-text">Invoices</span>
-        </button>
+        <!-- 7. Payments -->
         <button class="nav-link-btn" data-view="payments" data-perm="admin,finance,director">
-          <span class="nav-icon">💳</span>
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+          </span>
           <span class="nav-text">Payments</span>
         </button>
-        <button class="nav-link-btn" data-view="expenses" data-perm="admin,finance,director">
-          <span class="nav-icon">💸</span>
-          <span class="nav-text">Project Expenses</span>
+
+        <!-- 8. Inventory -->
+        <button class="nav-link-btn" data-view="inventory" data-perm="admin,warehouse,tech,director">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </span>
+          <span class="nav-text">Inventory</span>
+          <span class="badge-pill" id="badge-stock-count">12</span>
         </button>
+
+        <!-- 9. Installations -->
+        <button class="nav-link-btn" data-view="installations" data-perm="admin,tech,sales,director">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </span>
+          <span class="nav-text">Installations</span>
+          <span class="badge-pill" id="badge-inst-count">4</span>
+        </button>
+
+        <!-- 10. Warranties -->
+        <button class="nav-link-btn" data-view="warranties" data-perm="admin,support,director">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          </span>
+          <span class="nav-text">Warranties</span>
+        </button>
+
+        <!-- 11. Service Tickets -->
+        <button class="nav-link-btn" data-view="service" data-perm="admin,support,tech,director">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+          </span>
+          <span class="nav-text">Service Tickets</span>
+          <span class="badge-pill" id="badge-service-count">3</span>
+        </button>
+
+        <!-- 12. Project Costing -->
         <button class="nav-link-btn" data-view="costing" data-perm="admin,finance,director">
-          <span class="nav-icon">💰</span>
-          <span class="nav-text">Project Profitability</span>
-        </button>
-        <button class="nav-link-btn" data-view="fin_reports" data-perm="admin,finance,director">
-          <span class="nav-icon">📈</span>
-          <span class="nav-text">Financial Reports</span>
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          </span>
+          <span class="nav-text">Project Costing</span>
         </button>
 
-        <!-- 7. Analytics -->
-        <div class="nav-group-title" data-group-perm="admin,director">Analytics</div>
-        <button class="nav-link-btn" data-view="biz_reports" data-perm="admin,director">
-          <span class="nav-icon">📊</span>
-          <span class="nav-text">Business Reports</span>
-        </button>
-        <button class="nav-link-btn" data-view="op_reports" data-perm="admin,director">
-          <span class="nav-icon">⚙️</span>
-          <span class="nav-text">Operational Reports</span>
-        </button>
-        <button class="nav-link-btn" data-view="tech_perf" data-perm="admin,director">
-          <span class="nav-icon">🏅</span>
-          <span class="nav-text">Technician Performance</span>
-        </button>
-        <button class="nav-link-btn" data-view="sales_perf" data-perm="admin,director">
-          <span class="nav-icon">🎯</span>
-          <span class="nav-text">Sales Performance</span>
+        <!-- 13. Reports -->
+        <button class="nav-link-btn" data-view="reports" data-perm="admin,finance,director">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          </span>
+          <span class="nav-text">Reports</span>
         </button>
 
-        <!-- 8. Administration -->
-        <div class="nav-group-title" data-group-perm="admin">Administration</div>
+        <!-- 14. User Management -->
         <button class="nav-link-btn" data-view="users" data-perm="admin">
-          <span class="nav-icon">👥</span>
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </span>
           <span class="nav-text">User Management</span>
-        </button>
-        <button class="nav-link-btn" data-view="roles" data-perm="admin">
-          <span class="nav-icon">🔐</span>
-          <span class="nav-text">Roles &amp; Permissions</span>
-        </button>
-        <button class="nav-link-btn" data-view="company" data-perm="admin">
-          <span class="nav-icon">🏛️</span>
-          <span class="nav-text">Company Settings</span>
-        </button>
-        <button class="nav-link-btn" data-view="packages" data-perm="admin,sales">
-          <span class="nav-icon">📦</span>
-          <span class="nav-text">Solar Package Configuration</span>
-        </button>
-        <button class="nav-link-btn" data-view="settings" data-perm="admin">
-          <span class="nav-icon">⚙️</span>
-          <span class="nav-text">System Settings</span>
         </button>
       </nav>
 
@@ -232,7 +179,7 @@
     </aside>
 
     <!-- ==================================================================== -->
-    <!-- 2. APP MAIN WRAPPER & TOP NAVIGATION                                 -->
+    <!-- 2. MAIN WRAPPER & TOP NAVIGATION                                     -->
     <!-- ==================================================================== -->
     <div class="app-main-wrapper" id="app-main-wrapper">
       <!-- Fixed Enterprise Header -->
@@ -247,12 +194,12 @@
             <span class="breadcrumb-current" id="breadcrumb-page">Dashboard</span>
           </div>
 
-          <!-- Global Search Input with Instant Popover -->
+          <!-- Global Instant Search -->
           <div class="global-search-wrap">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="global-search-input" class="search-input" placeholder="Search customer, phone, serial, quotation..." autocomplete="off">
-            
-            <!-- Instant Search Dropdown Popover -->
+            <span class="search-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </span>
+            <input type="text" id="global-search-input" class="search-input" placeholder="Search customers, leads, serials, quotes..." autocomplete="off">
             <div id="search-results-popover" class="search-results-popover">
               <div id="search-results-content"></div>
             </div>
@@ -260,21 +207,14 @@
         </div>
 
         <div class="header-right">
-          <!-- 3kW Showcase Tour Button -->
-          <button class="btn-secondary-action" id="btn-showcase-tour" title="Run 1-Click Interactive 3kW Showcase Tour">
-            <span>▶ 3kW Turnkey Showcase</span>
+          <!-- 3kW Turnkey Showcase Tour Button -->
+          <button class="btn-secondary-action" id="btn-showcase-tour" title="1-Click Interactive 3kW Showcase Tour">
+            <span>▶ 3kW Showcase</span>
           </button>
 
-          <!-- Quick Create Action Menu -->
-          <div class="quick-create-dropdown">
-            <button class="btn-primary-action" id="btn-quick-create">
-              <span>+ Quick Create</span>
-            </button>
-          </div>
-
-          <!-- Notification Bell Trigger -->
+          <!-- Notification Bell -->
           <button class="notification-bell-btn" id="btn-notifications" title="System Notifications & Alerts">
-            <span>🔔</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
             <span class="notification-count-badge" id="notification-counter">3</span>
           </button>
 
@@ -284,12 +224,10 @@
               <span class="drawer-title">Notifications &amp; Alerts</span>
               <button class="drawer-mark-read" onclick="markAllNotificationsRead()">Mark all as read</button>
             </div>
-            <div class="drawer-item-list" id="drawer-notifications-list">
-              <!-- Dynamically Populated Notifications -->
-            </div>
+            <div class="drawer-item-list" id="drawer-notifications-list"></div>
           </div>
 
-          <!-- Active Role Switcher (RBAC Matrix) -->
+          <!-- Active Role Switcher (7 Roles) -->
           <div class="role-badge-selector">
             <label for="user-role-select">Role:</label>
             <select id="user-role-select" class="role-dropdown-select">
@@ -301,11 +239,6 @@
               <option value="finance">6. Finance Manager</option>
               <option value="director">7. Director / Investor (Read-Only)</option>
             </select>
-          </div>
-
-          <!-- Executive Read-Only Indicator -->
-          <div id="executive-readonly-badge" class="status-pill pill-warning" style="display:none; font-weight:700; align-items:center; gap:4px;">
-            <span>🔒</span><span>Read-Only Executive Mode</span>
           </div>
 
           <!-- User Profile Badge -->
@@ -322,80 +255,314 @@
       <!-- Toast Alerts Container -->
       <div id="toast-container" class="toast-bar"></div>
 
-      <!-- Main Content Container -->
+      <!-- Main Content Area -->
       <main class="main-content">
         <!-- ================================================================ -->
-        <!-- VIEW 1: DASHBOARD (ROLE-TAILORED WITH CHARTS)                     -->
+        <!-- VIEW 1: DASHBOARD (8 KPI CARDS, 4 CHARTS, ACTIVITIES & TASKS)     -->
         <!-- ================================================================ -->
         <section id="view-dashboard" class="view-section active">
-          <div id="role-dashboard-container">
-            <!-- Dynamically populated via JS based on Active Role -->
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Solar Energy ERP Command Center</h1>
+              <p class="section-description">Real-time performance monitoring across CRM leads, engineering surveys, installations, and gross margin analytics.</p>
+            </div>
+            <div class="header-action-group">
+              <span class="status-pill pill-success" id="db-sync-indicator">🟢 Live SQLite Sync</span>
+              <button class="btn-action-sm" onclick="reloadDashboardData()">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <!-- 8 KPI Cards Grid -->
+          <div class="kpi-cards-grid-8">
+            <!-- 1. Total Customers -->
+            <div class="kpi-card" onclick="switchView('customers')">
+              <div class="kpi-header">
+                <span class="kpi-title">Total Customers</span>
+                <div class="kpi-icon-pill pill-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpi-total-customers">10</span>
+              </div>
+              <div class="kpi-subtitle">
+                <span class="kpi-trend-up">↑ +2 this month</span> • Residential & Commercial
+              </div>
+            </div>
+
+            <!-- 2. Active Leads -->
+            <div class="kpi-card" onclick="switchView('leads')">
+              <div class="kpi-header">
+                <span class="kpi-title">Active Leads</span>
+                <div class="kpi-icon-pill pill-green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpi-active-leads">9</span>
+              </div>
+              <div class="kpi-subtitle">
+                <span class="kpi-trend-up">186.0 kW</span> • In sizing pipeline
+              </div>
+            </div>
+
+            <!-- 3. Pending Site Surveys -->
+            <div class="kpi-card" onclick="switchView('surveys')">
+              <div class="kpi-header">
+                <span class="kpi-title">Pending Surveys</span>
+                <div class="kpi-icon-pill pill-amber">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpi-pending-surveys">2</span>
+              </div>
+              <div class="kpi-subtitle">
+                <span class="kpi-trend-neutral">Shadow analysis</span> • Feasibility review
+              </div>
+            </div>
+
+            <!-- 4. Active Installations -->
+            <div class="kpi-card" onclick="switchView('installations')">
+              <div class="kpi-header">
+                <span class="kpi-title">Active Installs</span>
+                <div class="kpi-icon-pill pill-emerald">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpi-active-installations">3</span>
+              </div>
+              <div class="kpi-subtitle">
+                <span class="kpi-trend-up">Mobilized</span> • In progress / staging
+              </div>
+            </div>
+
+            <!-- 5. Completed Projects -->
+            <div class="kpi-card" onclick="switchView('installations')">
+              <div class="kpi-header">
+                <span class="kpi-title">Completed Projects</span>
+                <div class="kpi-icon-pill pill-teal">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpi-completed-projects">1</span>
+              </div>
+              <div class="kpi-subtitle">
+                <span class="kpi-trend-up">100% Commissioned</span> • Handover signed
+              </div>
+            </div>
+
+            <!-- 6. Warranty Records -->
+            <div class="kpi-card" onclick="switchView('warranties')">
+              <div class="kpi-header">
+                <span class="kpi-title">Warranty Records</span>
+                <div class="kpi-icon-pill pill-indigo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpi-warranty-records">4</span>
+              </div>
+              <div class="kpi-subtitle">
+                <span class="kpi-trend-up">SHA-256 Validated</span> • 25-Yr &amp; 10-Yr OEM
+              </div>
+            </div>
+
+            <!-- 7. Open Service Tickets -->
+            <div class="kpi-card" onclick="switchView('service')">
+              <div class="kpi-header">
+                <span class="kpi-title">Open Tickets</span>
+                <div class="kpi-icon-pill pill-rose">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpi-open-tickets">2</span>
+              </div>
+              <div class="kpi-subtitle">
+                <span class="kpi-trend-neutral">After-sales</span> • Warranty covered
+              </div>
+            </div>
+
+            <!-- 8. Total Revenue -->
+            <div class="kpi-card" onclick="switchView('costing')">
+              <div class="kpi-header">
+                <span class="kpi-title">Total Revenue</span>
+                <div class="kpi-icon-pill pill-green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpi-total-revenue">$48,250</span>
+              </div>
+              <div class="kpi-subtitle">
+                <span class="kpi-trend-up">Avg Margin 25.4%</span> • Healthy profitability
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Professional Charts Grid -->
+          <div class="charts-grid-4">
+            <!-- Chart 1: Monthly Solar Installations -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div class="chart-card-title-group">
+                  <span class="chart-card-title">Monthly Solar Installations</span>
+                  <span class="chart-card-subtitle">Commissioned Projects &amp; Capacity (kW)</span>
+                </div>
+                <span class="chart-badge-pill">Last 6 Months</span>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="chart-monthly-installations"></canvas>
+              </div>
+            </div>
+
+            <!-- Chart 2: Revenue Analytics -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div class="chart-card-title-group">
+                  <span class="chart-card-title">Revenue Analytics &amp; Profitability</span>
+                  <span class="chart-card-subtitle">Billed Revenue vs. EPC Delivery Cost ($ USD)</span>
+                </div>
+                <span class="chart-badge-pill">FY 2026</span>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="chart-revenue-analytics"></canvas>
+              </div>
+            </div>
+
+            <!-- Chart 3: Project Status Distribution -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div class="chart-card-title-group">
+                  <span class="chart-card-title">Project Status Distribution</span>
+                  <span class="chart-card-subtitle">Pipeline Conversion Funnel</span>
+                </div>
+                <span class="chart-badge-pill">Active Portfolio</span>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="chart-project-status"></canvas>
+              </div>
+            </div>
+
+            <!-- Chart 4: Installation Performance & Safety QC -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div class="chart-card-title-group">
+                  <span class="chart-card-title">Installation Performance &amp; Safety QC</span>
+                  <span class="chart-card-subtitle">Earth Pit Safety Target: &le; 5.0&Omega;</span>
+                </div>
+                <span class="status-pill pill-success">100% Passed</span>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="chart-installation-perf"></canvas>
+              </div>
+              <!-- Quality QC Metric Strip -->
+              <div class="perf-metrics-strip">
+                <div class="perf-metric-cell">
+                  <div class="perf-metric-label">Avg Earth Pit</div>
+                  <div class="perf-metric-val" style="color:var(--success-text);">2.4 &Omega;</div>
+                </div>
+                <div class="perf-metric-cell">
+                  <div class="perf-metric-label">Readiness Score</div>
+                  <div class="perf-metric-val" style="color:var(--primary-dark);">92/100</div>
+                </div>
+                <div class="perf-metric-cell">
+                  <div class="perf-metric-label">Avg Lead Time</div>
+                  <div class="perf-metric-val">3.4 Days</div>
+                </div>
+                <div class="perf-metric-cell">
+                  <div class="perf-metric-label">Client Rating</div>
+                  <div class="perf-metric-val">4.9 / 5.0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dual Column: Recent Activities & Pending Tasks -->
+          <div class="activities-tasks-grid">
+            <!-- Left: Recent System Activities Feed -->
+            <div class="feed-card">
+              <div class="feed-header">
+                <span class="feed-title">Recent System Activities</span>
+                <span class="status-pill pill-neutral">Live Feed</span>
+              </div>
+              <div class="feed-items-list" id="recent-activities-list">
+                <!-- Dynamically populated via JS -->
+              </div>
+            </div>
+
+            <!-- Right: Pending Urgent Tasks -->
+            <div class="feed-card">
+              <div class="feed-header">
+                <span class="feed-title">Pending Operational Tasks</span>
+                <span class="status-pill pill-warning">Action Required</span>
+              </div>
+              <div class="feed-items-list" id="pending-tasks-list">
+                <!-- Dynamically populated via JS -->
+              </div>
+            </div>
           </div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- VIEW 2: CUSTOMER ENQUIRIES                                        -->
+        <!-- VIEW 2: CUSTOMERS DIRECTORY                                      -->
         <!-- ================================================================ -->
-        <section id="view-enquiries" class="view-section">
+        <section id="view-customers" class="view-section">
           <div class="section-header-bar">
             <div>
-              <h1 class="section-title">Customer Enquiries &amp; Initial Contact</h1>
-              <p class="section-description">Incoming residential and commercial solar enquiries awaiting preliminary sizing and lead qualification.</p>
+              <h1 class="section-title">Customer Directory &amp; Accounts</h1>
+              <p class="section-description">Residential and commercial client accounts with sanctioned electrical load records.</p>
             </div>
-            <button class="btn-primary-action" onclick="showLeadModal()">+ New Customer Enquiry</button>
+            <button class="btn-primary-action" onclick="showCustomerModal()">+ New Customer</button>
           </div>
 
           <div class="table-panel">
             <div class="table-toolbar">
               <div class="table-filter-group">
                 <div class="table-inline-search">
-                  <span class="table-search-icon">🔍</span>
-                  <input type="text" id="search-enquiries" class="table-search-input" placeholder="Filter enquiries..." oninput="filterEnquiriesTable(this.value)">
+                  <span class="table-search-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+                  <input type="text" id="search-customers" class="table-search-input" placeholder="Search customer name, phone, city..." oninput="filterCustomersTable(this.value)">
                 </div>
-                <select class="filter-select" id="filter-enquiry-status" onchange="filterEnquiriesByStatus(this.value)">
-                  <option value="all">All Enquiries</option>
-                  <option value="qualified">Qualified</option>
-                  <option value="new">New Inquiries</option>
+                <select class="filter-select" id="filter-customer-type" onchange="filterCustomersByType(this.value)">
+                  <option value="all">All Property Types</option>
+                  <option value="Residential">Residential</option>
+                  <option value="Commercial">Commercial</option>
+                  <option value="Industrial">Industrial</option>
                 </select>
               </div>
-              <button class="btn-action-sm" onclick="exportTableToCSV('enquiries')">📥 Export CSV</button>
+              <button class="btn-action-sm" onclick="exportTableToCSV('customers')">📥 Export CSV</button>
             </div>
             <div class="table-responsive-wrapper">
               <table class="enterprise-data-table">
                 <thead>
                   <tr>
-                    <th>Enquiry Ref</th>
                     <th>Customer Name</th>
                     <th>Contact Phone</th>
-                    <th>Location</th>
+                    <th>Email Address</th>
+                    <th>Location / City</th>
                     <th>Property Type</th>
                     <th>Sanctioned Load</th>
-                    <th>Status</th>
+                    <th>Active Orders</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody id="enquiries-table-body">
-                  <!-- Populated via JS -->
-                </tbody>
+                <tbody id="customers-table-body"></tbody>
               </table>
-            </div>
-            <div class="table-pagination-footer">
-              <span>Showing 1 to 4 of 4 customer enquiries</span>
-              <div class="pagination-controls">
-                <button class="pagination-btn active">1</button>
-              </div>
             </div>
           </div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- VIEW 3: SOLAR LEADS (WITH LIST / KANBAN SWITCH)                   -->
+        <!-- VIEW 3: SOLAR LEADS & SIZING                                     -->
         <!-- ================================================================ -->
         <section id="view-leads" class="view-section">
           <div class="section-header-bar">
             <div>
               <h1 class="section-title">Solar Customer Leads &amp; Consumption Sizing</h1>
-              <p class="section-description">Qualified solar leads with monthly kWh consumption and mathematical sizing calculations.</p>
+              <p class="section-description">Monthly kWh consumption analysis, recommended capacity formula, and PM Surya Ghar eligibility.</p>
             </div>
             <div class="header-action-group">
               <div class="view-mode-toggle">
@@ -406,12 +573,11 @@
             </div>
           </div>
 
-          <!-- Table Mode -->
           <div id="leads-table-container" class="table-panel">
             <div class="table-toolbar">
               <div class="table-filter-group">
                 <div class="table-inline-search">
-                  <span class="table-search-icon">🔍</span>
+                  <span class="table-search-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
                   <input type="text" id="search-leads" class="table-search-input" placeholder="Search leads..." oninput="filterLeadsTable(this.value)">
                 </div>
                 <select class="filter-select" id="filter-lead-type" onchange="filterLeadsByType(this.value)">
@@ -435,65 +601,20 @@
                     <th>Recommended kW</th>
                     <th>System Type</th>
                     <th>Subsidy Eligibility</th>
-                    <th>Survey Status</th>
+                    <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody id="leads-table-body">
-                  <!-- Populated via JS -->
-                </tbody>
-              </table>
-            </div>
-            <div class="table-pagination-footer">
-              <span>Showing 1 to 10 of 10 solar leads</span>
-              <div class="pagination-controls">
-                <button class="pagination-btn active">1</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Kanban Mode -->
-          <div id="leads-kanban-container" class="kanban-board-container" style="display:none;">
-            <!-- Dynamically Populated Kanban Columns -->
-          </div>
-        </section>
-
-        <!-- ================================================================ -->
-        <!-- VIEW 4: FOLLOW-UPS                                               -->
-        <!-- ================================================================ -->
-        <section id="view-followups" class="view-section">
-          <div class="section-header-bar">
-            <div>
-              <h1 class="section-title">Sales Follow-ups &amp; Action Schedules</h1>
-              <p class="section-description">Scheduled customer calls, site visit follow-ups, and proposal reviews.</p>
-            </div>
-            <button class="btn-primary-action" onclick="showToast('Follow-up schedule modal opened.', 'info')">+ Schedule Follow-up</button>
-          </div>
-
-          <div class="table-panel">
-            <div class="table-responsive-wrapper">
-              <table class="enterprise-data-table">
-                <thead>
-                  <tr>
-                    <th>Due Date</th>
-                    <th>Customer</th>
-                    <th>Assigned Sales Rep</th>
-                    <th>Activity Type</th>
-                    <th>Summary / Next Steps</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="followups-table-body">
-                  <!-- Populated via JS -->
-                </tbody>
+                <tbody id="leads-table-body"></tbody>
               </table>
             </div>
           </div>
+
+          <div id="leads-kanban-container" class="kanban-board-container" style="display:none;"></div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- VIEW 5: SITE SURVEYS                                             -->
+        <!-- VIEW 4: SITE SURVEYS                                             -->
         <!-- ================================================================ -->
         <section id="view-surveys" class="view-section">
           <div class="section-header-bar">
@@ -506,16 +627,15 @@
                 <button class="toggle-btn active" id="surveys-view-list" onclick="setSurveysViewMode('list')">☰ Table</button>
                 <button class="toggle-btn" id="surveys-view-kanban" onclick="setSurveysViewMode('kanban')">▦ Kanban</button>
               </div>
-              <span class="status-pill pill-info">Engineering Rule: Valid Roof Area Required</span>
+              <button class="btn-primary-action" onclick="showSurveyModal()">+ New Site Survey</button>
             </div>
           </div>
 
-          <!-- Surveys Table -->
           <div id="surveys-table-container" class="table-panel">
             <div class="table-toolbar">
               <div class="table-filter-group">
                 <div class="table-inline-search">
-                  <span class="table-search-icon">🔍</span>
+                  <span class="table-search-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
                   <input type="text" id="search-surveys" class="table-search-input" placeholder="Search surveys..." oninput="filterSurveysTable(this.value)">
                 </div>
                 <select class="filter-select" id="filter-survey-status" onchange="filterSurveysByStatus(this.value)">
@@ -538,35 +658,42 @@
                     <th>Shadow-Free Area</th>
                     <th>Azimuth / Pitch</th>
                     <th>Cable Run</th>
-                    <th>Grid Phase</th>
                     <th>Sized Capacity</th>
-                    <th>Approval Status</th>
-                    <th>Engineering Action</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody id="surveys-table-body">
-                  <!-- Populated via JS -->
-                </tbody>
+                <tbody id="surveys-table-body"></tbody>
               </table>
             </div>
           </div>
 
-          <!-- Surveys Kanban -->
-          <div id="surveys-kanban-container" class="kanban-board-container" style="display:none;">
-            <!-- Dynamically Populated Kanban Columns -->
-          </div>
+          <div id="surveys-kanban-container" class="kanban-board-container" style="display:none;"></div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- VIEW 6: QUOTATIONS & SALES ORDERS                                -->
+        <!-- VIEW 5: SOLAR PACKAGES & DYNAMIC AUTO-BOM                        -->
+        <!-- ================================================================ -->
+        <section id="view-packages" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Solar Packages &amp; Dynamic Auto-BOM Engine</h1>
+              <p class="section-description">Standardized turnkey packages with itemized modules, smart inverters, and mounting hardware.</p>
+            </div>
+            <span class="status-pill pill-success">4 Standard Packages Active</span>
+          </div>
+          <div class="packages-grid" id="packages-cards-grid"></div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- VIEW 6: QUOTATIONS                                               -->
         <!-- ================================================================ -->
         <section id="view-quotations" class="view-section">
           <div class="section-header-bar">
             <div>
-              <h1 class="section-title">Turnkey Solar Quotations &amp; Proposals</h1>
-              <p class="section-description">Proposals generated from approved surveys with automatic BOM component pricing and PM Surya Ghar subsidy offsets.</p>
+              <h1 class="section-title">Turnkey Quotations &amp; Proposals</h1>
+              <p class="section-description">Proposals generated from approved surveys with automatic BOM pricing and PM Surya Ghar subsidy offset.</p>
             </div>
-            <button class="btn-secondary-action" onclick="showToast('Select an approved survey to generate quotation.', 'info')">+ Generate from Survey</button>
           </div>
 
           <div class="table-panel">
@@ -576,7 +703,6 @@
                   <tr>
                     <th>Quotation Ref</th>
                     <th>Customer</th>
-                    <th>Approved Survey</th>
                     <th>System Size</th>
                     <th>Gross Total</th>
                     <th>Subsidy Offset</th>
@@ -586,21 +712,22 @@
                     <th>Action</th>
                   </tr>
                 </thead>
-                <tbody id="quotations-table-body">
-                  <!-- Populated via JS -->
-                </tbody>
+                <tbody id="quotations-table-body"></tbody>
               </table>
             </div>
           </div>
         </section>
 
-        <section id="view-orders" class="view-section">
+        <!-- ================================================================ -->
+        <!-- VIEW 7: PAYMENTS & 50% ADVANCE DISPATCH GATE                     -->
+        <!-- ================================================================ -->
+        <section id="view-payments" class="view-section">
           <div class="section-header-bar">
             <div>
-              <h1 class="section-title">Confirmed Sales Orders &amp; 50% Advance Payment Gate</h1>
-              <p class="section-description">Signed turnkey EPC contracts with server-side validation enforcing 50% advance before warehouse dispatch.</p>
+              <h1 class="section-title">Customer Milestone Payments &amp; 50% Advance Gate</h1>
+              <p class="section-description">Enforces minimum 50% upfront payment collection before warehouse equipment dispatch is unlocked.</p>
             </div>
-            <span class="status-pill pill-warning">Critical Rule: Dispatch requires &ge;50% Advance</span>
+            <span class="status-pill pill-warning">Rule: &ge;50% Advance Unlocks Dispatch</span>
           </div>
 
           <div class="table-panel">
@@ -610,111 +737,42 @@
                   <tr>
                     <th>Order Ref</th>
                     <th>Customer</th>
-                    <th>System</th>
-                    <th>Gross Total</th>
-                    <th>Subsidy</th>
                     <th>Net Payable</th>
                     <th>Advance Req. (50%)</th>
                     <th>Amount Paid</th>
-                    <th>Payment Status</th>
+                    <th>Payment Progress</th>
                     <th>Dispatch Gate</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody id="orders-table-body">
-                  <!-- Populated via JS -->
-                </tbody>
+                <tbody id="payments-table-body"></tbody>
               </table>
             </div>
           </div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- VIEW 7: SOLAR PACKAGES & DYNAMIC AUTO-BOM                        -->
-        <!-- ================================================================ -->
-        <section id="view-packages" class="view-section">
-          <div class="section-header-bar">
-            <div>
-              <h1 class="section-title">Solar Packages &amp; Dynamic Auto-BOM Engine</h1>
-              <p class="section-description">Standardized residential and commercial solar packages with sum-of-components BOM calculations.</p>
-            </div>
-            <span class="status-pill pill-success">8 Configured Packages Active</span>
-          </div>
-
-          <div class="packages-grid" id="packages-cards-grid">
-            <!-- Populated via JS -->
-          </div>
-        </section>
-
-        <!-- ================================================================ -->
-        <!-- VIEW 8: INSTALLATION PROJECTS & COMMISSIONING QC                  -->
-        <!-- ================================================================ -->
-        <section id="view-installations" class="view-section">
-          <div class="section-header-bar">
-            <div>
-              <h1 class="section-title">Field Installation Projects &amp; Commissioning QC</h1>
-              <p class="section-description">Execution tracking with Installation Readiness Score (100 pts) and Electrical Safety Gate (Earth Pit &le; 5.0&Omega;).</p>
-            </div>
-            <span class="status-pill pill-danger">Safety Limit: Earth Pit &le; 5.0 &Omega;</span>
-          </div>
-
-          <div id="installations-container">
-            <!-- Populated via JS with detailed project cards and readiness score gauges -->
-          </div>
-        </section>
-
-        <section id="view-schedule" class="view-section">
-          <div class="section-header-bar">
-            <div>
-              <h1 class="section-title">Field Crew Installation Schedule</h1>
-              <p class="section-description">Site mobilization calendar, technician assignments, and planned energization dates.</p>
-            </div>
-          </div>
-
-          <div class="table-panel">
-            <div class="table-responsive-wrapper">
-              <table class="enterprise-data-table">
-                <thead>
-                  <tr>
-                    <th>Scheduled Date</th>
-                    <th>Installation Ref</th>
-                    <th>Customer Site</th>
-                    <th>Capacity</th>
-                    <th>Lead Electrician</th>
-                    <th>Crew Size</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="schedule-table-body">
-                  <!-- Populated via JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <!-- ================================================================ -->
-        <!-- VIEW 9: INVENTORY & SERIAL TRACKING                              -->
+        <!-- VIEW 8: INVENTORY & SERIAL TRACKING                              -->
         <!-- ================================================================ -->
         <section id="view-inventory" class="view-section">
           <div class="section-header-bar">
             <div>
               <h1 class="section-title">Serialized Equipment &amp; Single-Allocation Constraint</h1>
-              <p class="section-description">Barcode tracking for PV modules, smart inverters, and battery banks across warehouse storage, dispatch, and commissioning.</p>
+              <p class="section-description">Barcode serial tracking for PV modules, smart inverters, and battery banks across warehouse storage.</p>
             </div>
-            <span class="status-pill pill-info">Constraint: Single Active Allocation Enforced</span>
+            <span class="status-pill pill-info">Constraint: Single Active Allocation</span>
           </div>
 
           <div class="table-panel">
             <div class="table-toolbar">
               <div class="table-filter-group">
                 <div class="table-inline-search">
-                  <span class="table-search-icon">🔍</span>
+                  <span class="table-search-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
                   <input type="text" id="search-inventory" class="table-search-input" placeholder="Search serial numbers..." oninput="filterInventoryTable(this.value)">
                 </div>
                 <select class="filter-select" id="filter-serial-status" onchange="filterInventoryByStatus(this.value)">
                   <option value="all">All Statuses</option>
-                  <option value="installed">Mounted &amp; Installed</option>
+                  <option value="allocated">Allocated to Project</option>
                   <option value="available">In Warehouse (Available)</option>
                 </select>
               </div>
@@ -725,41 +783,50 @@
                   <tr>
                     <th>Serial Number / Barcode</th>
                     <th>Component Product</th>
-                    <th>OEM Manufacturer</th>
+                    <th>Category</th>
+                    <th>Warehouse Location</th>
                     <th>Allocation Status</th>
                     <th>Allocated Project</th>
-                    <th>Customer Owner</th>
-                    <th>Dispatch Date</th>
-                    <th>Warranty Term</th>
-                    <th>Lifecycle Timeline</th>
+                    <th>Received Date</th>
                   </tr>
                 </thead>
-                <tbody id="inventory-table-body">
-                  <!-- Populated via JS -->
-                </tbody>
+                <tbody id="inventory-table-body"></tbody>
               </table>
             </div>
           </div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- VIEW 10: DIGITAL WARRANTIES & SHA-256 CERTIFICATES               -->
+        <!-- VIEW 9: INSTALLATIONS & 6-PHASE QC                               -->
+        <!-- ================================================================ -->
+        <section id="view-installations" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Field Installation Projects &amp; Commissioning QC</h1>
+              <p class="section-description">Execution tracking with Installation Readiness Score (100 pts) and Electrical Safety Gate (Earth Pit &le; 5.0&Omega;).</p>
+            </div>
+            <span class="status-pill pill-danger">Safety Limit: Earth Pit &le; 5.0&Omega;</span>
+          </div>
+          <div class="installations-grid" id="installations-container"></div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- VIEW 10: WARRANTIES & SHA-256 CERTIFICATES                       -->
         <!-- ================================================================ -->
         <section id="view-warranties" class="view-section">
           <div class="section-header-bar">
             <div>
               <h1 class="section-title">Digital Warranty Certificates &amp; SHA-256 Verification</h1>
-              <p class="section-description">Automated warranty activation upon customer sign-off: Inverter (2-Yr), Battery (2-Yr), Solar Panel (20-Yr).</p>
+              <p class="section-description">Automated warranty activation upon customer sign-off: PV Modules (25-Yr), Inverters (10-Yr), Batteries (5-Yr).</p>
             </div>
-            <button class="btn-primary-action" onclick="triggerWarrantyReminderCheck()">⚡ Check 30-Day Expiry Engine</button>
           </div>
 
-          <!-- Digital Warranty Certificate Showcase Card -->
-          <div class="warranty-cert-card" id="warranty-cert-preview">
+          <!-- Digital Warranty Certificate Showcase -->
+          <div class="warranty-cert-card">
             <div class="cert-seal">🛡️</div>
             <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); font-weight:700;">Official Certificate of Coverage</div>
-            <h2 style="font-size:20px; color:var(--primary); margin:6px 0 2px 0;">Solar Inverter Replacement Warranty</h2>
-            <div style="font-size:12.5px; color:var(--text-muted);">Growatt 3kW Dual MPPT Grid-Tie Inverter • Serial: <strong>INV-GROWATT-3KW-9901</strong></div>
+            <h2 style="font-size:20px; color:var(--text-main); margin:6px 0 2px 0;">Solar Inverter Replacement Warranty</h2>
+            <div style="font-size:12.5px; color:var(--text-muted);">Growatt 3kW Dual MPPT Grid-Tie Inverter • Serial: <strong>GRW3K-2026-INV01</strong></div>
             
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-top:16px;">
               <div>
@@ -767,8 +834,8 @@
                 <strong style="font-size:13px;">Dr. Rajesh Sharma</strong>
               </div>
               <div>
-                <span style="font-size:11px; color:var(--text-muted); display:block;">Effective Period:</span>
-                <strong style="font-size:13px;">2026-10-31 to 2028-10-31 (24 Mo)</strong>
+                <span style="font-size:11px; color:var(--text-muted); display:block;">Coverage Term:</span>
+                <strong style="font-size:13px;">10 Years (2026-10-26 to 2036-10-26)</strong>
               </div>
               <div>
                 <span style="font-size:11px; color:var(--text-muted); display:block;">OEM Warranty Partner:</span>
@@ -777,7 +844,7 @@
             </div>
 
             <div class="cert-token-box">
-              <span>SHA-256 Token: <strong>A89F34CD10BC91EAF998231B99451</strong></span>
+              <span>SHA-256 Token: <strong>7c5b169a9e334a1bc7e49f50e7b89d42...</strong></span>
               <span class="status-pill pill-success">✓ Cryptographically Valid</span>
             </div>
           </div>
@@ -790,29 +857,27 @@
                     <th>Certificate Ref</th>
                     <th>Customer</th>
                     <th>Equipment Serial</th>
-                    <th>Product</th>
-                    <th>Coverage Term</th>
+                    <th>Equipment Type</th>
+                    <th>Coverage (Yrs)</th>
                     <th>Start Date</th>
                     <th>Expiry Date</th>
-                    <th>SHA-256 Token</th>
+                    <th>Verification</th>
                     <th>Status</th>
                   </tr>
                 </thead>
-                <tbody id="warranties-table-body">
-                  <!-- Populated via JS -->
-                </tbody>
+                <tbody id="warranties-table-body"></tbody>
               </table>
             </div>
           </div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- VIEW 11: AFTER-SALES SERVICE & COMPLAINTS                        -->
+        <!-- VIEW 11: AFTER-SALES SERVICE TICKETS                             -->
         <!-- ================================================================ -->
         <section id="view-service" class="view-section">
           <div class="section-header-bar">
             <div>
-              <h1 class="section-title">After-Sales Service Management &amp; Covered Repair Billing</h1>
+              <h1 class="section-title">After-Sales Service Management &amp; Warranty Billing</h1>
               <p class="section-description">Serial lookup automatically checks warranty status. Covered OEM faults bill $0.00; non-covered bill parts + labour.</p>
             </div>
             <div class="header-action-group">
@@ -820,11 +885,10 @@
                 <button class="toggle-btn active" id="service-view-list" onclick="setServiceViewMode('list')">☰ Table</button>
                 <button class="toggle-btn" id="service-view-kanban" onclick="setServiceViewMode('kanban')">▦ Kanban</button>
               </div>
-              <button class="btn-primary-action" onclick="showTicketModal()">+ Log Service Complaint</button>
+              <button class="btn-primary-action" onclick="showTicketModal()">+ Log Service Ticket</button>
             </div>
           </div>
 
-          <!-- Table View -->
           <div id="service-table-container" class="table-panel">
             <div class="table-responsive-wrapper">
               <table class="enterprise-data-table">
@@ -832,32 +896,25 @@
                   <tr>
                     <th>Ticket Ref</th>
                     <th>Customer</th>
-                    <th>Equipment Serial</th>
-                    <th>Fault Category</th>
+                    <th>Serial Number</th>
+                    <th>Issue Description</th>
                     <th>Technician</th>
-                    <th>Repair Cost</th>
-                    <th>Warranty Coverage</th>
+                    <th>Warranty Covered</th>
                     <th>Customer Charge</th>
-                    <th>Sign-off</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody id="service-table-body">
-                  <!-- Populated via JS -->
-                </tbody>
+                <tbody id="service-table-body"></tbody>
               </table>
             </div>
           </div>
 
-          <!-- Kanban View -->
-          <div id="service-kanban-container" class="kanban-board-container" style="display:none;">
-            <!-- Dynamically Populated Kanban Columns -->
-          </div>
+          <div id="service-kanban-container" class="kanban-board-container" style="display:none;"></div>
         </section>
 
         <!-- ================================================================ -->
-        <!-- VIEW 12: FINANCE & JOB COSTING PROFITABILITY                     -->
+        <!-- VIEW 12: PROJECT COSTING & PROFITABILITY                         -->
         <!-- ================================================================ -->
         <section id="view-costing" class="view-section">
           <div class="section-header-bar">
@@ -868,15 +925,6 @@
             <span class="status-pill pill-danger">Alert Gate: &gt;10% Cost Overrun</span>
           </div>
 
-          <!-- Confidential banner for non-authorized roles -->
-          <div id="costing-restricted-banner" class="confidential-financial-banner" style="display:none;">
-            <div class="banner-shield-icon">🔒</div>
-            <div>
-              <div class="banner-title">Confidential Financial Data Restricted</div>
-              <div class="banner-text">Job costing sheets, contractor labour margins, and company gross profit are restricted to <strong>Super Administrator</strong>, <strong>Finance Manager</strong>, and <strong>Director</strong>.</div>
-            </div>
-          </div>
-
           <div id="costing-content-panel">
             <div class="table-panel">
               <div class="table-responsive-wrapper">
@@ -884,23 +932,19 @@
                   <thead>
                     <tr>
                       <th>Cost Sheet Ref</th>
-                      <th>Project Site</th>
-                      <th>Customer</th>
-                      <th>Est. Revenue</th>
-                      <th>Actual Revenue</th>
-                      <th>Est. Cost</th>
-                      <th>Actual Cost</th>
-                      <th>Variance</th>
-                      <th>Overrun (%)</th>
+                      <th>Customer Site</th>
+                      <th>Revenue</th>
+                      <th>Material Cost</th>
+                      <th>Labour Cost</th>
+                      <th>Transport</th>
+                      <th>Total Cost</th>
                       <th>Gross Profit</th>
-                      <th>Gross Margin (%)</th>
-                      <th>Budget Health</th>
+                      <th>Margin (%)</th>
+                      <th>Margin Health</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
-                  <tbody id="costing-table-body">
-                    <!-- Populated via JS -->
-                  </tbody>
+                  <tbody id="costing-table-body"></tbody>
                 </table>
               </div>
             </div>
@@ -908,9 +952,9 @@
         </section>
 
         <!-- ================================================================ -->
-        <!-- VIEW 13: BUSINESS REPORTS & ANALYTICS                            -->
+        <!-- VIEW 13: REPORTS & ANALYTICS                                     -->
         <!-- ================================================================ -->
-        <section id="view-biz_reports" class="view-section">
+        <section id="view-reports" class="view-section">
           <div class="section-header-bar">
             <div>
               <h1 class="section-title">Executive Business &amp; Financial Analytics</h1>
@@ -919,76 +963,39 @@
             <button class="btn-action-sm" onclick="exportTableToCSV('reports')">📥 Export Executive Pack</button>
           </div>
 
-          <div class="chart-container-card">
-            <div class="chart-header">
-              <div class="chart-title">Quarterly Revenue vs. Realized EPC Costs ($ USD)</div>
-              <div class="chart-legend">
-                <div class="legend-item"><span class="legend-dot dot-primary"></span> Billed Revenue</div>
-                <div class="legend-item"><span class="legend-dot dot-secondary"></span> EPC Cost of Delivery</div>
-                <div class="legend-item"><span class="legend-dot dot-amber"></span> Gross Profit</div>
-              </div>
-            </div>
-            <div class="bar-chart-visual">
-              <div class="bar-col">
-                <div class="bar-pill" style="height:45%;">
-                  <span class="bar-tooltip">$1,200</span>
-                </div>
-                <span class="bar-label">Q1 (Jan-Mar)</span>
-              </div>
-              <div class="bar-col">
-                <div class="bar-pill" style="height:65%;">
-                  <span class="bar-tooltip">$1,850</span>
-                </div>
-                <span class="bar-label">Q2 (Apr-Jun)</span>
-              </div>
-              <div class="bar-col">
-                <div class="bar-pill" style="height:85%;">
-                  <span class="bar-tooltip">$2,450</span>
-                </div>
-                <span class="bar-label">Q3 (Jul-Sep)</span>
-              </div>
-              <div class="bar-col">
-                <div class="bar-pill" style="height:100%;">
-                  <span class="bar-tooltip">$3,000</span>
-                </div>
-                <span class="bar-label">Q4 (Oct-Dec)</span>
-              </div>
-            </div>
-          </div>
-
           <!-- Technician Performance Leaderboard -->
-          <div class="content-card">
-            <div class="card-title-bar">
-              <div class="card-title">Technician Crew Quality &amp; Safety Leaderboard</div>
-              <span class="status-pill pill-success">Target: Earth &le; 5.0 &Omega;</span>
+          <div class="table-panel">
+            <div class="table-toolbar">
+              <span style="font-weight:700; color:var(--text-main);">Technician Crew Quality &amp; Safety Compliance</span>
+              <span class="status-pill pill-success">Target: Earth &le; 5.0&Omega;</span>
             </div>
             <div class="table-responsive-wrapper">
               <table class="enterprise-data-table">
                 <thead>
                   <tr>
                     <th>Lead Electrician</th>
-                    <th>Commissioned Sites</th>
+                    <th>Assigned Sites</th>
                     <th>Average Earth Pit</th>
-                    <th>Insulation Megger</th>
                     <th>Customer Rating</th>
                     <th>Safety Compliance</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <td><strong>Ramesh Electrician (Senior Lead)</strong></td>
-                    <td>1 Project</td>
+                    <td>3 Projects</td>
                     <td><strong style="color:var(--success-text);">2.4 &Omega;</strong></td>
-                    <td>25.0 M&Omega;</td>
-                    <td>⭐⭐⭐⭐⭐ 5.0</td>
+                    <td>⭐⭐⭐⭐⭐ 4.9</td>
                     <td><span class="status-pill pill-success">100% Passed</span></td>
+                    <td><span class="status-pill pill-info">Active On-Site</span></td>
                   </tr>
                   <tr>
                     <td><strong>Suresh Technician</strong></td>
-                    <td>0 Projects</td>
-                    <td>Pending</td>
-                    <td>Pending</td>
-                    <td>New Crew</td>
+                    <td>1 Project</td>
+                    <td><strong style="color:var(--success-text);">2.8 &Omega;</strong></td>
+                    <td>⭐⭐⭐⭐⭐ 4.8</td>
+                    <td><span class="status-pill pill-success">100% Passed</span></td>
                     <td><span class="status-pill pill-neutral">Standby</span></td>
                   </tr>
                 </tbody>
@@ -997,7 +1004,39 @@
           </div>
         </section>
 
-        <!-- General Fallback Section for other submenus -->
+        <!-- ================================================================ -->
+        <!-- VIEW 14: USER MANAGEMENT                                         -->
+        <!-- ================================================================ -->
+        <section id="view-users" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">System Users &amp; Role-Based Access Control</h1>
+              <p class="section-description">7-Role security matrix: Super Admin, Sales Manager, Warehouse, Technician, Support, Finance, and Director.</p>
+            </div>
+            <button class="btn-primary-action" onclick="showUserModal()">+ Add System User</button>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>System Role</th>
+                    <th>Job Title</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="users-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- General Fallback Section -->
         <section id="view-generic-panel" class="view-section">
           <div class="section-header-bar">
             <div>
@@ -1005,9 +1044,7 @@
               <p class="section-description" id="generic-panel-desc">Operational records for this module.</p>
             </div>
           </div>
-          <div class="content-card" id="generic-panel-content">
-            <!-- Populated via JS -->
-          </div>
+          <div class="table-panel" id="generic-panel-content" style="padding:24px;"></div>
         </section>
       </main>
     </div>
@@ -1021,9 +1058,7 @@
           <h3 class="modal-dialog-title" id="modal-title">Modal Title</h3>
           <button class="modal-close-btn" onclick="closeModal()">&times;</button>
         </div>
-        <div class="modal-content-body" id="modal-body">
-          <!-- Dynamically Injected Form -->
-        </div>
+        <div class="modal-content-body" id="modal-body"></div>
         <div class="modal-footer-bar" id="modal-footer">
           <button class="btn-secondary-action" onclick="closeModal()">Cancel</button>
           <button class="btn-primary-action" id="modal-submit-btn">Submit</button>

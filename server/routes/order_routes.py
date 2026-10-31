@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """SolarFlow ERP - Commercial Quotations & Sales Orders Routes."""
 import json
-from datetime import datetime
+from datetime import datetime, date
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
-from server.helpers import get_next_ref
+from server.helpers import get_next_ref, calculate_subsidy
 
 order_bp = Blueprint('orders', __name__)
 
@@ -80,6 +80,30 @@ def record_payment(oid):
 def confirm_order(oid):
     execute_db("UPDATE orders SET status = 'confirmed' WHERE id = ? AND status = 'draft'", [oid])
     return jsonify({'message': 'Order confirmed'})
+
+
+@order_bp.route('/api/quotations', methods=['GET'])
+def get_quotations():
+    """Return all quotations and proposals."""
+    rows = query_db("""SELECT o.*, c.name as customer_name, c.phone as customer_phone,
+                              c.email as customer_email, p.name as package_name
+                       FROM orders o
+                       JOIN customers c ON o.customer_id = c.id
+                       LEFT JOIN packages p ON o.package_id = p.id
+                       ORDER BY o.id DESC""")
+    return jsonify(rows)
+
+
+@order_bp.route('/api/payments', methods=['GET'])
+def get_payments():
+    """Return payments overview."""
+    rows = query_db("""SELECT o.id, o.ref as order_ref, o.net_price, o.amount_paid,
+                              o.payment_percent, o.dispatch_unlocked, o.status,
+                              o.order_date, c.name as customer_name, c.phone as customer_phone
+                       FROM orders o
+                       JOIN customers c ON o.customer_id = c.id
+                       ORDER BY o.id DESC""")
+    return jsonify(rows)
 
 
 # ══════════════════════════════════════════════════════════════════════

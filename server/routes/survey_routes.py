@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """SolarFlow ERP - Site Survey Feasibility & BOM Routes."""
 import json
-from datetime import datetime
+from datetime import datetime, date
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
 from server.helpers import calculate_auto_bom, generate_auto_bom, get_next_ref
