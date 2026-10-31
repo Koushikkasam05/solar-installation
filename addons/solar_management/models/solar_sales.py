@@ -46,13 +46,13 @@ class SaleOrder(models.Model):
             if not order.subsidy_eligible:
                 order.subsidy_amount = 0.0
                 continue
-            cap = order.system_capacity_kw
+            cap = max(float(order.system_capacity_kw or 0.0), 0.0)
             if cap <= 2.0:
-                order.subsidy_amount = cap * 360.0
+                order.subsidy_amount = cap * 30000.0
             elif cap <= 3.0:
-                order.subsidy_amount = 940.0
+                order.subsidy_amount = 60000.0 + (cap - 2.0) * 18000.0
             else:
-                order.subsidy_amount = 940.0
+                order.subsidy_amount = 78000.0
 
     @api.depends('amount_total', 'subsidy_amount', 'system_capacity_kw', 'grid_tariff_rate')
     def _compute_solar_financials(self):

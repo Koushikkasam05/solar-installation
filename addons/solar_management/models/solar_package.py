@@ -55,13 +55,13 @@ class SolarPackage(models.Model):
             if not pkg.subsidy_eligible:
                 pkg.max_subsidy_amount = 0.0
                 continue
-            # PM Surya Ghar scheme structure:
-            # Up to 2 kW: ~30,000 / kW (or equivalent ~$360/kW)
-            # 3 kW and above: capped at ~78,000 (or equivalent ~$940 max)
-            cap = pkg.system_capacity_kw
+            # PM Surya Ghar subsidy structure for rooftop solar in India:
+            # Up to 2 kW: ₹30,000 per kW; 2-3 kW: ₹18,000 per kW for the additional capacity;
+            # 3 kW and above: capped at ₹78,000.
+            cap = max(float(pkg.system_capacity_kw or 0.0), 0.0)
             if cap <= 2.0:
-                pkg.max_subsidy_amount = round(cap * 360.0, 2)
+                pkg.max_subsidy_amount = round(cap * 30000.0, 2)
             elif cap <= 3.0:
-                pkg.max_subsidy_amount = 940.0
+                pkg.max_subsidy_amount = 60000.0 + (cap - 2.0) * 18000.0
             else:
-                pkg.max_subsidy_amount = 940.0 # Rooftop residential cap
+                pkg.max_subsidy_amount = 78000.0
