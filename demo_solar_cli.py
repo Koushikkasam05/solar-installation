@@ -105,7 +105,9 @@ def run_simulation():
     # Stage 8: Sales & Payment Management
     stage_header(8, "Sales Quotation, Subsidy Offset & Milestone Billing")
     turnkey_price = 3400.0
-    subsidy = 940.0 # PM Surya Ghar Scheme Tier
+    # PM Surya Ghar subsidy structure for rooftop solar: ₹30k/kW up to 2 kW,
+    # ₹18k/kW for the incremental capacity between 2-3 kW, capped at ₹78,000.
+    subsidy = 78000.0 if rec_cap >= 3.0 else (rec_cap * 30000.0 if rec_cap <= 2.0 else 60000.0 + (rec_cap - 2.0) * 18000.0)
     net_customer_cost = turnkey_price - subsidy
     annual_generation = rec_cap * 1450.0 # units/yr
     annual_savings = annual_generation * 0.12 # $0.12/kWh

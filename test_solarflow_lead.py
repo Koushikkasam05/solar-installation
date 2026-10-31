@@ -130,7 +130,6 @@ class TestSolarFlowLeadManagementSuite(unittest.TestCase):
             MockLead(9, "Lead B", self.customer, 10.0, system_type='on_grid', subsidy=False),
             MockLead(10, "Lead C", self.customer, 5.0, system_type='hybrid', subsidy=True),
         ]
-        # Filter by subsidy
         subsidized = [l for l in leads if l.subsidy_required]
         self.assertEqual(len(subsidized), 2)
 
