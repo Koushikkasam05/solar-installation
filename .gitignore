@@ -13,8 +13,9 @@ filestore/
 sessions/
 *.log
 
-# Sensitive Environment Configurations
-.env
+# SQLite Database
+*.db
+solarflow.db
 
 # IDEs & OS Files
 .vscode/
