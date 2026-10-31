@@ -4,6 +4,7 @@ from datetime import datetime, date, timedelta
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
 from server.helpers import generate_warranty_token, get_next_ref
+from server.auth import role_required
 
 warranty_bp = Blueprint('warranties', __name__)
 
@@ -11,6 +12,7 @@ warranty_bp = Blueprint('warranties', __name__)
 # ══════════════════════════════════════════════════════════════════════
 
 @warranty_bp.route('/api/warranties', methods=['GET'])
+@role_required('admin', 'support', 'sales', 'director', 'finance')
 def get_warranties():
     rows = query_db("""SELECT w.*, c.name as customer_name FROM warranties w
         JOIN customers c ON w.customer_id = c.id ORDER BY w.id DESC""")
@@ -18,12 +20,12 @@ def get_warranties():
 
 
 @warranty_bp.route('/api/warranties', methods=['POST'])
+@role_required('admin', 'support')
 def create_warranty():
-    d = request.get_json()
+    d = request.get_json() or {}
     ref = get_next_ref('SF/WTY', 'warranties')
     equip_type = d.get('equipment_type', 'pv_module')
 
-    # Warranty duration by type
     years_map = {'pv_module': 25, 'inverter': 10, 'battery': 5}
     years = years_map.get(equip_type, 5)
 
@@ -33,7 +35,6 @@ def create_warranty():
 
     token = generate_warranty_token(ref, d['customer_id'], d.get('serial_number', ''), equip_type, start)
 
-    # Duplicate check
     existing = query_db("SELECT id FROM warranties WHERE serial_number = ? AND equipment_type = ? AND status = 'active'",
         [d.get('serial_number',''), equip_type], one=True)
     if existing:
@@ -48,6 +49,7 @@ def create_warranty():
 
 
 @warranty_bp.route('/api/warranties/<int:wid>/verify', methods=['GET'])
+@role_required('admin', 'support', 'sales', 'director', 'finance', 'tech')
 def verify_warranty(wid):
     """Verify warranty token and check expiry status."""
     w = query_db("SELECT * FROM warranties WHERE id = ?", [wid], one=True)
@@ -73,6 +75,7 @@ def verify_warranty(wid):
 # ══════════════════════════════════════════════════════════════════════
 
 @warranty_bp.route('/api/service-tickets', methods=['GET'])
+@role_required('admin', 'support', 'tech', 'director', 'finance')
 def get_tickets():
     rows = query_db("""SELECT t.*, c.name as customer_name FROM service_tickets t
         JOIN customers c ON t.customer_id = c.id ORDER BY t.id DESC""")
@@ -80,17 +83,16 @@ def get_tickets():
 
 
 @warranty_bp.route('/api/service-tickets', methods=['POST'])
+@role_required('admin', 'support', 'sales')
 def create_ticket():
-    d = request.get_json()
+    d = request.get_json() or {}
     ref = get_next_ref('SF/SVC', 'service_tickets')
 
-    # Auto-detect warranty coverage by serial number
     serial = d.get('serial_number', '')
     warranty = query_db("""SELECT * FROM warranties WHERE serial_number = ? AND status = 'active'
         AND expiry_date >= ?""", [serial, date.today().isoformat()], one=True)
     under_warranty = 1 if warranty else 0
 
-    # If under warranty, cost is $0.00
     parts = 0 if under_warranty else d.get('parts_cost', 0)
     labour = 0 if under_warranty else d.get('labour_cost', 0)
     total = parts + labour
@@ -112,12 +114,9 @@ def create_ticket():
 
 
 @warranty_bp.route('/api/service-tickets/<int:tid>/resolve', methods=['POST'])
+@role_required('admin', 'support', 'tech')
 def resolve_ticket(tid):
-    d = request.get_json()
+    d = request.get_json() or {}
     execute_db("""UPDATE service_tickets SET status = 'resolved', resolution = ?,
         resolved_at = ? WHERE id = ?""", [d.get('resolution', ''), datetime.now().isoformat(), tid])
     return jsonify({'message': 'Ticket resolved'})
-
-
-# ══════════════════════════════════════════════════════════════════════
-

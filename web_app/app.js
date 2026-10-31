@@ -225,6 +225,11 @@ function initSidebar() {
   if (showcaseBtn) {
     showcaseBtn.addEventListener('click', runShowcaseTour);
   }
+
+  const rbacBtn = document.getElementById('btn-rbac-tour');
+  if (rbacBtn) {
+    rbacBtn.addEventListener('click', runRbacSecurityTour);
+  }
 }
 
 // 2. Hash Routing
@@ -332,16 +337,37 @@ function initRoleSwitcher() {
   const select = document.getElementById('user-role-select');
   if (!select) return;
 
-  select.addEventListener('change', (e) => {
-    applyRole(e.target.value);
+  select.addEventListener('change', async (e) => {
+    await applyRole(e.target.value);
   });
 
-  applyRole(SolarFlowState.currentRole);
+  applyRole(SolarFlowState.currentRole, false);
 }
 
-function applyRole(roleKey) {
+const ROLE_PASSWORDS = {
+  admin: 'admin123',
+  sales: 'sales123',
+  warehouse: 'warehouse123',
+  tech: 'tech123',
+  support: 'support123',
+  finance: 'finance123',
+  director: 'director123'
+};
+
+async function applyRole(roleKey, showToastMsg = true) {
   SolarFlowState.currentRole = roleKey;
   const cfg = SolarFlowState.roles[roleKey] || SolarFlowState.roles.admin;
+
+  // Sync session on backend Flask server
+  try {
+    await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: roleKey, password: ROLE_PASSWORDS[roleKey] || 'admin123' })
+    });
+  } catch (err) {
+    console.warn('[RBAC] Could not sync backend session:', err);
+  }
 
   const select = document.getElementById('user-role-select');
   if (select && select.value !== roleKey) select.value = roleKey;
@@ -356,6 +382,12 @@ function applyRole(roleKey) {
   if (name) name.innerHTML = `${cfg.userName}`;
   if (title) title.textContent = `${cfg.title}`;
 
+  // Director Executive Read-Only Banner
+  const readonlyBanner = document.getElementById('executive-readonly-banner');
+  if (readonlyBanner) {
+    readonlyBanner.style.display = (roleKey === 'director') ? 'flex' : 'none';
+  }
+
   // Filter sidebar items according to permissions
   document.querySelectorAll('.sidebar-nav .nav-link-btn').forEach(btn => {
     const perm = btn.getAttribute('data-perm') || '';
@@ -367,12 +399,25 @@ function applyRole(roleKey) {
     }
   });
 
+  // Toggle create/edit action buttons according to role permissions
+  document.querySelectorAll('.btn-primary-action, .btn-action-submit, [data-action="create"]').forEach(btn => {
+    if (cfg.readOnly || cfg.canCreate === false) {
+      btn.style.opacity = '0.4';
+      btn.setAttribute('title', `Blocked: Role "${cfg.name}" does not have create/modify privileges.`);
+    } else {
+      btn.style.opacity = '1';
+      btn.removeAttribute('title');
+    }
+  });
+
   // If active view is unauthorized for new role, switch to dashboard
   if (!cfg.perm.includes('all') && !cfg.perm.includes(SolarFlowState.activeView)) {
     switchView('dashboard');
+  } else {
+    loadAllBackendData();
   }
 
-  showToast(`Role switched to: ${cfg.name}`, 'info');
+  if (showToastMsg) showToast(`Active Role: ${cfg.name} (${cfg.title})`, 'info');
 }
 
 // ==========================================================================
@@ -2116,11 +2161,265 @@ function stopJuryAutoPlay() {
 }
 
 async function runShowcaseTour() {
+  stopRbacAutoPlay();
   stopJuryAutoPlay();
   juryTourCurrentIndex = 0;
   showToast('Starting 10-Step Jury Showcase: Dr. Rajesh Sharma (3kW On-Grid)...', 'info');
   renderJuryDemoBar();
   navigateJuryStep(0);
+}
+
+// ==========================================================================
+// 12-STEP RBAC & SECURITY AUDIT TOUR (PROMPT 4)
+// ==========================================================================
+const RBAC_STEPS = [
+  {
+    step: 1,
+    role: "admin",
+    view: "dashboard",
+    title: "1. Log in as Super Administrator",
+    desc: "Authenticated as System Administrator (admin). Full access granted across all 14 ERP modules and unlinks.",
+    action: async () => { await applyRole('admin'); }
+  },
+  {
+    step: 2,
+    role: "admin",
+    view: "dashboard",
+    title: "2. Full Dashboard & Financial Metrics",
+    desc: "Admin possesses full visibility into live revenue ($75k+), job costing, audit logs, and settings.",
+    action: async () => { switchView('dashboard'); }
+  },
+  {
+    step: 3,
+    role: "sales",
+    view: "customers",
+    title: "3. Log out & Log in as Sales Manager",
+    desc: "Authenticated as Vikram Sales Manager. Costing and warehouse dispatch menus are restricted.",
+    action: async () => { await applyRole('sales'); switchView('customers'); }
+  },
+  {
+    step: 4,
+    role: "sales",
+    view: "surveys",
+    title: "4. Customer & Engineering Survey Management",
+    desc: "Sales Manager has full authority to qualify leads, inspect rooftop surveys, and issue proposals.",
+    action: async () => { switchView('surveys'); }
+  },
+  {
+    step: 5,
+    role: "warehouse",
+    view: "inventory",
+    title: "5. Log in as Warehouse Manager",
+    desc: "Authenticated as Sanjay Warehouse Manager. CRM leads, quotations, and financial costing are hidden.",
+    action: async () => { await applyRole('warehouse'); switchView('inventory'); }
+  },
+  {
+    step: 6,
+    role: "warehouse",
+    view: "inventory",
+    title: "6. Inventory Stock Lots & Serial Allocation",
+    desc: "Warehouse Manager has exclusive authority to scan serials, allocate inventory, and release dispatch.",
+    action: async () => { switchView('inventory'); }
+  },
+  {
+    step: 7,
+    role: "tech",
+    view: "installations",
+    title: "7. Log in as Installation Technician",
+    desc: "Authenticated as Ramesh Electrician. Financial costing, quotations, and dispatch menus are hidden.",
+    action: async () => { await applyRole('tech'); switchView('installations'); }
+  },
+  {
+    step: 8,
+    role: "tech",
+    view: "installations",
+    title: "8. Assigned Installation Domain Isolation",
+    desc: "Technician is strictly restricted to assigned installations (Ramesh Electrician). Unassigned jobs blocked.",
+    action: async () => { switchView('installations'); }
+  },
+  {
+    step: 9,
+    role: "tech",
+    view: "installations",
+    title: "9. Attempt Unauthorized Action (Live HTTP Probe)",
+    desc: "Technician probes backend endpoint POST /api/costing to test if server security is active.",
+    action: async () => { await probeUnauthorizedAction(); }
+  },
+  {
+    step: 10,
+    role: "tech",
+    view: "installations",
+    title: "10. Live Backend HTTP 403 Forbidden Response",
+    desc: "Backend RBAC Guard actively rejected request with HTTP 403 Forbidden. Full security payload displayed.",
+    action: async () => { /* Displayed in modal */ }
+  },
+  {
+    step: 11,
+    role: "director",
+    view: "costing",
+    title: "11. Log in as Managing Director",
+    desc: "Authenticated as Aditya Director. Strict Read-Only Executive Privileges active across system.",
+    action: async () => { await applyRole('director'); switchView('costing'); }
+  },
+  {
+    step: 12,
+    role: "director",
+    view: "dashboard",
+    title: "12. Executive Read-Only Financial Analytics",
+    desc: "Director views revenue analytics, project profitability, and EBITDA margins. All mutation controls blocked.",
+    action: async () => { switchView('dashboard'); }
+  }
+];
+
+let rbacTourCurrentIndex = 0;
+let rbacTourAutoPlayTimer = null;
+
+function renderRbacDemoBar() {
+  let bar = document.getElementById('jury-demo-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'jury-demo-bar';
+    bar.className = 'jury-demo-bar';
+    document.body.appendChild(bar);
+  }
+
+  const step = RBAC_STEPS[rbacTourCurrentIndex];
+  bar.innerHTML = `
+    <div class="jury-badge" style="background: linear-gradient(135deg, #2563EB, #1D4ED8);">RBAC AUDIT &bull; STEP ${step.step} OF ${RBAC_STEPS.length}</div>
+    <div class="jury-content">
+      <div class="jury-title">${step.title}</div>
+      <div class="jury-desc">${step.desc}</div>
+    </div>
+    <div class="jury-controls">
+      <button class="jury-btn" id="rbac-btn-prev" ${rbacTourCurrentIndex === 0 ? 'disabled style="opacity:0.4"' : ''}>&larr; Prev</button>
+      <button class="jury-btn jury-btn-primary" style="background:#2563EB; border-color:#2563EB;" id="rbac-btn-next">${rbacTourCurrentIndex === RBAC_STEPS.length - 1 ? 'Finish &check;' : 'Next &rarr;'}</button>
+      <button class="jury-btn" id="rbac-btn-autoplay">${rbacTourAutoPlayTimer ? '&#10074;&#10074; Pause' : '&#9654;&#9654; Auto'}</button>
+      <button class="jury-close" id="rbac-btn-close" title="Exit RBAC Tour">&times;</button>
+    </div>
+  `;
+
+  document.getElementById('rbac-btn-prev').onclick = () => navigateRbacStep(rbacTourCurrentIndex - 1);
+  document.getElementById('rbac-btn-next').onclick = () => {
+    if (rbacTourCurrentIndex < RBAC_STEPS.length - 1) {
+      navigateRbacStep(rbacTourCurrentIndex + 1);
+    } else {
+      stopRbacAutoPlay();
+      bar.remove();
+      showToast('RBAC Security Demonstration successfully concluded!', 'success');
+    }
+  };
+  document.getElementById('rbac-btn-autoplay').onclick = toggleRbacAutoPlay;
+  document.getElementById('rbac-btn-close').onclick = () => {
+    stopRbacAutoPlay();
+    bar.remove();
+    showToast('Exited RBAC Demonstration Mode.', 'info');
+  };
+}
+
+async function navigateRbacStep(index) {
+  if (index < 0 || index >= RBAC_STEPS.length) return;
+  rbacTourCurrentIndex = index;
+  const step = RBAC_STEPS[index];
+  showToast(step.title, 'info');
+  if (step.action) await step.action();
+  renderRbacDemoBar();
+}
+
+function toggleRbacAutoPlay() {
+  if (rbacTourAutoPlayTimer) {
+    stopRbacAutoPlay();
+    renderRbacDemoBar();
+    showToast('Auto-Play paused.', 'info');
+  } else {
+    showToast('RBAC Auto-Play started (advances every 4s)...', 'info');
+    rbacTourAutoPlayTimer = setInterval(async () => {
+      if (rbacTourCurrentIndex < RBAC_STEPS.length - 1) {
+        await navigateRbacStep(rbacTourCurrentIndex + 1);
+      } else {
+        stopRbacAutoPlay();
+        renderRbacDemoBar();
+        showToast('Auto-Play completed all 12 RBAC demonstration steps!', 'success');
+      }
+    }, 4000);
+    renderRbacDemoBar();
+  }
+}
+
+function stopRbacAutoPlay() {
+  if (rbacTourAutoPlayTimer) {
+    clearInterval(rbacTourAutoPlayTimer);
+    rbacTourAutoPlayTimer = null;
+  }
+}
+
+async function runRbacSecurityTour() {
+  stopRbacAutoPlay();
+  stopJuryAutoPlay();
+  rbacTourCurrentIndex = 0;
+  showToast('Starting 12-Step RBAC Security Demonstration Tour...', 'info');
+  renderRbacDemoBar();
+  await navigateRbacStep(0);
+}
+
+async function probeUnauthorizedAction() {
+  showToast('Probing backend API endpoint POST /api/costing with role "tech"...', 'info');
+  try {
+    const res = await fetch('/api/costing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ revenue: 2040, material_cost: 1200 })
+    });
+    const data = await res.json();
+    showSecurityDeniedModal(res.status, data);
+  } catch (err) {
+    console.error('[RBAC Probe Error]', err);
+  }
+}
+
+function showSecurityDeniedModal(statusCode, payload) {
+  let modal = document.getElementById('security-denied-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'security-denied-modal';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="modal-dialog-box" style="border: 2px solid #EF4444; max-width: 580px;">
+      <div class="modal-header-bar" style="background: rgba(239, 68, 68, 0.1); border-bottom: 1px solid #FCA5A5;">
+        <div class="modal-dialog-title" style="color: #DC2626; display: flex; align-items: center; gap: 8px;">
+          <svg style="width:22px;height:22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+          Security Guard Enforced: Access Denied (HTTP ${statusCode})
+        </div>
+        <button class="modal-close-btn" onclick="document.getElementById('security-denied-modal').classList.remove('active')">&times;</button>
+      </div>
+      <div class="modal-content-body" style="padding: 20px;">
+        <div style="background: #FEF2F2; border-left: 4px solid #EF4444; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px;">
+          <div style="font-weight: 700; color: #991B1B; font-size: 13.5px;">Active Server-Side Authorization Gate Rejection</div>
+          <div style="color: #B91C1C; font-size: 12.5px; margin-top: 4px;">
+            The request was transmitted to the backend Flask API and rejected by the <code>@role_required</code> Python security decorator.
+          </div>
+        </div>
+
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">LIVE BACKEND HTTP RESPONSE PAYLOAD:</div>
+        <pre style="background: #0F172A; color: #F8FAFC; padding: 14px; border-radius: 8px; font-family: monospace; font-size: 12px; overflow-x: auto;">${JSON.stringify(payload, null, 2)}</pre>
+
+        <div style="margin-top: 16px; font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+          • <strong>Enforcement Mechanism:</strong> Flask session inspection via <code>server.auth.role_required</code>.<br>
+          • <strong>Protected Resource:</strong> Project Job Costing & Profit Margin Audit.<br>
+          • <strong>Policy:</strong> Technicians and unauthorized personnel are barred from confidential commercial data.
+        </div>
+      </div>
+      <div class="modal-footer-bar">
+        <button class="btn-action-secondary" onclick="document.getElementById('security-denied-modal').classList.remove('active')">Acknowledge & Close</button>
+      </div>
+    </div>
+  `;
+  modal.classList.add('active');
 }
 
 // ==========================================================================

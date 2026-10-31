@@ -2,6 +2,7 @@
 """SolarFlow ERP - Executive Dashboard & KPI Metrics Routes."""
 from flask import Blueprint, jsonify
 from server.database import query_db
+from server.auth import role_required
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -9,6 +10,7 @@ dashboard_bp = Blueprint('dashboard', __name__)
 # ══════════════════════════════════════════════════════════════════════
 
 @dashboard_bp.route('/api/dashboard', methods=['GET'])
+@role_required('admin', 'sales', 'warehouse', 'tech', 'support', 'finance', 'director')
 def dashboard():
     """Return real-time dashboard KPIs, charts, and activity feeds computed from database."""
     total_customers = query_db("SELECT COUNT(*) as c FROM customers", one=True)['c']

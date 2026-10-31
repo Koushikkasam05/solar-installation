@@ -3,22 +3,27 @@
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
 from server.helpers import calculate_project_cost, get_next_ref
+from server.auth import role_required
 
 cost_bp = Blueprint('costing', __name__)
 
-# ROUTES: PROJECT COSTING
+# ROUTES: PROJECT COSTING (FINANCIAL INFORMATION PROTECTION)
 # ══════════════════════════════════════════════════════════════════════
 
 @cost_bp.route('/api/costing', methods=['GET'])
+@role_required('admin', 'finance', 'director')
 def get_costs():
+    """Confidential financial costing sheet access restricted to Finance, Executive Directors, and Admins."""
     rows = query_db("""SELECT pc.*, c.name as customer_name FROM project_costs pc
         LEFT JOIN customers c ON pc.customer_id = c.id ORDER BY pc.id DESC""")
     return jsonify(rows)
 
 
 @cost_bp.route('/api/costing', methods=['POST'])
+@role_required('admin', 'finance')
 def create_cost():
-    d = request.get_json()
+    """Create project job cost sheet. Directors blocked (read-only); non-finance roles blocked (HTTP 403)."""
+    d = request.get_json() or {}
     ref = get_next_ref('SF/COST', 'project_costs')
 
     revenue = d.get('revenue', 0)

@@ -5,13 +5,15 @@ from datetime import datetime, date
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
 from server.helpers import get_next_ref, calculate_subsidy
+from server.auth import role_required
 
 order_bp = Blueprint('orders', __name__)
 
-# ROUTES: SALES ORDERS
+# ROUTES: SALES ORDERS & COMMERCIAL QUOTATIONS
 # ══════════════════════════════════════════════════════════════════════
 
 @order_bp.route('/api/orders', methods=['GET'])
+@role_required('admin', 'sales', 'finance', 'director', 'warehouse')
 def get_orders():
     rows = query_db("""SELECT o.*, c.name as customer_name FROM orders o
         JOIN customers c ON o.customer_id = c.id ORDER BY o.id DESC""")
@@ -19,6 +21,7 @@ def get_orders():
 
 
 @order_bp.route('/api/orders/<int:oid>', methods=['GET'])
+@role_required('admin', 'sales', 'finance', 'director', 'warehouse')
 def get_order(oid):
     row = query_db("""SELECT o.*, c.name as customer_name FROM orders o
         JOIN customers c ON o.customer_id = c.id WHERE o.id = ?""", [oid], one=True)
@@ -26,11 +29,11 @@ def get_order(oid):
 
 
 @order_bp.route('/api/orders', methods=['POST'])
+@role_required('admin', 'sales')
 def create_order():
-    d = request.get_json()
+    d = request.get_json() or {}
     ref = get_next_ref('SF/SO', 'orders')
 
-    # Get package price
     pkg_price = 0
     if d.get('package_id'):
         pkg = query_db("SELECT total_price FROM packages WHERE id = ?", [d['package_id']], one=True)
@@ -57,9 +60,10 @@ def create_order():
 
 
 @order_bp.route('/api/orders/<int:oid>/payment', methods=['POST'])
+@role_required('admin', 'finance', 'sales')
 def record_payment(oid):
-    """Record payment and check 50% advance gate."""
-    d = request.get_json()
+    """Record customer milestone payment. Enforces 50% advance dispatch gate."""
+    d = request.get_json() or {}
     order = query_db("SELECT * FROM orders WHERE id = ?", [oid], one=True)
     if not order:
         return jsonify({'error': 'Order not found'}), 404
@@ -82,12 +86,14 @@ def record_payment(oid):
 
 
 @order_bp.route('/api/orders/<int:oid>/confirm', methods=['POST'])
+@role_required('admin', 'sales')
 def confirm_order(oid):
     execute_db("UPDATE orders SET status = 'confirmed' WHERE id = ? AND status = 'draft'", [oid])
     return jsonify({'message': 'Order confirmed'})
 
 
 @order_bp.route('/api/quotations', methods=['GET'])
+@role_required('admin', 'sales', 'finance', 'director', 'warehouse')
 def get_quotations():
     """Return all quotations and proposals."""
     rows = query_db("""SELECT o.*, c.name as customer_name, c.phone as customer_phone,
@@ -100,8 +106,9 @@ def get_quotations():
 
 
 @order_bp.route('/api/payments', methods=['GET'])
+@role_required('admin', 'finance', 'sales', 'director')
 def get_payments():
-    """Return payments overview."""
+    """Return payments overview (financial information protection)."""
     rows = query_db("""SELECT o.id, o.ref as order_ref, o.net_price, o.amount_paid,
                               o.payment_percent, o.dispatch_unlocked, o.status,
                               o.order_date, c.name as customer_name, c.phone as customer_phone
@@ -109,7 +116,3 @@ def get_payments():
                        JOIN customers c ON o.customer_id = c.id
                        ORDER BY o.id DESC""")
     return jsonify(rows)
-
-
-# ══════════════════════════════════════════════════════════════════════
-

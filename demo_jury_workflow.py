@@ -61,6 +61,10 @@ def run_jury_demo():
         _run_jury_demo_body()
 
 def _run_jury_demo_body():
+    # Authenticate test client as Super Administrator
+    login_res = client.post('/api/auth/login', json={'username': 'admin', 'password': 'admin123'})
+    assert login_res.status_code == 200, "Admin authentication required"
+
     print_header("SOLARFLOW ERP - END-TO-END JURY DEMONSTRATION WORKFLOW")
     print("  Customer:           Dr. Rajesh Sharma")
     print("  Site Location:      Whitefield, Bengaluru, Karnataka")

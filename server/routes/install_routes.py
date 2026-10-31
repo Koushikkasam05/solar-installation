@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """SolarFlow ERP - Field Installations & 6-Phase QC Testing Routes."""
 from datetime import datetime, date
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from server.database import query_db, execute_db
 from server.helpers import calculate_readiness_score, get_next_ref
+from server.auth import role_required, get_current_user_role
 
 install_bp = Blueprint('installations', __name__)
 
@@ -11,30 +12,55 @@ install_bp = Blueprint('installations', __name__)
 # ══════════════════════════════════════════════════════════════════════
 
 @install_bp.route('/api/installations', methods=['GET'])
+@role_required('admin', 'sales', 'warehouse', 'tech', 'finance', 'director', 'support')
 def get_installations():
-    rows = query_db("""SELECT i.*, c.name as customer_name FROM installations i
-        JOIN customers c ON i.customer_id = c.id ORDER BY i.id DESC""")
+    """Fetch installations. Technicians are restricted to their assigned projects."""
+    user_role = get_current_user_role()
+    if user_role == 'tech':
+        user_name = session.get('user_name', '')
+        rows = query_db("""SELECT i.*, c.name as customer_name FROM installations i
+            JOIN customers c ON i.customer_id = c.id
+            WHERE (i.technician LIKE ? OR i.technician IS NULL OR i.technician = '')
+            ORDER BY i.id DESC""", [f'%{user_name}%'])
+    else:
+        rows = query_db("""SELECT i.*, c.name as customer_name FROM installations i
+            JOIN customers c ON i.customer_id = c.id ORDER BY i.id DESC""")
     return jsonify(rows)
 
 
 @install_bp.route('/api/installations/<int:iid>', methods=['GET'])
+@role_required('admin', 'sales', 'warehouse', 'tech', 'finance', 'director', 'support')
 def get_installation(iid):
+    """Fetch single installation with technician domain isolation guard."""
     row = query_db("""SELECT i.*, c.name as customer_name FROM installations i
         JOIN customers c ON i.customer_id = c.id WHERE i.id = ?""", [iid], one=True)
     if not row:
         return jsonify({'error': 'Not found'}), 404
-    # Get assigned serials
+
+    user_role = get_current_user_role()
+    if user_role == 'tech':
+        user_name = session.get('user_name', '')
+        assigned_tech = row.get('technician') or ''
+        if assigned_tech and user_name and (user_name.lower() not in assigned_tech.lower()):
+            return jsonify({
+                'error': f'Access Denied (HTTP 403): Installation #{iid} is assigned to "{assigned_tech}". Technician "{user_name}" is strictly restricted to assigned installations.',
+                'role': 'tech',
+                'installation_id': iid,
+                'status': 403
+            }), 403
+
     serials = query_db("SELECT * FROM stock_lots WHERE allocated_to_installation = ?", [iid])
     row['serials'] = serials
     return jsonify(row)
 
 
 @install_bp.route('/api/installations', methods=['POST'])
+@role_required('admin', 'sales')
 def create_installation():
-    d = request.get_json()
+    """Create installation job. Restricted to Admin and Sales."""
+    d = request.get_json() or {}
     ref = get_next_ref('SF/INST', 'installations')
 
-    # Calculate readiness score
     survey = query_db("SELECT * FROM surveys WHERE id = ?", [d.get('survey_id', 0)], one=True)
     order = query_db("SELECT * FROM orders WHERE id = ?", [d.get('order_id', 0)], one=True)
     survey_ok = survey and survey['state'] == 'approved' if survey else False
@@ -53,9 +79,27 @@ def create_installation():
 
 
 @install_bp.route('/api/installations/<int:iid>/phase', methods=['POST'])
+@role_required('admin', 'tech')
 def update_phase(iid):
-    """Update installation phase milestone and recalculate completion %."""
-    d = request.get_json()
+    """Update installation phase milestone with technician assignment check."""
+    user_role = get_current_user_role()
+    inst = query_db("SELECT * FROM installations WHERE id = ?", [iid], one=True)
+    if not inst:
+        return jsonify({'error': 'Installation not found'}), 404
+
+    # Restrict technician to assigned project
+    if user_role == 'tech':
+        user_name = session.get('user_name', '')
+        assigned_tech = inst.get('technician') or ''
+        if assigned_tech and user_name and (user_name.lower() not in assigned_tech.lower()):
+            return jsonify({
+                'error': f'Access Denied (HTTP 403): Technician "{user_name}" cannot update Installation #{iid} because it is assigned to "{assigned_tech}".',
+                'role': 'tech',
+                'installation_id': iid,
+                'status': 403
+            }), 403
+
+    d = request.get_json() or {}
     phase = d.get('phase', '')
     value = 1 if d.get('completed', True) else 0
 
@@ -71,7 +115,6 @@ def update_phase(iid):
 
     execute_db(f"UPDATE installations SET {phase} = ? WHERE id = ?", [value, iid])
 
-    # Recalculate completion %
     inst = query_db("SELECT * FROM installations WHERE id = ?", [iid], one=True)
     phases_done = sum([inst[p] for p in valid_phases])
     pct = round((phases_done / 6) * 100, 1)
@@ -82,14 +125,29 @@ def update_phase(iid):
 
 
 @install_bp.route('/api/installations/<int:iid>/qc', methods=['POST'])
+@role_required('admin', 'tech')
 def submit_qc(iid):
-    """Submit electrical QC test results."""
-    d = request.get_json()
+    """Submit electrical QC test results (Voc, Isc, Earth Pit Resistance)."""
+    user_role = get_current_user_role()
+    inst = query_db("SELECT * FROM installations WHERE id = ?", [iid], one=True)
+    if not inst:
+        return jsonify({'error': 'Installation not found'}), 404
+
+    if user_role == 'tech':
+        user_name = session.get('user_name', '')
+        assigned_tech = inst.get('technician') or ''
+        if assigned_tech and user_name and (user_name.lower() not in assigned_tech.lower()):
+            return jsonify({
+                'error': f'Access Denied (HTTP 403): Technician "{user_name}" cannot submit QC for Installation #{iid} (assigned to {assigned_tech}).',
+                'role': 'tech',
+                'status': 403
+            }), 403
+
+    d = request.get_json() or {}
     voc = d.get('voc', 0)
     isc = d.get('isc', 0)
     earth = d.get('earth_ohm', 0)
 
-    # QC validation: Voc > 0, Isc > 0, Earth ≤ 5.0 Ω
     qc_passed = 1 if (voc > 0 and isc > 0 and earth <= 5.0) else 0
     state = 'testing' if not qc_passed else 'completed'
 
@@ -109,6 +167,7 @@ def submit_qc(iid):
 
 
 @install_bp.route('/api/installations/<int:iid>/readiness', methods=['GET'])
+@role_required('admin', 'sales', 'warehouse', 'tech', 'finance', 'director', 'support')
 def get_readiness(iid):
     """Calculate and return Installation Readiness Score."""
     inst = query_db("SELECT * FROM installations WHERE id = ?", [iid], one=True)
@@ -144,7 +203,3 @@ def get_readiness(iid):
             'technician_assigned': {'value': tech_ok, 'points': 20 if tech_ok else 0},
         }
     })
-
-
-# ══════════════════════════════════════════════════════════════════════
-

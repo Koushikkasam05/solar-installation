@@ -5,13 +5,15 @@ from datetime import datetime, date
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
 from server.helpers import calculate_auto_bom, generate_auto_bom, get_next_ref
+from server.auth import role_required
 
 survey_bp = Blueprint('surveys', __name__)
 
-# ROUTES: SITE SURVEYS
+# ROUTES: SITE SURVEYS (ENGINEERING & SALES RBAC GATES)
 # ══════════════════════════════════════════════════════════════════════
 
 @survey_bp.route('/api/surveys', methods=['GET'])
+@role_required('admin', 'sales', 'tech', 'director', 'finance')
 def get_surveys():
     rows = query_db("""SELECT s.*, c.name as customer_name FROM surveys s
         JOIN customers c ON s.customer_id = c.id ORDER BY s.id DESC""")
@@ -19,6 +21,7 @@ def get_surveys():
 
 
 @survey_bp.route('/api/surveys/<int:sid>', methods=['GET'])
+@role_required('admin', 'sales', 'tech', 'director', 'finance')
 def get_survey(sid):
     row = query_db("""SELECT s.*, c.name as customer_name FROM surveys s
         JOIN customers c ON s.customer_id = c.id WHERE s.id = ?""", [sid], one=True)
@@ -26,6 +29,7 @@ def get_survey(sid):
 
 
 @survey_bp.route('/api/surveys', methods=['POST'])
+@role_required('admin', 'sales', 'tech')
 def create_survey():
     d = request.get_json() or {}
     if not d.get('customer_id'):
@@ -48,12 +52,15 @@ def create_survey():
 
 
 @survey_bp.route('/api/surveys/<int:sid>/approve', methods=['POST'])
+@role_required('admin', 'sales')
 def approve_survey(sid):
+    """Chief Engineer / Sales Manager approval. Technicians and Directors blocked."""
     execute_db("UPDATE surveys SET state = 'approved' WHERE id = ? AND state IN ('draft','submitted')", [sid])
     return jsonify({'message': 'Survey approved'})
 
 
 @survey_bp.route('/api/surveys/<int:sid>/reject', methods=['POST'])
+@role_required('admin', 'sales')
 def reject_survey(sid):
     d = request.get_json() or {}
     execute_db("UPDATE surveys SET state = 'rejected', rejection_reason = ? WHERE id = ?",
@@ -66,6 +73,7 @@ def reject_survey(sid):
 # ══════════════════════════════════════════════════════════════════════
 
 @survey_bp.route('/api/packages', methods=['GET'])
+@role_required('admin', 'sales', 'warehouse', 'tech', 'director', 'finance')
 def get_packages():
     packages = query_db("SELECT * FROM packages WHERE is_active = 1 ORDER BY capacity_kw")
     for pkg in packages:
@@ -74,6 +82,7 @@ def get_packages():
 
 
 @survey_bp.route('/api/packages/<int:pid>', methods=['GET'])
+@role_required('admin', 'sales', 'warehouse', 'tech', 'director', 'finance')
 def get_package(pid):
     pkg = query_db("SELECT * FROM packages WHERE id = ?", [pid], one=True)
     if not pkg:
@@ -83,6 +92,7 @@ def get_package(pid):
 
 
 @survey_bp.route('/api/bom/calculate', methods=['POST'])
+@role_required('admin', 'sales', 'warehouse', 'tech', 'director', 'finance')
 def calculate_bom_api():
     """Calculate Auto-BOM for a given system size."""
     d = request.get_json() or {}

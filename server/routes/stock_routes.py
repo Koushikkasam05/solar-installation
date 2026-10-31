@@ -3,13 +3,15 @@
 from datetime import datetime, date
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
+from server.auth import role_required
 
 stock_bp = Blueprint('stock', __name__)
 
-# ROUTES: STOCK / INVENTORY
+# ROUTES: STOCK / INVENTORY (WAREHOUSE AUTHORIZATION GATES)
 # ══════════════════════════════════════════════════════════════════════
 
 @stock_bp.route('/api/stock', methods=['GET'])
+@role_required('admin', 'warehouse', 'tech', 'support', 'director', 'finance', 'sales')
 def get_stock():
     status_filter = request.args.get('status', None)
     if status_filter:
@@ -20,8 +22,10 @@ def get_stock():
 
 
 @stock_bp.route('/api/stock', methods=['POST'])
+@role_required('admin', 'warehouse')
 def create_stock_lot():
-    d = request.get_json()
+    """Create equipment inventory item. Restricted to Admin and Warehouse."""
+    d = request.get_json() or {}
     sid = execute_db("""INSERT INTO stock_lots (serial_number, product_name, category, status, warehouse, received_date)
         VALUES (?,?,?,?,?,?)""",
         [d['serial_number'], d['product_name'], d.get('category','pv_module'),
@@ -30,9 +34,10 @@ def create_stock_lot():
 
 
 @stock_bp.route('/api/stock/<int:sid>/allocate', methods=['POST'])
+@role_required('admin', 'warehouse')
 def allocate_stock(sid):
-    """Allocate a serial to an order/installation (single-active constraint)."""
-    d = request.get_json()
+    """Allocate a serial to an order/installation. Restricted to Admin and Warehouse."""
+    d = request.get_json() or {}
     lot = query_db("SELECT * FROM stock_lots WHERE id = ?", [sid], one=True)
     if not lot:
         return jsonify({'error': 'Stock lot not found'}), 404
@@ -48,7 +53,3 @@ def allocate_stock(sid):
         allocated_to_installation = ? WHERE id = ?""",
         [d.get('order_id'), d.get('installation_id'), sid])
     return jsonify({'message': f'Serial {lot["serial_number"]} allocated successfully.'})
-
-
-# ══════════════════════════════════════════════════════════════════════
-

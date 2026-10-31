@@ -4,6 +4,7 @@ from datetime import datetime, date
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
 from server.helpers import calculate_recommended_capacity, calculate_feasibility_score, calculate_auto_bom, calculate_subsidy, get_next_ref
+from server.auth import role_required
 
 lead_bp = Blueprint('leads', __name__)
 
@@ -11,19 +12,22 @@ lead_bp = Blueprint('leads', __name__)
 # ══════════════════════════════════════════════════════════════════════
 
 @lead_bp.route('/api/customers', methods=['GET'])
+@role_required('admin', 'sales', 'support', 'director', 'finance')
 def get_customers():
     return jsonify(query_db("SELECT * FROM customers ORDER BY id"))
 
 
 @lead_bp.route('/api/customers/<int:cid>', methods=['GET'])
+@role_required('admin', 'sales', 'support', 'director', 'finance')
 def get_customer(cid):
     c = query_db("SELECT * FROM customers WHERE id = ?", [cid], one=True)
     return jsonify(c) if c else (jsonify({'error': 'Not found'}), 404)
 
 
 @lead_bp.route('/api/customers', methods=['POST'])
+@role_required('admin', 'sales', 'support')
 def create_customer():
-    d = request.get_json()
+    d = request.get_json() or {}
     cid = execute_db("""INSERT INTO customers (name, phone, email, address, city, state, property_type, sanctioned_load_kw)
         VALUES (?,?,?,?,?,?,?,?)""",
         [d['name'], d.get('phone',''), d.get('email',''), d.get('address',''),
@@ -36,6 +40,7 @@ def create_customer():
 # ══════════════════════════════════════════════════════════════════════
 
 @lead_bp.route('/api/enquiries', methods=['GET'])
+@role_required('admin', 'sales', 'director')
 def get_enquiries():
     rows = query_db("""SELECT e.*, c.name as customer_name FROM enquiries e
         JOIN customers c ON e.customer_id = c.id ORDER BY e.id DESC""")
@@ -43,8 +48,9 @@ def get_enquiries():
 
 
 @lead_bp.route('/api/enquiries', methods=['POST'])
+@role_required('admin', 'sales')
 def create_enquiry():
-    d = request.get_json()
+    d = request.get_json() or {}
     ref = f"ENQ-{datetime.now().year}-{datetime.now().strftime('%m%d')}"
     eid = execute_db("""INSERT INTO enquiries (ref, customer_id, date, property_type, sanctioned_load, status)
         VALUES (?,?,?,?,?,?)""",
@@ -58,6 +64,7 @@ def create_enquiry():
 # ══════════════════════════════════════════════════════════════════════
 
 @lead_bp.route('/api/leads', methods=['GET'])
+@role_required('admin', 'sales', 'director')
 def get_leads():
     rows = query_db("""SELECT l.*, c.name as customer_name, c.phone as customer_phone
         FROM leads l JOIN customers c ON l.customer_id = c.id ORDER BY l.id DESC""")
@@ -65,6 +72,7 @@ def get_leads():
 
 
 @lead_bp.route('/api/leads/<int:lid>', methods=['GET'])
+@role_required('admin', 'sales', 'director')
 def get_lead(lid):
     row = query_db("""SELECT l.*, c.name as customer_name FROM leads l
         JOIN customers c ON l.customer_id = c.id WHERE l.id = ?""", [lid], one=True)
@@ -72,8 +80,9 @@ def get_lead(lid):
 
 
 @lead_bp.route('/api/leads', methods=['POST'])
+@role_required('admin', 'sales')
 def create_lead():
-    d = request.get_json()
+    d = request.get_json() or {}
     ref = get_next_ref('SF/LEAD', 'leads')
     monthly_kwh = d.get('monthly_kwh', 300)
     roof_area = d.get('roof_area_sqft', 500)
@@ -93,14 +102,24 @@ def create_lead():
 
 
 @lead_bp.route('/api/leads/<int:lid>', methods=['PUT'])
+@role_required('admin', 'sales')
 def update_lead(lid):
-    d = request.get_json()
+    d = request.get_json() or {}
     execute_db("UPDATE leads SET status=?, sized_kw=?, system_type=?, notes=? WHERE id=?",
         [d.get('status', 'draft'), d.get('sized_kw', 3.0), d.get('system_type', 'on_grid'), d.get('notes', ''), lid])
     return jsonify({'message': 'Lead updated'})
 
 
+@lead_bp.route('/api/leads/<int:lid>', methods=['DELETE'])
+@role_required('admin')
+def delete_lead(lid):
+    """Admin-only Unlink Protection: Only Super Administrator may permanently delete leads."""
+    execute_db("DELETE FROM leads WHERE id = ?", [lid])
+    return jsonify({'message': f'Lead #{lid} deleted successfully by Administrator.'})
+
+
 @lead_bp.route('/api/leads/<int:lid>/calculate', methods=['GET'])
+@role_required('admin', 'sales', 'director', 'finance')
 def calculate_lead(lid):
     """Calculate recommended capacity and feasibility for a lead."""
     lead = query_db("SELECT * FROM leads WHERE id = ?", [lid], one=True)
@@ -123,6 +142,7 @@ def calculate_lead(lid):
 # ══════════════════════════════════════════════════════════════════════
 
 @lead_bp.route('/api/followups', methods=['GET'])
+@role_required('admin', 'sales', 'director')
 def get_followups():
     rows = query_db("""SELECT f.*, c.name as customer_name FROM followups f
         JOIN customers c ON f.customer_id = c.id ORDER BY f.date""")
@@ -130,14 +150,11 @@ def get_followups():
 
 
 @lead_bp.route('/api/followups', methods=['POST'])
+@role_required('admin', 'sales')
 def create_followup():
-    d = request.get_json()
+    d = request.get_json() or {}
     fid = execute_db("""INSERT INTO followups (customer_id, date, sales_rep, type, summary, priority, status)
         VALUES (?,?,?,?,?,?,?)""",
         [d['customer_id'], d.get('date', date.today().isoformat()), d.get('sales_rep',''),
          d.get('type',''), d.get('summary',''), d.get('priority','Normal'), 'Pending'])
     return jsonify({'id': fid, 'message': 'Follow-up created'}), 201
-
-
-# ══════════════════════════════════════════════════════════════════════
-
