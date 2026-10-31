@@ -7,6 +7,31 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* SunPower Nexus B2B and agentic management modules */
+.module-toolbar,.agent-status-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.module-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.module-stat{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column}
+.module-stat span{color:var(--text-muted);font-size:12px}.module-stat strong{font-family:'Outfit';font-size:24px;margin:4px 0}
+.module-stat small{color:var(--text-muted)}.trend-up{color:var(--success-text)!important}.trend-down{color:var(--danger-text)!important}
+.b2b-layout,.agent-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:16px;margin-bottom:16px}
+.b2b-main-card,.b2b-side-card,.agent-chat-card{padding:18px}
+.module-card-header{display:flex;justify-content:space-between;margin-bottom:14px}.module-card-header h3{font-size:16px}.module-card-header p{color:var(--text-muted)}
+.b2b-order-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.b2b-product{border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;justify-content:space-between;gap:12px}
+.b2b-product strong,.b2b-product small{display:block}.b2b-product small{color:var(--text-muted);margin-top:4px}.b2b-product input{width:78px;border:1px solid var(--border);border-radius:6px;padding:6px}
+.module-inline-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.profile-grid{display:grid;grid-template-columns:120px 1fr;gap:10px}.profile-grid dt{color:var(--text-muted)}.profile-grid dd{font-weight:600}
+.verification-note{background:var(--info-bg);border-left:3px solid var(--info-text);padding:10px 12px;margin-top:14px;color:#334155;font-size:12px;border-radius:4px}
+.module-table-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.module-table-grid .content-card{padding:18px}
+.data-row{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border-light);padding:11px 0}.data-row strong,.data-row small{display:block}.data-row small{color:var(--text-muted)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid label{font-weight:600;font-size:12px}.form-span-2{grid-column:span 2}.form-input{width:100%;margin-top:5px;padding:9px;border:1px solid var(--border);border-radius:6px;background:#fff}
+.agent-status-bar{background:#173b29;color:#fff;border-radius:10px;padding:14px 16px}.agent-status-bar small{display:block;color:#c9ddd1}.agent-pulse{display:inline-block;width:8px;height:8px;background:#65d69a;border-radius:50%;margin-right:7px}
+.agent-layout{grid-template-columns:minmax(0,2fr) minmax(280px,1fr)}.agent-specialists{display:grid;gap:8px}.specialist-card{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px}
+.specialist-card>span{font-size:22px}.specialist-card strong,.specialist-card small{display:block}.specialist-card small{color:var(--text-muted)}
+.agent-chat-history{height:330px;overflow:auto;border:1px solid var(--border-light);border-radius:8px;padding:14px;background:#fbfcfb}.chat-message{max-width:82%;padding:10px 12px;border-radius:9px;margin-bottom:10px}.chat-user{margin-left:auto;background:var(--primary);color:#fff}.chat-assistant{background:#fff;border:1px solid var(--border)}.chat-assistant strong{color:var(--primary)}
+.agent-chat-form{display:flex;gap:8px;margin-top:12px}.agent-chat-form input{flex:1;border:1px solid var(--border);border-radius:7px;padding:10px}.suggested-questions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}.suggested-questions button{border:1px solid var(--border);background:#fff;border-radius:20px;padding:6px 10px;color:var(--text-muted);cursor:pointer}
+.agent-evidence{background:var(--bg-subtle);border-left:3px solid var(--primary);padding:8px 10px;margin:8px 0}
+@media(max-width:900px){.module-kpi-grid{grid-template-columns:1fr 1fr}.b2b-layout,.agent-layout,.module-table-grid{grid-template-columns:1fr}.b2b-order-grid,.form-grid{grid-template-columns:1fr}.form-span-2{grid-column:auto}}
+
 :root {
   /* SolarFlow Forest & Sage Brand Tokens */
   --primary: #246B45;

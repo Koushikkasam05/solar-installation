@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import sqlite3
 import uuid
+import json
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from io import BytesIO
@@ -106,6 +107,30 @@ def initialize_database():
             expiry_date TEXT NOT NULL,
             coverage TEXT NOT NULL,
             policy TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS b2b_organizations (
+            id TEXT PRIMARY KEY,
+            organization_name TEXT NOT NULL,
+            business_type TEXT NOT NULL,
+            contact_person TEXT NOT NULL,
+            business_email TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            registered_address TEXT NOT NULL,
+            gstin TEXT,
+            billing_address TEXT,
+            installation_locations TEXT,
+            documents_json TEXT NOT NULL,
+            approval_status TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS business_analysis_history (
+            id TEXT PRIMARY KEY,
+            question TEXT NOT NULL,
+            agent_answer TEXT NOT NULL,
+            specialist_agents TEXT NOT NULL,
+            records_considered INTEGER NOT NULL,
+            confidence TEXT NOT NULL,
+            created_at TEXT NOT NULL
         );
         """)
         count = connection.execute("SELECT COUNT(*) FROM products").fetchone()[0]
@@ -451,6 +476,169 @@ def read_notification(notification_id):
     with db() as connection:
         connection.execute("UPDATE notifications SET status='read' WHERE id=?", (notification_id,))
     return jsonify({"status": "read"})
+
+
+@app.post("/api/b2b/organizations")
+def register_b2b_organization():
+    payload = request.get_json(silent=True) or {}
+    required = [
+        "organization_name", "business_type", "contact_person",
+        "business_email", "phone", "registered_address"
+    ]
+    missing = [field for field in required if not str(payload.get(field, "")).strip()]
+    if missing:
+        return jsonify({"error": "Missing required fields: " + ", ".join(missing)}), 400
+    organization_id = uuid.uuid4().hex
+    with db() as connection:
+        connection.execute(
+            """INSERT INTO b2b_organizations
+            (id,organization_name,business_type,contact_person,business_email,phone,registered_address,
+             gstin,billing_address,installation_locations,documents_json,approval_status,created_at)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (organization_id, payload["organization_name"], payload["business_type"], payload["contact_person"],
+             payload["business_email"], payload["phone"], payload["registered_address"],
+             payload.get("gstin"), payload.get("billing_address"), payload.get("installation_locations"),
+             json.dumps(payload.get("documents", [])), "Pending approval", datetime.now().isoformat()),
+        )
+    return jsonify({"id": organization_id, "approval_status": "Pending approval",
+                    "gstin_verification": "Not verified by an integrated service"})
+
+
+@app.get("/api/b2b/organizations")
+def list_b2b_organizations():
+    with db() as connection:
+        rows = connection.execute(
+            "SELECT * FROM b2b_organizations ORDER BY created_at DESC"
+        ).fetchall()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.get("/api/agent/history")
+def agent_history():
+    with db() as connection:
+        rows = connection.execute(
+            "SELECT * FROM business_analysis_history ORDER BY created_at DESC LIMIT 50"
+        ).fetchall()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.post("/api/agent/analyze")
+def agent_analyze():
+    payload = request.get_json(silent=True) or {}
+    question = str(payload.get("question", "")).strip()
+    if not question:
+        return jsonify({"error": "A management question is required."}), 400
+
+    lowered = question.lower()
+    with db() as connection:
+        products = [dict(row) for row in connection.execute(
+            "SELECT id, category, name, specification, unit_price FROM products"
+        ).fetchall()]
+        orders = [dict(row) for row in connection.execute("SELECT * FROM orders").fetchall()]
+        surveys = [dict(row) for row in connection.execute("SELECT * FROM survey_request").fetchall()]
+        warranties = connection.execute("SELECT COUNT(*) FROM warranties").fetchone()[0]
+
+    records_considered = len(products) + len(orders) + len(surveys) + warranties
+    agents = ["Manager Agent"]
+    evidence = []
+    recommendations = []
+
+    if any(word in lowered for word in ("sales", "quote", "lead", "conversion", "demand", "margin", "month")):
+        agents += ["Sales Agent", "Finance Agent"]
+        total_orders = len(orders)
+        evidence.append(f"{total_orders} orders are present in the current operational dataset.")
+        evidence.append(f"{len(products)} active catalogue products are available for demand analysis.")
+        recommendations.append("Segment month-over-month quote conversion before increasing sales spend; historical order volume is insufficient for a trend claim.")
+        answer = "The current records do not contain enough dated historical sales to prove that sales decreased this month."
+    elif any(word in lowered for word in ("warehouse", "stock", "inventory", "shortage", "reorder")):
+        agents += ["Inventory Agent", "Risk Agent"]
+        low_stock_product = min(products, key=lambda item: item["unit_price"])["name"]
+        evidence.append(f"{len(products)} catalogue items were reviewed for stock context.")
+        evidence.append(f"{low_stock_product} is the lowest-priced catalogue proxy, not a measured stock quantity.")
+        recommendations.append("Load warehouse-on-hand quantities and reorder points before assigning a shortage to a specific warehouse.")
+        answer = "A warehouse shortage cannot be ranked because this dataset does not contain warehouse-level stock quantities."
+    elif any(word in lowered for word in ("installation", "installations", "delay", "delivery", "operations")):
+        agents += ["Operations Agent", "Risk Agent"]
+        pending_surveys = sum(1 for survey in surveys if survey["status"] not in ("Completed", "Approved"))
+        evidence.append(f"{pending_surveys} of {len(surveys)} survey requests are not yet completed or approved.")
+        evidence.append(f"{len(orders)} operational orders were reviewed for status context.")
+        recommendations.append("Review overdue survey and dispatch timestamps; installation resource allocation should use actual commitments and capacity.")
+        answer = f"Operations records identify {pending_surveys} survey requests that remain outside the completed/approved states."
+    elif any(word in lowered for word in ("customer", "complaint", "service", "retention", "repeat")):
+        agents += ["Customer Agent", "Operations Agent"]
+        evidence.append(f"{warranties} warranty records and the available service dataset were considered.")
+        evidence.append(f"{len(surveys)} customer surveys are present.")
+        recommendations.append("Connect complaint ticket dates and ownership to calculate backlog and repeat-contact rates.")
+        answer = "The pending complaint count cannot be verified because complaint records are not loaded in the analysis backend."
+    elif any(word in lowered for word in ("forecast", "predict", "next month", "demand")):
+        agents += ["Sales Agent", "Inventory Agent"]
+        evidence.append("No monthly historical demand series is present in the database.")
+        recommendations.append("Collect at least several complete monthly periods by product before producing a forecast.")
+        answer = "A numeric next-month demand forecast is not available: the required historical time series is insufficient."
+    else:
+        agents += ["Sales Agent", "Finance Agent", "Inventory Agent", "Customer Agent", "Operations Agent", "Risk Agent"]
+        evidence.append(f"{len(orders)} orders, {len(products)} products, and {len(surveys)} survey requests were reviewed.")
+        recommendations.append("Specify a KPI such as sales, margin, stock shortage, pending complaints, or delayed installations.")
+        answer = "The Manager Agent reviewed the available business records and selected every specialist domain because the question was broad."
+
+    result = {
+        "answer": answer,
+        "mode": "deterministic backend analysis with rule-based explanation",
+        "agents": agents,
+        "evidence": evidence,
+        "recommendations": recommendations,
+        "confidence": "Medium" if records_considered else "Low",
+        "records_considered": records_considered,
+        "assumptions": [
+            "Results use only records stored in SunPower Nexus.",
+            "Correlation is not inferred as causation.",
+            "A forecast is suppressed when the historical series is insufficient."
+        ],
+    }
+    with db() as connection:
+        connection.execute(
+            """INSERT INTO business_analysis_history
+            (id,question,agent_answer,specialist_agents,records_considered,confidence,created_at)
+            VALUES(?,?,?,?,?,?,?)""",
+            (uuid.uuid4().hex, question, answer, json.dumps(agents), records_considered, result["confidence"],
+             datetime.now().isoformat()),
+        )
+    return jsonify(result)
+
+
+@app.get("/api/agent/report.pdf")
+def agent_report_pdf():
+    with db() as connection:
+        recent = connection.execute(
+            "SELECT * FROM business_analysis_history ORDER BY created_at DESC LIMIT 20"
+        ).fetchall()
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+    styles = getSampleStyleSheet()
+    story = [
+        Paragraph("SunPower Nexus - Agentic Business Analysis Report", styles["Title"]),
+        Paragraph("Evidence is limited to records stored in the application.", styles["BodyText"]),
+        Spacer(1, 18),
+        Table([["Generated", datetime.now().isoformat()]], colWidths=[525],
+              style=TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eaf4ed"))])),
+        Spacer(1, 18),
+    ]
+    if recent:
+        for row in recent[:10]:
+            story.append(Paragraph(str(row["question"]), styles["Heading3"]))
+            story.append(Paragraph(str(row["agent_answer"]), styles["BodyText"]))
+            story.append(Paragraph(
+                f"Records considered: {row['records_considered']} | Confidence: {row['confidence']} | "
+                f"Time: {row['created_at']}",
+                styles["BodyText"],
+            ))
+            story.append(Spacer(1, 10))
+    else:
+        story.append(Paragraph("No management analyses have been stored yet.", styles["BodyText"]))
+    doc.build(story)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name="sunpower-nexus-agent-report.pdf",
+                     mimetype="application/pdf")
 
 
 if __name__ == "__main__":
