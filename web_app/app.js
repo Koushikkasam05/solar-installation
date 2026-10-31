@@ -48,24 +48,6 @@ const SolarFlowState = {
       canManageCosting: false,
       desc: "Manages customer enquiries, leads, follow-ups, surveys, quotations, and orders."
     },
-    survey_tech: {
-      name: "Survey Technician",
-      userName: "Arun Survey Tech",
-      login: "survey@solarflow.erp",
-      assignedName: "Arun Survey Tech",
-      title: "Field Solar Surveyor",
-      avatar: "ST",
-      perm: ["dashboard", "surveys", "schedule"],
-      canCreate: true,
-      canEdit: true,
-      canDelete: false,
-      canApproveSurveys: false, // Cannot self-approve surveys!
-      canConfirmOrders: false,
-      canCompleteInstallation: false,
-      canValidateDispatch: false,
-      canManageCosting: false,
-      desc: "Performs rooftop feasibility surveys, pitch/azimuth/shadow logs, and photo uploads."
-    },
     warehouse: {
       name: "Warehouse Manager",
       userName: "Sanjay Warehouse Manager",
@@ -633,9 +615,6 @@ function renderRoleDashboard() {
     case 'finance':
       renderFinanceDashboard(container);
       break;
-    case 'survey_tech':
-      renderSurveyTechDashboard(container);
-      break;
     case 'director':
       renderDirectorDashboard(container);
       break;
@@ -1047,30 +1026,7 @@ function renderSupportDashboard(el) {
   `;
 }
 
-// 6. Survey Technician Dashboard
-function renderSurveyTechDashboard(el) {
-  el.innerHTML = `
-    <div class="section-header-bar">
-      <div>
-        <h1 class="section-title">Survey Technician Assessment Board</h1>
-        <p class="section-description">Assigned rooftop site visits, shadow analysis, azimuth/tilt logging, and chief engineer submissions.</p>
-      </div>
-    </div>
-
-    <div class="metrics-grid-12">
-      <div class="metric-card" onclick="switchView('surveys')">
-        <div class="metric-header"><span class="metric-label">Assigned Surveys</span><div class="metric-icon-wrap icon-forest">📐</div></div>
-        <div class="metric-value">2</div><div class="metric-subtext">SRV-0001, SRV-0002</div>
-      </div>
-      <div class="metric-card" onclick="switchView('surveys')">
-        <div class="metric-header"><span class="metric-label">Submitted for Approval</span><div class="metric-icon-wrap icon-blue">📩</div></div>
-        <div class="metric-value">1</div><div class="metric-subtext">SRV-0001 Approved</div>
-      </div>
-    </div>
-  `;
-}
-
-// 7. Finance Manager Dashboard
+// 6. Finance Manager Dashboard
 function renderFinanceDashboard(el) {
   el.innerHTML = `
     <div class="section-header-bar">
@@ -1329,11 +1285,6 @@ function renderSurveys(filterQuery = '', filterStatus = 'all') {
   const roleCfg = SolarFlowState.roles[currentRole] || SolarFlowState.roles.admin;
 
   let list = SolarFlowState.surveys;
-
-  // Domain Isolation: Survey Technician only sees assigned surveys
-  if (currentRole === 'survey_tech') {
-    list = list.filter(s => (s.engineer && s.engineer.includes('Arun')) || (s.engineer && s.engineer.includes('Pending')));
-  }
 
   if (filterStatus !== 'all') {
     list = list.filter(s => s.state === filterStatus);
@@ -2307,7 +2258,7 @@ function openAttachment(docType, id) {
     },
     survey_photo: {
       title: "High-Resolution Rooftop Panoramic Feasibility Assessment & Shading Map",
-      allowed: ['admin', 'sales', 'survey_tech', 'director'],
+      allowed: ['admin', 'sales', 'director'],
       docRef: `SITE-PANORAMA-SRV-${id}.JPG`,
       content: `
         <div style="border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; background:#FAFCFA;">

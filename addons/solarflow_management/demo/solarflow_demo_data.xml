@@ -544,15 +544,7 @@
             <field name="groups_id" eval="[(6, 0, [ref('solarflow_management.group_solarflow_sales_manager'), ref('base.group_user')])]"/>
         </record>
 
-        <!-- 3. Survey Technician -->
-        <record id="user_solarflow_test_survey" model="res.users">
-            <field name="name">Arun Survey Tech</field>
-            <field name="login">survey@solarflow.erp</field>
-            <field name="email">survey@solarflow.erp</field>
-            <field name="groups_id" eval="[(6, 0, [ref('solarflow_management.group_solarflow_survey_technician'), ref('base.group_user')])]"/>
-        </record>
-
-        <!-- 4. Warehouse Manager -->
+        <!-- 3. Warehouse Manager -->
         <record id="user_solarflow_test_warehouse" model="res.users">
             <field name="name">Sanjay Warehouse Manager</field>
             <field name="login">warehouse@solarflow.erp</field>

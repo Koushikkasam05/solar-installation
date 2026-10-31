@@ -227,8 +227,6 @@ class SolarFlowSurvey(models.Model):
             self.env.user.has_group('solarflow_management.group_solarflow_engineer') or
             self.env.user.has_group('solarflow_management.group_solarflow_manager')
         )
-        if self.env.user.has_group('solarflow_management.group_solarflow_survey_technician') and not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
-            is_authorized = False
         if not is_authorized:
             raise AccessError(_("Security Violation: Only a Sales Manager or Super Administrator is authorized to approve site surveys."))
 
@@ -264,8 +262,6 @@ class SolarFlowSurvey(models.Model):
             self.env.user.has_group('solarflow_management.group_solarflow_engineer') or
             self.env.user.has_group('solarflow_management.group_solarflow_manager')
         )
-        if self.env.user.has_group('solarflow_management.group_solarflow_survey_technician') and not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
-            is_authorized = False
         if not is_authorized:
             raise AccessError(_("Security Violation: Only a Sales Manager or Super Administrator is authorized to reject site surveys."))
 

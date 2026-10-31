@@ -1,11 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_sf_survey_survey_tech,solarflow.survey.survey_tech,model_solarflow_survey,group_solarflow_survey_technician,1,1,1,0
 access_sf_survey_inst_tech,solarflow.survey.inst_tech,model_solarflow_survey,group_solarflow_technician,1,0,0,0
 access_sf_survey_sales,solarflow.survey.sales,model_solarflow_survey,group_solarflow_sales_manager,1,1,1,1
 access_sf_survey_finance,solarflow.survey.finance,model_solarflow_survey,group_solarflow_finance_manager,1,0,0,0
 access_sf_survey_dir,solarflow.survey.dir,model_solarflow_survey,group_solarflow_director,1,0,0,0
 access_sf_survey_admin,solarflow.survey.admin,model_solarflow_survey,group_solarflow_admin,1,1,1,1
-access_sf_pkg_survey_tech,solarflow.package.survey_tech,model_solarflow_package,group_solarflow_survey_technician,1,0,0,0
 access_sf_pkg_tech,solarflow.package.tech,model_solarflow_package,group_solarflow_technician,1,0,0,0
 access_sf_pkg_sales,solarflow.package.sales,model_solarflow_package,group_solarflow_sales_manager,1,1,1,1
 access_sf_pkg_wh,solarflow.package.wh,model_solarflow_package,group_solarflow_warehouse_manager,1,0,0,0
@@ -16,7 +14,6 @@ access_sf_pkg_line_sales,solarflow.package.line.sales,model_solarflow_package_li
 access_sf_pkg_line_wh,solarflow.package.line.wh,model_solarflow_package_line,group_solarflow_warehouse_manager,1,0,0,0
 access_sf_pkg_line_finance,solarflow.package.line.finance,model_solarflow_package_line,group_solarflow_finance_manager,1,0,0,0
 access_sf_pkg_line_admin,solarflow.package.line.admin,model_solarflow_package_line,group_solarflow_admin,1,1,1,1
-access_sf_bom_survey_tech,solarflow.bom.line.survey_tech,model_solarflow_bom_line,group_solarflow_survey_technician,1,1,1,0
 access_sf_bom_tech,solarflow.bom.line.tech,model_solarflow_bom_line,group_solarflow_technician,1,0,0,0
 access_sf_bom_sales,solarflow.bom.line.sales,model_solarflow_bom_line,group_solarflow_sales_manager,1,1,1,1
 access_sf_bom_wh,solarflow.bom.line.wh,model_solarflow_bom_line,group_solarflow_warehouse_manager,1,0,0,0
@@ -54,7 +51,6 @@ access_sf_wiz_survey_reject_sales,solarflow.survey.reject.wizard.sales,model_sol
 access_sf_wiz_survey_reject_admin,solarflow.survey.reject.wizard.admin,model_solarflow_survey_reject_wizard,group_solarflow_admin,1,1,1,1
 access_sf_wiz_lead_survey_sales,solarflow.lead.to.survey.wizard.sales,model_solarflow_lead_to_survey_wizard,group_solarflow_sales_manager,1,1,1,1
 access_sf_wiz_lead_survey_admin,solarflow.lead.to.survey.wizard.admin,model_solarflow_lead_to_survey_wizard,group_solarflow_admin,1,1,1,1
-access_sf_dash_survey_tech,solarflow.dashboard.survey_tech,model_solarflow_dashboard,group_solarflow_survey_technician,1,0,0,0
 access_sf_dash_tech,solarflow.dashboard.tech,model_solarflow_dashboard,group_solarflow_technician,1,0,0,0
 access_sf_dash_sales,solarflow.dashboard.sales,model_solarflow_dashboard,group_solarflow_sales_manager,1,0,0,0
 access_sf_dash_wh,solarflow.dashboard.wh,model_solarflow_dashboard,group_solarflow_warehouse_manager,1,0,0,0

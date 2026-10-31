@@ -32,7 +32,11 @@ Technicians can trace any serialized inverter, battery, or PV module through its
 - Real-time comparison of **Estimated Costs vs. Actual Execution Costs**.
 - Configurable profit leakage threshold (default 10%).
 - If cost overrun exceeds the threshold, high-priority automated alerts are sent to the **Director** and **Solar Operations Manager**.
-- Financial costing information is strictly restricted to authorized roles
+- Financial costing information is strictly restricted to authorized roles.
+
+---
+
+## 🏗️ Core Custom Models & Technical Architecture
 
 | Custom Model | Technical Identifier | Description & Business Rules |
 | :--- | :--- | :--- |

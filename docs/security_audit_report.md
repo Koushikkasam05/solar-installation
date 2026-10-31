@@ -26,8 +26,7 @@ Eight dedicated test accounts were established in the system ([`addons/solarflow
 |---|-----------------|-----------------|------------------|----------------------------|---------------------------|
 | 1 | **Super Administrator** | `admin@solarflow.erp` | `admin123` | `solarflow_management.group_solarflow_admin` | Unrestricted system control, settings, user management, and sole deletion authority. |
 | 2 | **Sales Manager** | `sales@solarflow.erp` | `sales123` | `solarflow_management.group_solarflow_sales_manager` | Leads, CRM, survey approval/rejection, quotation creation, and commercial sales order confirmation. |
-| 3 | **Survey Technician** | `survey@solarflow.erp` | `survey123` | `solarflow_management.group_solarflow_survey_technician` | Assigned site surveys, shadow-free measurements, tilt/azimuth capture, site photo uploads. |
-| 4 | **Warehouse Manager** | `warehouse@solarflow.erp` | `warehouse123` | `solarflow_management.group_solarflow_warehouse_manager` | BOM inventory, serial number tracking, barcode scanning, equipment dispatch validation. |
+| 3 | **Warehouse Manager** | `warehouse@solarflow.erp` | `warehouse123` | `solarflow_management.group_solarflow_warehouse_manager` | BOM inventory, serial number tracking, barcode scanning, equipment dispatch validation. |
 | 5 | **Installation Technician** | `tech@solarflow.erp` | `tech123` | `solarflow_management.group_solarflow_technician` | Assigned installation projects, checklist execution, commissioning, QC megger test upload. |
 | 6 | **Support Manager** | `support@solarflow.erp` | `support123` | `solarflow_management.group_solarflow_support_manager` | Warranty registrations, RMA tracking, post-commissioning customer service tickets, SLA resolution. |
 | 7 | **Finance Manager** | `finance@solarflow.erp` | `finance123` | `solarflow_management.group_solarflow_finance_manager` | Project costing sheets, margin variance tracking, invoicing, customer payments, cash flow audits. |
@@ -138,7 +137,7 @@ The table below outlines the CRUD permissions and method rights across all core 
 ### Vector 10: Sensitive Model Methods
 - **Objective**: Restrict state-transition methods on models to authorized roles.
 - **Server Implementation**:
-  - `SolarFlowSurvey.action_approve()` and `action_reject()`: Restricts approval strictly to `group_solarflow_sales_manager` or `group_solarflow_admin`. Explicitly blocks `group_solarflow_survey_technician`.
+  - `SolarFlowSurvey.action_approve()` and `action_reject()`: Restricts approval strictly to `group_solarflow_sales_manager` or `group_solarflow_admin`.
   - `SaleOrder.action_confirm()`: Restricts confirmation to `group_solarflow_sales_manager` or `group_solarflow_admin`. Blocks Director and field staff.
   - `SolarFlowInstallation.action_complete_and_handover()`: Enforces technician or sales manager validation; blocks Director.
   - `StockTracking.button_validate()`: Restricts dispatch validation to `group_solarflow_warehouse_manager` or `group_solarflow_admin`.

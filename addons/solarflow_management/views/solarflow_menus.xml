@@ -71,7 +71,7 @@
     <menuitem id="menu_solarflow_operations"
               name="Operations"
               parent="menu_solarflow_root"
-              groups="solarflow_management.group_solarflow_technician,solarflow_management.group_solarflow_survey_technician,solarflow_management.group_solarflow_sales_manager,solarflow_management.group_solarflow_admin,solarflow_management.group_solarflow_director"
+              groups="solarflow_management.group_solarflow_technician,solarflow_management.group_solarflow_sales_manager,solarflow_management.group_solarflow_admin,solarflow_management.group_solarflow_director"
               sequence="30"/>
 
     <menuitem id="menu_solarflow_installations"

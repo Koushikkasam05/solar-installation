@@ -7,16 +7,9 @@
     </record>
 
     <!-- ===================================================================== -->
-    <!-- 8 ENTERPRISE ROLES FOR SOLAR EPC                                      -->
+    <!-- 7 ENTERPRISE ROLES FOR SOLAR EPC                                      -->
     <!-- ===================================================================== -->
 
-    <!-- 1. Survey Technician -->
-    <record id="group_solarflow_survey_technician" model="res.groups">
-        <field name="name">Survey Technician</field>
-        <field name="category_id" ref="module_solarflow_category"/>
-        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-        <field name="comment">Performs rooftop assessments, logs pitch/azimuth/shadow, and submits surveys. Cannot approve surveys or view financial reports.</field>
-    </record>
 
     <!-- 2. Installation Technician -->
     <record id="group_solarflow_technician" model="res.groups">
@@ -71,7 +64,6 @@
         <field name="name">Super Administrator</field>
         <field name="category_id" ref="module_solarflow_category"/>
         <field name="implied_ids" eval="[
-            (4, ref('group_solarflow_survey_technician')),
             (4, ref('group_solarflow_technician')),
             (4, ref('group_solarflow_sales_manager')),
             (4, ref('group_solarflow_warehouse_manager')),
@@ -107,19 +99,7 @@
     <!-- RECORD RULES                                                          -->
     <!-- ===================================================================== -->
 
-    <!-- Rule 1: Survey Technicians only view assigned site surveys -->
-    <record id="rule_solarflow_survey_technician" model="ir.rule">
-        <field name="name">Survey Technician: Assigned Surveys Only</field>
-        <field name="model_id" ref="model_solarflow_survey"/>
-        <field name="domain_force">['|', ('surveyor_id', '=', user.id), ('surveyor_id', '=', False)]</field>
-        <field name="groups" eval="[(4, ref('group_solarflow_survey_technician'))]"/>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="True"/>
-        <field name="perm_create" eval="True"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-
-    <!-- Rule 2: Installation Technicians only view assigned installation projects -->
+    <!-- Rule 1: Installation Technicians only view assigned installation projects -->
     <record id="rule_solarflow_installation_technician" model="ir.rule">
         <field name="name">Technician: View Assigned Installations Only</field>
         <field name="model_id" ref="model_solarflow_installation"/>

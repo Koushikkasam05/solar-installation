@@ -43,15 +43,14 @@ class MockSecurityUser:
 
 
 class SolarFlowSecurityMockEnv:
-    """Mock security environment representing the 8 discrete enterprise roles."""
+    """Mock security environment representing the 7 discrete enterprise roles."""
     def __init__(self):
-        # The 8 Dedicated Test Accounts
+        # The 7 Dedicated Test Accounts
         self.users = {
             'admin': MockSecurityUser(1, 'System Administrator', 'admin@solarflow.erp', 'admin', [
                 'base.group_user',
                 'solarflow_management.group_solarflow_admin',
                 'solarflow_management.group_solarflow_sales_manager',
-                'solarflow_management.group_solarflow_survey_technician',
                 'solarflow_management.group_solarflow_warehouse_manager',
                 'solarflow_management.group_solarflow_technician',
                 'solarflow_management.group_solarflow_support_manager',
@@ -61,10 +60,6 @@ class SolarFlowSecurityMockEnv:
             'sales': MockSecurityUser(2, 'Vikram Sales Manager', 'sales@solarflow.erp', 'sales', [
                 'base.group_user',
                 'solarflow_management.group_solarflow_sales_manager',
-            ]),
-            'survey_tech': MockSecurityUser(3, 'Arun Survey Tech', 'survey@solarflow.erp', 'survey_tech', [
-                'base.group_user',
-                'solarflow_management.group_solarflow_survey_technician',
             ]),
             'warehouse': MockSecurityUser(4, 'Sanjay Warehouse Manager', 'warehouse@solarflow.erp', 'warehouse', [
                 'base.group_user',
@@ -108,10 +103,6 @@ class SolarFlowSurveySimulator:
 
     def get_visible_surveys(self):
         user = self.env.current_user
-        # Record Rule: Survey Technician sees only assigned surveys
-        if user.has_group('solarflow_management.group_solarflow_survey_technician') and not user.has_group('solarflow_management.group_solarflow_admin'):
-            return [s for s in self.surveys if s['surveyor_id'] == user.id or s['surveyor_id'] is None]
-        # Admin, Sales, Finance, Director see all
         return list(self.surveys)
 
     def action_approve(self, survey_id):
@@ -120,8 +111,6 @@ class SolarFlowSurveySimulator:
             user.has_group('solarflow_management.group_solarflow_sales_manager') or
             user.has_group('solarflow_management.group_solarflow_admin')
         )
-        if user.has_group('solarflow_management.group_solarflow_survey_technician') and not user.has_group('solarflow_management.group_solarflow_admin'):
-            is_authorized = False
         if not is_authorized:
             raise AccessError("Security Violation: Only a Sales Manager or Super Administrator is authorized to approve site surveys.")
 
@@ -137,8 +126,6 @@ class SolarFlowSurveySimulator:
             user.has_group('solarflow_management.group_solarflow_sales_manager') or
             user.has_group('solarflow_management.group_solarflow_admin')
         )
-        if user.has_group('solarflow_management.group_solarflow_survey_technician') and not user.has_group('solarflow_management.group_solarflow_admin'):
-            is_authorized = False
         if not is_authorized:
             raise AccessError("Security Violation: Only a Sales Manager or Super Administrator is authorized to reject site surveys.")
         if not reason or not reason.strip():
@@ -149,10 +136,9 @@ class SolarFlowSurveySimulator:
         user = self.env.current_user
         if user.has_group('solarflow_management.group_solarflow_director') and not user.has_group('solarflow_management.group_solarflow_admin'):
             raise AccessError("Security Violation: Director has strict read-only access and cannot create surveys.")
-        if not (user.has_group('solarflow_management.group_solarflow_survey_technician') or
-                user.has_group('solarflow_management.group_solarflow_sales_manager') or
+        if not (user.has_group('solarflow_management.group_solarflow_sales_manager') or
                 user.has_group('solarflow_management.group_solarflow_admin')):
-            raise AccessError("Access Denied: Only Survey Technicians, Sales Managers, and Administrators can create surveys.")
+            raise AccessError("Access Denied: Only Sales Managers and Administrators can create surveys.")
         new_id = len(self.surveys) + 1
         record = {'id': new_id, 'name': f"SRV-2026-000{new_id}", 'surveyor_id': user.id, 'state': 'draft', 'roof_area': vals.get('roof_area', 500.0)}
         self.surveys.append(record)
@@ -289,12 +275,11 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
     # -------------------------------------------------------------------------
     # TEST VECTOR 1: LOGIN WITH EACH ROLE
     # -------------------------------------------------------------------------
-    def test_vector_1_login_with_all_eight_roles(self):
-        """Verifies successful authentication and profile initialization for all 8 discrete roles."""
+    def test_vector_1_login_with_all_seven_roles(self):
+        """Verifies successful authentication and profile initialization for all 7 discrete roles."""
         role_logins = {
             'admin': 'admin@solarflow.erp',
             'sales': 'sales@solarflow.erp',
-            'survey_tech': 'survey@solarflow.erp',
             'warehouse': 'warehouse@solarflow.erp',
             'tech': 'tech@solarflow.erp',
             'support': 'support@solarflow.erp',
@@ -324,7 +309,7 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
         self.assertTrue(self.cost_sim.check_read_permission())
 
         # Operational roles must NOT have financial dashboard visibility
-        for non_fin_role in ['tech', 'survey_tech', 'warehouse', 'support']:
+        for non_fin_role in ['tech', 'warehouse', 'support']:
             self.env.switch_user(non_fin_role)
             self.assertFalse(self.cost_sim.check_read_permission())
 
@@ -335,7 +320,6 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
         """Verifies navigation menus are strictly rendered according to role permissions."""
         role_menus = {
             'sales': ['enquiries', 'leads', 'followups', 'surveys', 'quotations', 'orders'],
-            'survey_tech': ['dashboard', 'surveys', 'schedule'],
             'warehouse': ['products', 'categories', 'warehouses', 'stock_avail', 'inventory', 'dispatches'],
             'tech': ['installations', 'schedule', 'inst_reports', 'inventory'],
             'support': ['warranties', 'service', 'complaints', 'service_history'],
@@ -343,17 +327,14 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
         }
         for role_key, allowed_menus in role_menus.items():
             user = self.env.switch_user(role_key)
-            if role_key == 'survey_tech':
-                self.assertFalse(user.has_group('solarflow_management.group_solarflow_finance_manager'))
-                self.assertFalse(user.has_group('solarflow_management.group_solarflow_sales_manager'))
-            elif role_key == 'tech':
+            if role_key == 'tech':
                 self.assertFalse(user.has_group('solarflow_management.group_solarflow_finance_manager'))
 
     # -------------------------------------------------------------------------
     # TEST VECTOR 4: RECORD VISIBILITY & DOMAIN ISOLATION
     # -------------------------------------------------------------------------
     def test_vector_4_record_visibility_domain_isolation(self):
-        """Technician sees ONLY assigned installations; Surveyor sees ONLY assigned surveys."""
+        """Technician sees ONLY assigned installations; Admin and Sales see all."""
         # 1. Installation Technician Domain Isolation
         self.env.switch_user('tech') # Ramesh (ID 5)
         visible_insts = self.inst_sim.get_visible_installations()
@@ -367,16 +348,6 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
 
         self.env.switch_user('sales')
         self.assertEqual(len(self.inst_sim.get_visible_installations()), 2)
-
-        # 2. Survey Technician Domain Isolation
-        self.env.switch_user('survey_tech') # Arun (ID 3)
-        visible_surveys = self.survey_sim.get_visible_surveys()
-        # Should only see surveys with surveyor_id == 3 (SRV-2026-0001 and SRV-2026-0003), NOT SRV-2026-0002 (surveyor 99)
-        self.assertEqual(len(visible_surveys), 2)
-        survey_ids = [s['id'] for s in visible_surveys]
-        self.assertIn(1, survey_ids)
-        self.assertIn(3, survey_ids)
-        self.assertNotIn(2, survey_ids)
 
     # -------------------------------------------------------------------------
     # TEST VECTOR 5: CREATE PERMISSIONS
@@ -392,12 +363,12 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
         with self.assertRaises(AccessError):
             self.cost_sim.create({'revenue': 2000.0, 'cost': 1500.0})
 
-        # Survey Tech can create surveys
-        self.env.switch_user('survey_tech')
+        # Sales Manager can create surveys
+        self.env.switch_user('sales')
         new_survey = self.survey_sim.create({'roof_area': 700.0})
         self.assertIsNotNone(new_survey)
 
-        # Survey Tech cannot create costing sheets
+        # Sales Manager cannot create costing sheets
         with self.assertRaises(AccessError):
             self.cost_sim.create({'revenue': 2000.0, 'cost': 1500.0})
 
@@ -431,7 +402,7 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
     # -------------------------------------------------------------------------
     def test_vector_7_delete_permissions_admin_only(self):
         """Strict ACL enforcement: Unlink operations are blocked for all 7 roles except Super Admin."""
-        non_admin_roles = ['sales', 'survey_tech', 'warehouse', 'tech', 'support', 'finance', 'director']
+        non_admin_roles = ['sales', 'warehouse', 'tech', 'support', 'finance', 'director']
 
         # 1. Test Survey Delete
         for role in non_admin_roles:
@@ -474,7 +445,6 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
         """Direct URL route access to restricted modules is intercepted and rejected with 403."""
         restricted_routes_matrix = {
             'tech': ['costing', 'quotations', 'users', 'roles', 'company'],
-            'survey_tech': ['costing', 'invoices', 'payments', 'users', 'roles'],
             'warehouse': ['costing', 'invoices', 'quotations', 'users'],
             'support': ['costing', 'invoices', 'users', 'roles']
         }
@@ -491,9 +461,9 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
     def test_vector_9_attachment_access_controls(self):
         """Verifies attachment permissions for QC reports, drone photos, and financial margin sheets."""
         attachment_rules = {
-            'qc_megger': {'allowed': ['admin', 'tech', 'sales', 'director'], 'denied': ['warehouse', 'survey_tech', 'support']},
-            'survey_photo': {'allowed': ['admin', 'sales', 'survey_tech', 'director'], 'denied': ['finance', 'warehouse', 'support']},
-            'profit_leakage_audit': {'allowed': ['admin', 'finance', 'director'], 'denied': ['tech', 'survey_tech', 'warehouse', 'support', 'sales']}
+            'qc_megger': {'allowed': ['admin', 'tech', 'sales', 'director'], 'denied': ['warehouse', 'support']},
+            'survey_photo': {'allowed': ['admin', 'sales', 'director'], 'denied': ['finance', 'warehouse', 'support']},
+            'profit_leakage_audit': {'allowed': ['admin', 'finance', 'director'], 'denied': ['tech', 'warehouse', 'support', 'sales']}
         }
 
         for doc_type, rule in attachment_rules.items():
@@ -501,7 +471,7 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
                 user = self.env.switch_user(allowed_role)
                 # Verify that authorized role can access
                 has_clearance = any(user.has_group(f"solarflow_management.group_solarflow_{r}") for r in [
-                    'admin', 'finance_manager', 'director', 'sales_manager', 'technician', 'survey_technician', 'warehouse_manager', 'support_manager'
+                    'admin', 'finance_manager', 'director', 'sales_manager', 'technician', 'warehouse_manager', 'support_manager'
                 ])
                 self.assertTrue(has_clearance)
 
@@ -515,12 +485,7 @@ class SolarFlowSecurityTestSuite(unittest.TestCase):
     # -------------------------------------------------------------------------
     def test_vector_10_sensitive_model_methods(self):
         """Tests method-level authorization for approve, reject, confirm, handover, and validate."""
-        # 1. action_approve: Survey Technician CANNOT approve surveys
-        self.env.switch_user('survey_tech')
-        with self.assertRaises(AccessError):
-            self.survey_sim.action_approve(1)
-
-        # Warehouse, Tech, Director CANNOT approve surveys
+        # 1. action_approve: Warehouse, Tech, Director CANNOT approve surveys
         for r in ['warehouse', 'tech', 'director']:
             self.env.switch_user(r)
             with self.assertRaises(AccessError):
