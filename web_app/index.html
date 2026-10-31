@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SolarFlow ERP – Solar Installation Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div id="solarflow-app">
+    <!-- ==================================================================== -->
+    <!-- COLLAPSIBLE LEFT SIDEBAR                                             -->
+    <!-- ==================================================================== -->
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a href="javascript:void(0)" class="brand-wrapper" onclick="switchView('dashboard')">
+          <div class="sun-badge-logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+          </div>
+          <div class="brand-info">
+            <span class="brand-title">SolarFlow ERP</span>
+            <span class="brand-subtitle">Commercial Solar EPC</span>
+          </div>
+        </a>
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Sidebar Navigation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Navigation Tree Filtered By Active Role -->
+      <nav class="sidebar-nav" id="sidebar-nav-tree">
+        <!-- 1. Overview -->
+        <div class="nav-group-title">Overview</div>
+        <button class="nav-link-btn active" data-view="dashboard" data-perm="all">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Dashboard</span>
+        </button>
+
+        <!-- 2. Sales Management -->
+        <div class="nav-group-title" data-group-perm="admin,sales,director">Sales Management</div>
+        <button class="nav-link-btn" data-view="enquiries" data-perm="admin,sales,director">
+          <span class="nav-icon">📩</span>
+          <span class="nav-text">Customer Enquiries</span>
+          <span class="badge-pill" id="badge-enquiries-count">4</span>
+        </button>
+        <button class="nav-link-btn" data-view="leads" data-perm="admin,sales,director">
+          <span class="nav-icon">🎯</span>
+          <span class="nav-text">Leads</span>
+          <span class="badge-pill" id="badge-leads-count">10</span>
+        </button>
+        <button class="nav-link-btn" data-view="followups" data-perm="admin,sales,director">
+          <span class="nav-icon">⏰</span>
+          <span class="nav-text">Follow-ups</span>
+          <span class="badge-pill" id="badge-followups-count">3</span>
+        </button>
+        <button class="nav-link-btn" data-view="surveys" data-perm="admin,sales,survey_tech,director">
+          <span class="nav-icon">📐</span>
+          <span class="nav-text">Site Surveys</span>
+        </button>
+        <button class="nav-link-btn" data-view="quotations" data-perm="admin,sales,finance,director">
+          <span class="nav-icon">📑</span>
+          <span class="nav-text">Quotations</span>
+        </button>
+        <button class="nav-link-btn" data-view="orders" data-perm="admin,sales,finance,director">
+          <span class="nav-icon">✅</span>
+          <span class="nav-text">Sales Orders</span>
+        </button>
+
+        <!-- 3. Operations -->
+        <div class="nav-group-title" data-group-perm="admin,tech,survey_tech,sales,director">Operations</div>
+        <button class="nav-link-btn" data-view="installations" data-perm="admin,tech,sales,director">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-text">Installation Projects</span>
+        </button>
+        <button class="nav-link-btn" data-view="schedule" data-perm="admin,tech,sales,director">
+          <span class="nav-icon">📅</span>
+          <span class="nav-text">Installation Schedule</span>
+        </button>
+        <button class="nav-link-btn" data-view="technicians" data-perm="admin,sales,director">
+          <span class="nav-icon">👷</span>
+          <span class="nav-text">Technician Management</span>
+        </button>
+        <button class="nav-link-btn" data-view="inst_reports" data-perm="admin,tech,sales,director">
+          <span class="nav-icon">📋</span>
+          <span class="nav-text">Installation Reports</span>
+        </button>
+
+        <!-- 4. Inventory -->
+        <div class="nav-group-title" data-group-perm="admin,warehouse,director">Inventory</div>
+        <button class="nav-link-btn" data-view="products" data-perm="admin,warehouse,sales,director">
+          <span class="nav-icon">📦</span>
+          <span class="nav-text">Products</span>
+        </button>
+        <button class="nav-link-btn" data-view="categories" data-perm="admin,warehouse,director">
+          <span class="nav-icon">🗂️</span>
+          <span class="nav-text">Categories</span>
+        </button>
+        <button class="nav-link-btn" data-view="warehouses" data-perm="admin,warehouse,director">
+          <span class="nav-icon">🏢</span>
+          <span class="nav-text">Warehouses</span>
+        </button>
+        <button class="nav-link-btn" data-view="stock_avail" data-perm="admin,warehouse,director">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Stock Availability</span>
+        </button>
+        <button class="nav-link-btn" data-view="stock_reservations" data-perm="admin,warehouse,sales,director">
+          <span class="nav-icon">🔒</span>
+          <span class="nav-text">Stock Reservations</span>
+        </button>
+        <button class="nav-link-btn" data-view="inventory" data-perm="admin,warehouse,tech,support,director">
+          <span class="nav-icon">🏷️</span>
+          <span class="nav-text">Serial Numbers</span>
+        </button>
+        <button class="nav-link-btn" data-view="dispatches" data-perm="admin,warehouse,director">
+          <span class="nav-icon">🚚</span>
+          <span class="nav-text">Dispatch</span>
+        </button>
+        <button class="nav-link-btn" data-view="stock_moves" data-perm="admin,warehouse,director">
+          <span class="nav-icon">🔄</span>
+          <span class="nav-text">Stock Movement History</span>
+        </button>
+
+        <!-- 5. After-Sales -->
+        <div class="nav-group-title" data-group-perm="admin,support,tech,director">After-Sales</div>
+        <button class="nav-link-btn" data-view="warranties" data-perm="admin,support,director">
+          <span class="nav-icon">🛡️</span>
+          <span class="nav-text">Warranty Management</span>
+        </button>
+        <button class="nav-link-btn" data-view="service" data-perm="admin,support,tech,director">
+          <span class="nav-icon">🔧</span>
+          <span class="nav-text">Service Tickets</span>
+        </button>
+        <button class="nav-link-btn" data-view="complaints" data-perm="admin,support,director">
+          <span class="nav-icon">⚠️</span>
+          <span class="nav-text">Customer Complaints</span>
+        </button>
+        <button class="nav-link-btn" data-view="service_history" data-perm="admin,support,director">
+          <span class="nav-icon">📜</span>
+          <span class="nav-text">Service History</span>
+        </button>
+
+        <!-- 6. Finance -->
+        <div class="nav-group-title" data-group-perm="admin,finance,director">Finance</div>
+        <button class="nav-link-btn" data-view="invoices" data-perm="admin,finance,director">
+          <span class="nav-icon">🧾</span>
+          <span class="nav-text">Invoices</span>
+        </button>
+        <button class="nav-link-btn" data-view="payments" data-perm="admin,finance,director">
+          <span class="nav-icon">💳</span>
+          <span class="nav-text">Payments</span>
+        </button>
+        <button class="nav-link-btn" data-view="expenses" data-perm="admin,finance,director">
+          <span class="nav-icon">💸</span>
+          <span class="nav-text">Project Expenses</span>
+        </button>
+        <button class="nav-link-btn" data-view="costing" data-perm="admin,finance,director">
+          <span class="nav-icon">💰</span>
+          <span class="nav-text">Project Profitability</span>
+        </button>
+        <button class="nav-link-btn" data-view="fin_reports" data-perm="admin,finance,director">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">Financial Reports</span>
+        </button>
+
+        <!-- 7. Analytics -->
+        <div class="nav-group-title" data-group-perm="admin,director">Analytics</div>
+        <button class="nav-link-btn" data-view="biz_reports" data-perm="admin,director">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Business Reports</span>
+        </button>
+        <button class="nav-link-btn" data-view="op_reports" data-perm="admin,director">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">Operational Reports</span>
+        </button>
+        <button class="nav-link-btn" data-view="tech_perf" data-perm="admin,director">
+          <span class="nav-icon">🏅</span>
+          <span class="nav-text">Technician Performance</span>
+        </button>
+        <button class="nav-link-btn" data-view="sales_perf" data-perm="admin,director">
+          <span class="nav-icon">🎯</span>
+          <span class="nav-text">Sales Performance</span>
+        </button>
+
+        <!-- 8. Administration -->
+        <div class="nav-group-title" data-group-perm="admin">Administration</div>
+        <button class="nav-link-btn" data-view="users" data-perm="admin">
+          <span class="nav-icon">👥</span>
+          <span class="nav-text">User Management</span>
+        </button>
+        <button class="nav-link-btn" data-view="roles" data-perm="admin">
+          <span class="nav-icon">🔐</span>
+          <span class="nav-text">Roles &amp; Permissions</span>
+        </button>
+        <button class="nav-link-btn" data-view="company" data-perm="admin">
+          <span class="nav-icon">🏛️</span>
+          <span class="nav-text">Company Settings</span>
+        </button>
+        <button class="nav-link-btn" data-view="packages" data-perm="admin,sales">
+          <span class="nav-icon">📦</span>
+          <span class="nav-text">Solar Package Configuration</span>
+        </button>
+        <button class="nav-link-btn" data-view="settings" data-perm="admin">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">System Settings</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="role-badge-pill">
+          <span class="role-dot"></span>
+          <span id="sidebar-role-indicator">Super Administrator</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ==================================================================== -->
+    <!-- APP MAIN WRAPPER & TOP NAVIGATION                                    -->
+    <!-- ==================================================================== -->
+    <div class="app-main-wrapper" id="app-main-wrapper">
+      <!-- Fixed Enterprise Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <!-- Breadcrumb Navigation -->
+          <div class="breadcrumbs">
+            <span class="breadcrumb-root">SolarFlow ERP</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-root" id="breadcrumb-section">Overview</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current" id="breadcrumb-page">Dashboard</span>
+          </div>
+
+          <!-- Global Search Input -->
+          <div class="global-search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="global-search-input" class="search-input" placeholder="Search customer, phone, serial, quotation...">
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- 3kW Showcase Tour Button -->
+          <button class="btn-outline-action" id="btn-showcase-tour" title="Run 1-Click Interactive 3kW Showcase Tour">
+            <span>▶ 3kW Turnkey Showcase</span>
+          </button>
+
+          <!-- Quick Create Action Menu -->
+          <div class="quick-create-dropdown">
+            <button class="btn-quick-create" id="btn-quick-create">
+              <span>+ Quick Create</span>
+            </button>
+          </div>
+
+          <!-- Notification Bell -->
+          <button class="notification-btn" id="btn-notifications" title="System Notifications & Alerts">
+            <span>🔔</span>
+            <span class="notification-badge" id="notification-counter">3</span>
+          </button>
+
+          <!-- Active Role Switcher (RBAC Matrix) -->
+          <div class="role-badge-selector">
+            <label for="user-role-select">Role:</label>
+            <select id="user-role-select" class="role-dropdown-select">
+              <option value="admin">1. Super Administrator</option>
+              <option value="sales">2. Sales Manager</option>
+              <option value="survey_tech">3. Survey Technician</option>
+              <option value="warehouse">4. Warehouse Manager</option>
+              <option value="tech">5. Installation Technician</option>
+              <option value="support">6. Support Manager</option>
+              <option value="finance">7. Finance Manager</option>
+              <option value="director">8. Director / Investor (Read-Only)</option>
+            </select>
+          </div>
+
+          <!-- User Profile Badge -->
+          <div class="user-profile-btn" id="user-profile-badge">
+            <div class="user-avatar-circle" id="user-avatar-initials">SA</div>
+            <div>
+              <div class="user-name-text" id="user-display-name">Solar Admin</div>
+              <div class="user-role-text" id="user-role-title">Chief Executive</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Toast Alerts Container -->
+      <div id="toast-container" class="toast-bar"></div>
+
+      <!-- Main Content Container -->
+      <main class="main-content">
+        <!-- ================================================================ -->
+        <!-- 1. DASHBOARD VIEW (ROLE-TAILORED)                                -->
+        <!-- ================================================================ -->
+        <section id="view-dashboard" class="view-section active">
+          <!-- Dynamically Injected Role-Tailored Dashboard -->
+          <div id="role-dashboard-container">
+            <!-- Populated via JS based on Active Role -->
+          </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- 2. CUSTOMER ENQUIRIES & LEADS                                    -->
+        <!-- ================================================================ -->
+        <section id="view-enquiries" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Customer Enquiries &amp; Initial Contact</h1>
+              <p class="section-description">Incoming residential and commercial solar enquiries awaiting preliminary sizing and lead qualification.</p>
+            </div>
+            <button class="btn-quick-create" onclick="showLeadModal()">+ New Customer Enquiry</button>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-toolbar">
+              <div class="table-filter-group">
+                <select class="filter-select" id="filter-enquiry-status">
+                  <option value="all">All Enquiries</option>
+                  <option value="new">New Inquiries</option>
+                  <option value="qualified">Qualified</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Enquiry Ref</th>
+                    <th>Customer Name</th>
+                    <th>Contact Phone</th>
+                    <th>Location</th>
+                    <th>Property Type</th>
+                    <th>Sanctioned Load</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="enquiries-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-leads" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Solar Leads &amp; Consumption Sizing</h1>
+              <p class="section-description">Qualified solar leads with historical monthly kWh consumption and mathematical sizing calculations.</p>
+            </div>
+            <button class="btn-quick-create" onclick="showLeadModal()">+ New Solar Lead</button>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Lead Ref</th>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Monthly kWh</th>
+                    <th>Tariff ($/kWh)</th>
+                    <th>Recommended kW</th>
+                    <th>System Type</th>
+                    <th>Subsidy Eligibility</th>
+                    <th>Survey Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="leads-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-followups" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Sales Follow-ups &amp; Action Schedules</h1>
+              <p class="section-description">Scheduled customer calls, site visit follow-ups, and proposal reviews.</p>
+            </div>
+            <button class="btn-action-primary-sm" onclick="showToast('Follow-up scheduled with customer.', 'success')">+ Schedule Follow-up</button>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Due Date</th>
+                    <th>Customer</th>
+                    <th>Assigned Sales Rep</th>
+                    <th>Activity Type</th>
+                    <th>Summary / Next Steps</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="followups-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- 3. SITE SURVEYS                                                  -->
+        <!-- ================================================================ -->
+        <section id="view-surveys" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Rooftop Site Survey Engineering Assessments</h1>
+              <p class="section-description">Shadow analysis, pitch &amp; azimuth verification, cable distance, and chief engineer approval gates.</p>
+            </div>
+            <div class="header-action-group">
+              <span class="status-pill pill-info">Engineering Rule: Valid Roof Area Required</span>
+            </div>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Survey Ref</th>
+                    <th>Customer Site</th>
+                    <th>Roof Architecture</th>
+                    <th>Total Area</th>
+                    <th>Shadow-Free Area</th>
+                    <th>Azimuth / Pitch</th>
+                    <th>Cable Run</th>
+                    <th>Grid Phase</th>
+                    <th>Sized Capacity</th>
+                    <th>Approval Status</th>
+                    <th>Engineering Action</th>
+                  </tr>
+                </thead>
+                <tbody id="surveys-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- 4. QUOTATIONS & SALES ORDERS                                     -->
+        <!-- ================================================================ -->
+        <section id="view-quotations" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Turnkey Solar Quotations &amp; Proposals</h1>
+              <p class="section-description">Proposals generated from approved surveys with automatic BOM component pricing and PM Surya Ghar subsidy offsets.</p>
+            </div>
+            <button class="btn-action-primary-sm" onclick="showToast('Select an approved survey to generate quotation.', 'info')">+ Generate from Survey</button>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Quotation Ref</th>
+                    <th>Customer</th>
+                    <th>Approved Survey</th>
+                    <th>System Size</th>
+                    <th>Gross Total</th>
+                    <th>Subsidy Offset</th>
+                    <th>Net Customer Price</th>
+                    <th>Payback (Years)</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="quotations-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-orders" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Confirmed Sales Orders &amp; 50% Advance Payment Gate</h1>
+              <p class="section-description">Signed turnkey EPC contracts with server-side validation enforcing 50% advance before warehouse dispatch.</p>
+            </div>
+            <span class="status-pill pill-warning">Critical Rule: Dispatch requires &ge;50% Advance</span>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Order Ref</th>
+                    <th>Customer</th>
+                    <th>System</th>
+                    <th>Gross Total</th>
+                    <th>Subsidy</th>
+                    <th>Net Payable</th>
+                    <th>Advance Req. (50%)</th>
+                    <th>Amount Paid</th>
+                    <th>Payment Status</th>
+                    <th>Dispatch Gate</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- 5. PACKAGES & DYNAMIC AUTO-BOM                                   -->
+        <!-- ================================================================ -->
+        <section id="view-packages" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Solar Packages &amp; Dynamic Auto-BOM Engine</h1>
+              <p class="section-description">Standardized residential and commercial solar packages with sum-of-components BOM calculations.</p>
+            </div>
+            <span class="status-pill pill-success">8 Configured Packages Active</span>
+          </div>
+
+          <div class="packages-grid" id="packages-cards-grid">
+            <!-- Populated via JS -->
+          </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- 6. OPERATIONS & INSTALLATIONS                                    -->
+        <!-- ================================================================ -->
+        <section id="view-installations" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Field Installation Projects &amp; Commissioning QC</h1>
+              <p class="section-description">Execution tracking with Installation Readiness Score (100 pts) and Electrical Safety Gate (Earth Pit &le; 5.0&Omega;).</p>
+            </div>
+            <span class="status-pill pill-danger">Safety Limit: Earth Pit &le; 5.0 &Omega;</span>
+          </div>
+
+          <div id="installations-container">
+            <!-- Populated via JS -->
+          </div>
+        </section>
+
+        <section id="view-schedule" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Field Crew Installation Schedule</h1>
+              <p class="section-description">Site mobilization calendar, technician assignments, and planned energization dates.</p>
+            </div>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Scheduled Date</th>
+                    <th>Installation Ref</th>
+                    <th>Customer Site</th>
+                    <th>Capacity</th>
+                    <th>Lead Electrician</th>
+                    <th>Crew Size</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="schedule-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- 7. INVENTORY & SERIAL TRACKING                                   -->
+        <!-- ================================================================ -->
+        <section id="view-inventory" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Serialized Equipment &amp; Single-Allocation Constraint</h1>
+              <p class="section-description">Barcode tracking for PV modules, smart inverters, and battery banks across warehouse storage, dispatch, and commissioning.</p>
+            </div>
+            <span class="status-pill pill-info">Constraint: Single Active Allocation Enforced</span>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Serial Number / Barcode</th>
+                    <th>Component Product</th>
+                    <th>OEM Manufacturer</th>
+                    <th>Allocation Status</th>
+                    <th>Allocated Project</th>
+                    <th>Customer Owner</th>
+                    <th>Dispatch Date</th>
+                    <th>Warranty Term</th>
+                    <th>Lifecycle Timeline</th>
+                  </tr>
+                </thead>
+                <tbody id="inventory-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- 8. AFTER-SALES: WARRANTIES & SERVICE                             -->
+        <!-- ================================================================ -->
+        <section id="view-warranties" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Digital Warranty Certificates &amp; SHA-256 Verification</h1>
+              <p class="section-description">Automated warranty activation upon customer sign-off: Inverter (2-Yr), Battery (2-Yr), Solar Panel (20-Yr).</p>
+            </div>
+            <button class="btn-action-primary-sm" onclick="triggerWarrantyReminderCheck()">⚡ Check 30-Day Expiry Engine</button>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Certificate Ref</th>
+                    <th>Customer</th>
+                    <th>Equipment Serial</th>
+                    <th>Product</th>
+                    <th>Coverage Term</th>
+                    <th>Start Date</th>
+                    <th>Expiry Date</th>
+                    <th>SHA-256 Token</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="warranties-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-service" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">After-Sales Service Management &amp; Covered Repair Billing</h1>
+              <p class="section-description">Serial lookup automatically checks warranty status. Covered OEM faults bill $0.00; non-covered bill parts + labour.</p>
+            </div>
+            <button class="btn-quick-create" onclick="showTicketModal()">+ Log Service Complaint</button>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-responsive-wrapper">
+              <table class="enterprise-data-table">
+                <thead>
+                  <tr>
+                    <th>Ticket Ref</th>
+                    <th>Customer</th>
+                    <th>Equipment Serial</th>
+                    <th>Fault Category</th>
+                    <th>Technician</th>
+                    <th>Repair Cost</th>
+                    <th>Warranty Coverage</th>
+                    <th>Customer Charge</th>
+                    <th>Sign-off</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="service-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- 9. FINANCE: JOB COSTING & PROFITABILITY                          -->
+        <!-- ================================================================ -->
+        <section id="view-costing" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title">Project Job Costing, Profitability &amp; Profit Leakage Alerting</h1>
+              <p class="section-description">Itemized Material, Labour, Transport, and Additional Expenses. Gross Profit and Margin %. Leakage alerts (>10% overrun).</p>
+            </div>
+            <span class="status-pill pill-danger">Alert Gate: &gt;10% Cost Overrun</span>
+          </div>
+
+          <!-- Confidential banner for non-authorized roles -->
+          <div id="costing-restricted-banner" class="confidential-financial-banner" style="display:none;">
+            <div class="banner-shield-icon">🔒</div>
+            <div>
+              <div class="banner-title">Confidential Financial Data Restricted</div>
+              <div class="banner-text">Job costing sheets, contractor labour margins, and company gross profit are restricted to <strong>Super Administrator</strong>, <strong>Finance Manager</strong>, and <strong>Director</strong>.</div>
+            </div>
+          </div>
+
+          <div id="costing-content-panel">
+            <div class="table-panel">
+              <div class="table-responsive-wrapper">
+                <table class="enterprise-data-table">
+                  <thead>
+                    <tr>
+                      <th>Cost Sheet Ref</th>
+                      <th>Project Site</th>
+                      <th>Customer</th>
+                      <th>Est. Revenue</th>
+                      <th>Actual Revenue</th>
+                      <th>Est. Cost</th>
+                      <th>Actual Cost</th>
+                      <th>Variance</th>
+                      <th>Overrun (%)</th>
+                      <th>Gross Profit</th>
+                      <th>Gross Margin (%)</th>
+                      <th>Budget Health</th>
+                    </tr>
+                  </thead>
+                  <tbody id="costing-table-body">
+                    <!-- Populated via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- General Fallback Section for other submenus -->
+        <section id="view-generic-panel" class="view-section">
+          <div class="section-header-bar">
+            <div>
+              <h1 class="section-title" id="generic-panel-title">Module Section</h1>
+              <p class="section-description" id="generic-panel-desc">Operational records for this module.</p>
+            </div>
+          </div>
+          <div class="content-card" id="generic-panel-content">
+            <!-- Populated via JS -->
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- MODAL DIALOGS CONTAINER                                              -->
+    <!-- ==================================================================== -->
+    <div id="modal-container" class="modal-overlay" style="display:none;">
+      <div class="modal-dialog-box">
+        <div class="modal-header-bar">
+          <h3 class="modal-dialog-title" id="modal-title">Modal Title</h3>
+          <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-content-body" id="modal-body">
+          <!-- Dynamically Injected Form -->
+        </div>
+        <div class="modal-footer-bar" id="modal-footer">
+          <button class="btn-action-sm" onclick="closeModal()">Cancel</button>
+          <button class="btn-action-primary-sm" id="modal-submit-btn">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

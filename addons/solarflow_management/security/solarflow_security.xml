@@ -6,55 +6,84 @@
         <field name="sequence">15</field>
     </record>
 
-    <!-- 1. Installation Technician -->
+    <!-- ===================================================================== -->
+    <!-- 8 ENTERPRISE ROLES FOR SOLAR EPC                                      -->
+    <!-- ===================================================================== -->
+
+    <!-- 1. Survey Technician -->
+    <record id="group_solarflow_survey_technician" model="res.groups">
+        <field name="name">Survey Technician</field>
+        <field name="category_id" ref="module_solarflow_category"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Performs rooftop assessments, logs pitch/azimuth/shadow, and submits surveys. Cannot approve surveys or view financial reports.</field>
+    </record>
+
+    <!-- 2. Installation Technician -->
     <record id="group_solarflow_technician" model="res.groups">
         <field name="name">Installation Technician</field>
         <field name="category_id" ref="module_solarflow_category"/>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Executes assigned rooftop installations, 6-phase checklist, and electrical QC testing (Voc, Isc, Earth &lt;= 5.0 Ohm). Cannot view financial reports or unrelated projects.</field>
     </record>
 
-    <!-- 2. Sales Manager -->
+    <!-- 3. Sales Manager -->
     <record id="group_solarflow_sales_manager" model="res.groups">
         <field name="name">Sales Manager</field>
         <field name="category_id" ref="module_solarflow_category"/>
-        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_manager')), (4, ref('group_solarflow_technician'))]"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Manages customer enquiries, leads, follow-ups, survey requests, quotations, and sales contracts. Cannot modify inventory stock or financial configurations.</field>
     </record>
 
-    <!-- 3. Warehouse Manager -->
+    <!-- 4. Warehouse Manager -->
     <record id="group_solarflow_warehouse_manager" model="res.groups">
         <field name="name">Warehouse Manager</field>
         <field name="category_id" ref="module_solarflow_category"/>
-        <field name="implied_ids" eval="[(4, ref('stock.group_stock_manager')), (4, ref('base.group_user'))]"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Manages products, inventory receipts, reservations, serialized hardware allocation, and site dispatches. Cannot edit sales pricing or financial settings.</field>
     </record>
 
-    <!-- 4. Support Manager -->
+    <!-- 5. Support Manager -->
     <record id="group_solarflow_support_manager" model="res.groups">
         <field name="name">Support Manager</field>
         <field name="category_id" ref="module_solarflow_category"/>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Handles after-sales service tickets, complaints, serial warranty lookup, replacement parts, and technician assignment.</field>
     </record>
 
-    <!-- 5. Director -->
-    <record id="group_solarflow_director" model="res.groups">
-        <field name="name">Director</field>
+    <!-- 6. Finance Manager -->
+    <record id="group_solarflow_finance_manager" model="res.groups">
+        <field name="name">Finance Manager</field>
         <field name="category_id" ref="module_solarflow_category"/>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Manages milestone invoices, payments, project expenses, and job costing profitability sheets. Cannot modify system configurations or user accounts.</field>
     </record>
 
-    <!-- 6. Solar Administrator (Full System Access) -->
+    <!-- 7. Director / Investor (Strict Read-Only) -->
+    <record id="group_solarflow_director" model="res.groups">
+        <field name="name">Director / Investor</field>
+        <field name="category_id" ref="module_solarflow_category"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Executive read-only access to business performance dashboards, revenue, EBITDA gross margins, project profitability, and operational reports.</field>
+    </record>
+
+    <!-- 8. Super Administrator (Full System Access) -->
     <record id="group_solarflow_admin" model="res.groups">
-        <field name="name">Solar Administrator</field>
+        <field name="name">Super Administrator</field>
         <field name="category_id" ref="module_solarflow_category"/>
         <field name="implied_ids" eval="[
+            (4, ref('group_solarflow_survey_technician')),
+            (4, ref('group_solarflow_technician')),
             (4, ref('group_solarflow_sales_manager')),
             (4, ref('group_solarflow_warehouse_manager')),
             (4, ref('group_solarflow_support_manager')),
+            (4, ref('group_solarflow_finance_manager')),
             (4, ref('group_solarflow_director'))
         ]"/>
         <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        <field name="comment">Full administrative control over all business modules, security settings, users, roles, and system configurations.</field>
     </record>
 
-    <!-- Aliases for backwards compatibility -->
+    <!-- Compatibility aliases -->
     <record id="group_solarflow_user" model="res.groups">
         <field name="name">SolarFlow Standard User</field>
         <field name="category_id" ref="module_solarflow_category"/>
@@ -77,7 +106,20 @@
     <!-- ===================================================================== -->
     <!-- RECORD RULES                                                          -->
     <!-- ===================================================================== -->
-    <!-- Rule 1: Technicians only access assigned installation records -->
+
+    <!-- Rule 1: Survey Technicians only view assigned site surveys -->
+    <record id="rule_solarflow_survey_technician" model="ir.rule">
+        <field name="name">Survey Technician: Assigned Surveys Only</field>
+        <field name="model_id" ref="model_solarflow_survey"/>
+        <field name="domain_force">['|', ('surveyor_id', '=', user.id), ('surveyor_id', '=', False)]</field>
+        <field name="groups" eval="[(4, ref('group_solarflow_survey_technician'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Rule 2: Installation Technicians only view assigned installation projects -->
     <record id="rule_solarflow_installation_technician" model="ir.rule">
         <field name="name">Technician: View Assigned Installations Only</field>
         <field name="model_id" ref="model_solarflow_installation"/>
@@ -89,7 +131,7 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Rule 2: Managers, Directors & Admins see all installations -->
+    <!-- Rule 3: Managers, Directors & Admins view all installations -->
     <record id="rule_solarflow_installation_admin_director" model="ir.rule">
         <field name="name">Administrator, Director &amp; Managers: View All Installations</field>
         <field name="model_id" ref="model_solarflow_installation"/>
@@ -99,7 +141,8 @@
             (4, ref('group_solarflow_director')),
             (4, ref('group_solarflow_sales_manager')),
             (4, ref('group_solarflow_support_manager')),
-            (4, ref('group_solarflow_warehouse_manager'))
+            (4, ref('group_solarflow_warehouse_manager')),
+            (4, ref('group_solarflow_finance_manager'))
         ]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -107,16 +150,19 @@
         <field name="perm_unlink" eval="True"/>
     </record>
 
-    <!-- Rule 3: Restrict Financial Costing Information to Director and Administrator -->
-    <record id="rule_solarflow_cost_director_admin" model="ir.rule">
-        <field name="name">Project Costing: Director and Administrator Only</field>
+    <!-- Rule 4: Restrict Financial Costing & Profitability to Finance Manager, Director, and Admin -->
+    <record id="rule_solarflow_cost_finance_director_admin" model="ir.rule">
+        <field name="name">Project Costing: Finance, Director and Administrator Only</field>
         <field name="model_id" ref="model_solarflow_project_cost"/>
         <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups" eval="[(4, ref('group_solarflow_director')), (4, ref('group_solarflow_admin'))]"/>
+        <field name="groups" eval="[
+            (4, ref('group_solarflow_finance_manager')),
+            (4, ref('group_solarflow_director')),
+            (4, ref('group_solarflow_admin'))
+        ]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="True"/>
     </record>
 </odoo>
-
