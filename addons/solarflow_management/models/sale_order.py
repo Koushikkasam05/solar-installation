@@ -159,16 +159,16 @@ class SaleOrder(models.Model):
     @api.depends('installation_capacity_kw', 'amount_total')
     def _compute_subsidy(self):
         for order in self:
-            cap = order.installation_capacity_kw
+            cap = max(float(order.installation_capacity_kw or 0.0), 0.0)
             if cap <= 2.0:
-                subsidy = cap * 360.0
+                subsidy = cap * 30000.0
             elif cap <= 3.0:
-                subsidy = 940.0
+                subsidy = 60000.0 + (cap - 2.0) * 18000.0
             else:
-                subsidy = 940.0
+                subsidy = 78000.0
             order.subsidy_amount = subsidy
             order.net_customer_cost = max(0.0, order.amount_total - subsidy)
-            annual_savings = cap * 1450.0 * 0.12 # $0.12/kWh
+            annual_savings = cap * 1450.0 * 0.12  # ₹0.12/kWh equivalent in this model
             order.simple_payback_years = round(order.net_customer_cost / annual_savings, 2) if annual_savings > 0 else 0.0
 
     def action_confirm(self):

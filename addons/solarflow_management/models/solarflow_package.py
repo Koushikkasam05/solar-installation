@@ -128,13 +128,13 @@ class SolarFlowPackage(models.Model):
             if not pkg.subsidy_eligible:
                 pkg.max_subsidy_amount = 0.0
                 continue
-            cap = pkg.system_capacity_kw
+            cap = max(float(pkg.system_capacity_kw or 0.0), 0.0)
             if cap <= 2.0:
-                pkg.max_subsidy_amount = cap * 360.0
+                pkg.max_subsidy_amount = cap * 30000.0
             elif cap <= 3.0:
-                pkg.max_subsidy_amount = 940.0
+                pkg.max_subsidy_amount = 60000.0 + (cap - 2.0) * 18000.0
             else:
-                pkg.max_subsidy_amount = 940.0
+                pkg.max_subsidy_amount = 78000.0
 
     def unlink(self):
         if not self.env.user.has_group('solarflow_management.group_solarflow_admin'):
