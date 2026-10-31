@@ -399,12 +399,29 @@ function closeNexusLogin() {
   setTimeout(() => { if (login) login.hidden = true; }, 180);
 }
 
-function completeNexusLogin() {
-  sessionStorage.setItem('nexus-entered', 'true');
-  const entry = document.getElementById('nexus-entry');
-  if (entry) entry.classList.add('nexus-entering');
-  setTimeout(() => entry?.remove(), 500);
-  showToast('Welcome to SunPower Nexus', 'success');
+async function completeNexusLogin() {
+  const email = document.getElementById('nexus-user')?.value.trim();
+  const password = document.getElementById('nexus-password')?.value;
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ email, password })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Login failed');
+    sessionStorage.setItem('nexus-entered', 'true');
+    sessionStorage.setItem('nexus-csrf', result.csrfToken);
+    sessionStorage.setItem('nexus-role', result.user.role);
+    const entry = document.getElementById('nexus-entry');
+    if (entry) entry.classList.add('nexus-entering');
+    setTimeout(() => entry?.remove(), 500);
+    showToast(`Welcome back, ${result.user.name}`, 'success');
+    SolarFlowState.currentRole = result.user.role;
+  } catch (error) {
+    showToast(error.message, 'error');
+  }
 }
 
 // Setup Sidebar Toggle

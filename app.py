@@ -8,7 +8,10 @@ from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from io import BytesIO
 
-from flask import Flask, jsonify, request, send_file, send_from_directory
+from flask import Flask, jsonify, request, send_file, send_from_directory, session
+from werkzeug.security import check_password_hash, generate_password_hash
+from functools import wraps
+import secrets
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
@@ -21,6 +24,12 @@ DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "solarflow.db"
 
 app = Flask(__name__, static_folder=None)
+app.config.update(
+    SECRET_KEY=os.getenv("SUNPOWER_SECRET_KEY", secrets.token_hex(32)),
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.getenv("SUNPOWER_SECURE_COOKIES", "0") == "1",
+)
 
 
 def db():
@@ -37,6 +46,15 @@ def money(value):
 def initialize_database():
     with db() as connection:
         connection.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL,
+            approved INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             category TEXT NOT NULL,
@@ -151,8 +169,95 @@ def initialize_database():
                 ],
             )
 
+        demo_password = generate_password_hash(os.getenv("SUNPOWER_DEMO_PASSWORD", "Solar@123"))
+        demo_accounts = [
+            ("customer@sunpower.local", "Demo Customer", "customer"),
+            ("sales@sunpower.local", "Demo Sales", "sales"),
+            ("warehouse@sunpower.local", "Demo Warehouse", "warehouse"),
+            ("technician@sunpower.local", "Demo Technician", "technician"),
+            ("support@sunpower.local", "Demo Support", "support"),
+            ("admin@sunpower.local", "Demo Admin", "admin"),
+        ]
+        for email, name, role in demo_accounts:
+            connection.execute(
+                """INSERT OR IGNORE INTO users(email, name, password_hash, role, approved, created_at)
+                   VALUES(?, ?, ?, ?, 1, ?)""",
+                (email, name, demo_password, role, datetime.now().isoformat()),
+            )
+
 
 initialize_database()
+
+
+def current_user():
+    if not session.get("user_id"):
+        return None
+    with db() as connection:
+        return connection.execute(
+            "SELECT id, email, name, role, approved FROM users WHERE id=? AND approved=1",
+            (session["user_id"],),
+        ).fetchone()
+
+
+def login_required(roles=None):
+    allowed = set(roles or [])
+
+    def decorator(function):
+        @wraps(function)
+        def guarded(*args, **kwargs):
+            user = current_user()
+            if user is None:
+                return jsonify({"error": "Authentication required"}), 401
+            if allowed and user["role"] not in allowed:
+                return jsonify({"error": "Forbidden"}), 403
+            request.user = user
+            return function(*args, **kwargs)
+        return guarded
+    return decorator
+
+
+@app.before_request
+def enforce_csrf():
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"} and request.path == "/api/auth/login":
+        return None
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"} and session.get("user_id"):
+        if request.headers.get("X-CSRF-Token") != session.get("csrf_token"):
+            return jsonify({"error": "Invalid CSRF token"}), 403
+
+
+@app.post("/api/auth/login")
+def auth_login():
+    payload = request.get_json(silent=True) or {}
+    email = str(payload.get("email", "")).strip().lower()
+    password = str(payload.get("password", ""))
+    with db() as connection:
+        user = connection.execute(
+            "SELECT * FROM users WHERE email=? AND approved=1", (email,),
+        ).fetchone()
+    if user is None or not check_password_hash(user["password_hash"], password):
+        return jsonify({"error": "Invalid email or password"}), 401
+    session.clear()
+    session["user_id"] = user["id"]
+    session["csrf_token"] = secrets.token_urlsafe(32)
+    return jsonify({
+        "user": {"email": user["email"], "name": user["name"], "role": user["role"]},
+        "csrfToken": session["csrf_token"],
+    })
+
+
+@app.post("/api/auth/logout")
+@login_required()
+def auth_logout():
+    session.clear()
+    return jsonify({"ok": True})
+
+
+@app.get("/api/auth/me")
+def auth_me():
+    user = current_user()
+    if user is None:
+        return jsonify({"authenticated": False}), 401
+    return jsonify({"authenticated": True, "user": dict(user)})
 
 
 @app.get("/")
@@ -370,10 +475,19 @@ def notify(role, title, message, due_at=None):
 
 
 @app.get("/api/dashboard/<role>")
+@login_required(["admin", "warehouse", "sales", "technician", "support", "customer"])
 def dashboard(role):
+    if request.user["role"] != "admin" and request.user["role"] != role:
+        return jsonify({"error": "Forbidden"}), 403
     with db() as connection:
         products_count = connection.execute("SELECT COUNT(*) FROM products").fetchone()[0]
-        orders = connection.execute("SELECT * FROM orders ORDER BY created_at DESC LIMIT 20").fetchall()
+        if request.user["role"] == "customer":
+            orders = connection.execute(
+                "SELECT * FROM orders WHERE created_by=? ORDER BY created_at DESC LIMIT 20",
+                (request.user["name"],),
+            ).fetchall()
+        else:
+            orders = connection.execute("SELECT * FROM orders ORDER BY created_at DESC LIMIT 20").fetchall()
         notifications = connection.execute(
             "SELECT * FROM notifications WHERE recipient_role=? AND status='unread' ORDER BY created_at DESC",
             (role,),
@@ -395,6 +509,7 @@ def dashboard(role):
 
 
 @app.post("/api/orders")
+@login_required(["customer", "sales", "admin"])
 def create_order():
     payload = request.get_json(silent=True) or {}
     if not payload.get("customer_name"):
@@ -409,19 +524,20 @@ def create_order():
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (order_id, payload.get("quotation_id"), payload["customer_name"], payload.get("customer_phone"),
              payload.get("booking_method", "customer_challenge"), code, "created", "warehouse", None, None, None,
-             __import__("json").dumps(payload.get("evidence", {})), payload.get("created_by", "Customer"), now, now),
+             __import__("json").dumps(payload.get("evidence", {})), request.user["name"], now, now),
         )
     notify("warehouse", "New customer order", f"{payload['customer_name']} placed order {order_id[:8]}")
     return jsonify({"id": order_id, "verification_code": code if payload.get("booking_method") == "technician_otp" else None, "status": "created"})
 
 
 @app.post("/api/orders/<order_id>/transition")
+@login_required(["warehouse", "sales", "technician", "support", "admin"])
 def transition_order(order_id):
     payload = request.get_json(silent=True) or {}
     target = payload.get("status")
     stage_roles = {"warehouse": "warehouse_ready", "sales": "delivered", "technician": "installed",
                    "support": "warranty_issued", "admin": "completed"}
-    acting_role = payload.get("actor_role", "")
+    acting_role = request.user["role"]
     with db() as connection:
         row = connection.execute("SELECT status FROM orders WHERE id=?", (order_id,)).fetchone()
         if not row:
@@ -447,6 +563,7 @@ def transition_order(order_id):
 
 
 @app.post("/api/orders/<order_id>/warranty")
+@login_required(["support", "admin"])
 def issue_warranty(order_id):
     payload = request.get_json(silent=True) or {}
     serials = payload.get("serials", [])
@@ -505,6 +622,7 @@ def register_b2b_organization():
 
 
 @app.get("/api/b2b/organizations")
+@login_required(["admin"])
 def list_b2b_organizations():
     with db() as connection:
         rows = connection.execute(
@@ -514,6 +632,7 @@ def list_b2b_organizations():
 
 
 @app.get("/api/agent/history")
+@login_required(["admin", "sales", "support"])
 def agent_history():
     with db() as connection:
         rows = connection.execute(
@@ -523,6 +642,7 @@ def agent_history():
 
 
 @app.post("/api/agent/analyze")
+@login_required(["admin", "sales", "support"])
 def agent_analyze():
     payload = request.get_json(silent=True) or {}
     question = str(payload.get("question", "")).strip()
@@ -607,6 +727,7 @@ def agent_analyze():
 
 
 @app.get("/api/agent/report.pdf")
+@login_required(["admin", "sales", "support"])
 def agent_report_pdf():
     with db() as connection:
         recent = connection.execute(
