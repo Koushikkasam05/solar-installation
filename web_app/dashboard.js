@@ -11,15 +11,61 @@ const info = definitions[role];
 async function loadDashboard() {
   const data = await fetch(`/api/dashboard/${role}`).then(r => r.json());
   const unread = data.notifications.length;
+  const customerExtras = role === 'customer' ? customerExperience() : '';
   document.getElementById('app').innerHTML = `
-    <aside class="dash-sidebar"><div class="dash-brand">☀ SolarFlow ERP</div>
-      <a class="dash-side-link" href="${role}.html">Dashboard</a><a class="dash-side-link" href="quotation.html">Quotations</a><a class="dash-side-link" href="survey.html">Site Surveys</a>
+    <aside class="dash-sidebar"><div class="dash-brand"><span>☀</span> SunPower Nexus</div>
+      <a class="dash-side-link active" href="${role}.html">⌂ &nbsp; Dashboard</a><a class="dash-side-link" href="quotation.html">▤ &nbsp; Quotations</a><a class="dash-side-link" href="survey.html">⌖ &nbsp; Site Surveys</a>
       <nav class="mobile-nav"><a href="${role}.html">⌂</a><a href="quotation.html">▤</a><a href="survey.html">⌖</a></nav>
     </aside>
-    <main class="dash-main"><header class="dash-top"><div><p class="eyebrow">${info.name}</p><h1>Namaste, ${info.user}</h1></div><div class="dash-actions"><button class="icon-button" title="Notifications">🔔${unread ? `<span class="badge">${unread}</span>` : ''}</button><button class="icon-button" title="Profile">👤</button><button class="icon-button" title="Logout">↪</button></div></header>
-    <section class="metrics">${info.cards.map((card,i)=>`<div class="metric">${card}<strong>${[data.metrics.products,data.metrics.orders,data.metrics.surveys,data.metrics.warranties][i] ?? '—'}</strong></div>`).join('')}</section>
+    <main class="dash-main"><header class="dash-top"><div><p class="eyebrow">${info.name}</p><h1>Namaste, ${info.user}</h1></div><div class="dash-actions"><button class="icon-button" title="Notifications" data-dashboard-action="notifications">🔔${unread ? `<span class="badge">${unread}</span>` : ''}</button><button class="icon-button" title="Profile" data-dashboard-action="profile">👤</button><button class="icon-button" title="Logout" data-dashboard-action="logout">↪</button></div></header>
+    ${role === 'customer' ? `<section class="customer-hero"><div><p class="eyebrow" style="color:#9fcdb1">YOUR SOLAR JOURNEY</p><h2>Your home is generating smarter energy.</h2><p>Installation 72% complete · Estimated commissioning in 8 days</p></div><div class="solar-score" aria-label="Project completion 84 percent"><span>84%</span></div></section>` : ''}
+    <section class="metrics">${info.cards.map((card,i)=>`<div class="metric">${card}<strong>${[data.metrics.products,data.metrics.orders,data.metrics.surveys,data.metrics.warranties][i] ?? '—'}</strong><span>${i === 0 ? 'Current portfolio' : 'Updated now'}</span></div>`).join('')}</section>
+    ${customerExtras}
     <section class="panel-grid"><div class="panel"><h2>Current work</h2>${data.orders.length ? data.orders.map(order=>`<div class="list-row"><span>${order.customer_name}<small><br>${order.status}</small></span><span class="status">${order.id.slice(0,8)}</span></div>`).join('') : '<p>No orders are currently assigned.</p>'}</div>
     <div class="panel"><h2>Notifications</h2>${data.notifications.length ? data.notifications.map(n=>`<div class="list-row"><span>${n.title}<small><br>${n.message}</small></span><button class="task-button">Open</button></div>`).join('') : '<p>No unread notifications.</p>'}</div></section>
     <section class="panel"><h2>Actions</h2><div class="dash-actions">${info.actions.map(action=>`<button class="task-button" data-action="${action}">${action}</button>`).join('')}</div></section></main>`;
+  bindDashboardActions();
+}
+
+function customerExperience() {
+  return `
+    <section class="panel">
+      <div class="dash-top"><div><p class="eyebrow">PROJECT PROGRESS</p><h2>Order SFL-2026-0048</h2></div><span class="status">Installation underway</span></div>
+      <div class="order-timeline" aria-label="Solar installation order progress">
+        <div class="timeline-step done"><i></i><strong>Consulted</strong></div>
+        <div class="timeline-step done"><i></i><strong>Survey approved</strong></div>
+        <div class="timeline-step current"><i></i><strong>Installation</strong></div>
+        <div class="timeline-step"><i></i><strong>Energized</strong></div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="dash-top"><div><p class="eyebrow">RECOMMENDED SYSTEMS</p><h2>Designed for your roof</h2></div><button class="task-button secondary" data-action="Compare products">Compare products</button></div>
+      <div class="product-grid">
+        ${[
+          ['Essential 3 kW','Ideal for compact homes','₹2.04L','Residential · 3 kW'],
+          ['Performance 5 kW','Best value for growing families','₹3.25L','Hybrid · 5 kW'],
+          ['Premium 7 kW','Maximum solar independence','₹4.68L','High-output · 7 kW']
+        ].map(product => `<article class="product-card"><div class="product-visual" role="img" aria-label="${product[0]} solar product"><div class="mini-panel"><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="product-info"><strong>${product[0]}</strong><small>${product[1]} · ${product[3]}</small><div class="product-price">${product[2]}</div><button class="task-button" style="margin-top:12px;width:100%" data-action="View ${product[0]}">View system</button></div></article>`).join('')}
+      </div>
+    </section>`;
+}
+
+function bindDashboardActions() {
+  document.querySelectorAll('[data-dashboard-action]').forEach(button => button.addEventListener('click', () => {
+    const action = button.dataset.dashboardAction;
+    if (action === 'logout') window.location.href = 'index.html';
+    if (action === 'profile') alert('Profile settings are available from your secure customer workspace.');
+    if (action === 'notifications') {
+      document.querySelector('.panel-grid')?.scrollIntoView({behavior:'smooth'});
+      button.querySelector('.badge')?.remove();
+    }
+  }));
+  document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => {
+    button.textContent = 'Opening…';
+    setTimeout(() => {
+      button.textContent = button.dataset.action;
+      window.location.href = 'quotation.html';
+    }, 350);
+  }));
 }
 loadDashboard().catch(error => document.getElementById('app').textContent = error.message);

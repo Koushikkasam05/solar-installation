@@ -7,6 +7,34 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+:root {
+  --navy: #071c2c;
+  --navy-2: #102f45;
+  --solar-gold: #f4b942;
+  --solar-gold-soft: #fff3c7;
+}
+
+/* SunPower Nexus cinematic entry */
+.nexus-entry{position:fixed;inset:0;z-index:2000;overflow:hidden;background:linear-gradient(115deg,#061827 0%,#0c3046 48%,#d6dfe3 48%,#eef1ee 100%);color:#fff;font-family:'Inter',sans-serif}
+.nexus-entry-content{position:relative;z-index:5;width:min(640px,52vw);height:100%;padding:34px 5vw;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,rgba(6,24,39,.98) 82%,rgba(6,24,39,.72))}
+.nexus-entry-brand{position:absolute;top:34px;color:#fff;text-decoration:none;font-family:'Outfit';font-size:22px}.nexus-entry-brand span{color:var(--solar-gold);margin-right:7px}.nexus-entry-brand strong{color:var(--solar-gold)}
+.nexus-eyebrow{color:#f3c968;font-size:11px;font-weight:800;letter-spacing:.22em;margin-bottom:18px}
+.nexus-entry h1{font-family:'Outfit';font-size:clamp(48px,5vw,78px);line-height:.98;letter-spacing:-.035em;color:#fff;margin-bottom:24px}.nexus-entry h1 em{color:#88cba7;font-style:normal}
+.nexus-entry-copy{max-width:520px;color:#cfdae1;font-size:18px;line-height:1.65}
+.nexus-entry-actions{display:flex;align-items:center;gap:22px;margin-top:34px}.nexus-primary{border:0;border-radius:7px;background:var(--solar-gold);color:#17243a;padding:13px 20px;font-weight:800;cursor:pointer;box-shadow:0 12px 30px rgba(244,185,66,.18)}
+.nexus-primary:hover{background:#ffd166}.nexus-text-button{border:0;background:transparent;color:#fff;font-weight:700;cursor:pointer}.nexus-text-button span{color:var(--solar-gold);margin-left:7px}
+.nexus-proof{position:absolute;bottom:34px;display:flex;gap:32px;color:#97aebd;font-size:11px}.nexus-proof strong{display:block;color:#fff;font-family:'Outfit';font-size:20px}
+.nexus-sun{position:absolute;width:250px;height:250px;border-radius:50%;right:17%;top:4%;background:#ffd670;box-shadow:0 0 90px 35px rgba(255,203,89,.45);animation:sunBreath 6s ease-in-out infinite}
+.nexus-city{position:absolute;right:-3%;bottom:-4%;width:57%;height:68%;transform:skewY(-4deg)}
+.nexus-roof{position:absolute;left:0;right:0;bottom:0;height:68%;background:linear-gradient(155deg,#d9dddb,#aeb8b9 48%,#71858a);clip-path:polygon(11% 22%,100% 0,100% 100%,0 100%,0 48%)}
+.nexus-panel-array{position:absolute;left:8%;bottom:18%;width:86%;height:55%;display:grid;grid-template-columns:repeat(4,1fr);gap:9px;transform:perspective(700px) rotateX(19deg) rotateZ(-3deg)}
+.nexus-panel-array i{display:block;background:linear-gradient(135deg,#183c55,#071e31 55%,#1c6680);border:3px solid rgba(255,255,255,.55);box-shadow:0 9px 0 rgba(31,49,53,.35),inset 0 0 22px rgba(78,167,199,.25);animation:panelRaise .9s both}
+.nexus-panel-array i:nth-child(2){animation-delay:.08s}.nexus-panel-array i:nth-child(3){animation-delay:.16s}.nexus-panel-array i:nth-child(5){animation-delay:.24s}.nexus-panel-array i:nth-child(6){animation-delay:.32s}
+.nexus-login-card{position:absolute;z-index:8;right:9%;top:50%;width:min(390px,34vw);transform:translateY(-46%) translateX(30px);background:#fff;color:#24332b;border-radius:14px;padding:34px;box-shadow:0 30px 80px rgba(5,20,32,.4);opacity:0;transition:.2s ease}
+.nexus-login-card.visible{opacity:1;transform:translateY(-50%) translateX(0)}.nexus-login-card h2{font-family:'Outfit';font-size:32px;color:#102f45}.nexus-login-card>p:not(.nexus-eyebrow){color:#65766d;margin:4px 0 22px}.nexus-login-card label{display:block;font-size:12px;font-weight:800;margin:14px 0 6px}.nexus-login-card input{width:100%;border:1px solid #d8e1dc;border-radius:7px;padding:12px}.nexus-login-submit{width:100%;margin-top:22px}.nexus-customer-login{color:#246b45;margin-top:14px;width:100}.nexus-login-close{position:absolute;right:16px;top:10px;border:0;background:transparent;font-size:26px;color:#65766d;cursor:pointer}
+.nexus-entry.nexus-entering{animation:entryDepart .5s forwards}.nexus-entry[hidden]{display:none}
+@keyframes sunBreath{50%{transform:scale(1.04);box-shadow:0 0 110px 45px rgba(255,203,89,.55)}}@keyframes panelRaise{from{opacity:0;transform:translateY(45px) scale(.92)}to{opacity:1;transform:none}}@keyframes entryDepart{to{opacity:0;transform:scale(1.025)}}
+
 /* SunPower Nexus B2B and agentic management modules */
 .module-toolbar,.agent-status-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
 .module-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
@@ -31,6 +59,35 @@
 .agent-chat-form{display:flex;gap:8px;margin-top:12px}.agent-chat-form input{flex:1;border:1px solid var(--border);border-radius:7px;padding:10px}.suggested-questions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}.suggested-questions button{border:1px solid var(--border);background:#fff;border-radius:20px;padding:6px 10px;color:var(--text-muted);cursor:pointer}
 .agent-evidence{background:var(--bg-subtle);border-left:3px solid var(--primary);padding:8px 10px;margin:8px 0}
 @media(max-width:900px){.module-kpi-grid{grid-template-columns:1fr 1fr}.b2b-layout,.agent-layout,.module-table-grid{grid-template-columns:1fr}.b2b-order-grid,.form-grid{grid-template-columns:1fr}.form-span-2{grid-column:auto}}
+
+/* Premium staff workspace refinement */
+.sidebar{background:#071c2c;border-right-color:#071c2c;color:#fff}
+.sidebar-header{background:#071c2c;border-bottom-color:rgba(255,255,255,.08)}
+.brand-title{color:#fff}.brand-subtitle{color:#91aabd}.sidebar .sun-badge-logo{background:linear-gradient(135deg,#f4b942,#d9911b);color:#173044;box-shadow:0 8px 20px rgba(244,185,66,.18)}
+.sidebar-toggle-btn{color:#aec2cf;background:rgba(255,255,255,.07)}.sidebar-nav{background:transparent}
+.nav-group-title{color:#7894a7!important}.nav-link-btn{color:#c6d5de!important;border-left:3px solid transparent}.nav-link-btn:hover{background:rgba(255,255,255,.07)!important;color:#fff!important}.nav-link-btn.active{background:linear-gradient(90deg,rgba(244,185,66,.18),rgba(244,185,66,.04))!important;color:#fff!important;border-left-color:#f4b942!important}
+.sidebar-footer{background:#071c2c;border-top-color:rgba(255,255,255,.08)}.sidebar-role-indicator,.sidebar-footer span{color:#c6d5de!important}
+.topbar{background:rgba(255,255,255,.96);backdrop-filter:blur(12px);box-shadow:0 1px 0 var(--border)}.main-content-area,.view-section.active{animation:viewEnter .28s ease both}
+.metric-card,.content-card{box-shadow:0 8px 24px rgba(24,55,65,.055);border-color:#e1e8e5}.metric-card{position:relative;overflow:hidden}.metric-card:before{content:'';position:absolute;width:70px;height:70px;border-radius:50%;right:-28px;top:-28px;background:#f4b942;opacity:.09}
+.btn-primary-action{background:#246b45;border-color:#246b45}.btn-primary-action:hover{background:#1b5234}.status-pill,.badge-pill{font-weight:700}
+.table-container{border-radius:10px}.data-table thead{background:#f4f7f5}.data-table tbody tr:hover{background:#f8fbf9}
+.nexus-entry *:focus-visible{outline:3px solid #ffd166;outline-offset:3px}
+@keyframes viewEnter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media(max-width:900px){
+  .nexus-entry{background:linear-gradient(180deg,#061827 0 62%,#dbe2e2 62%)}
+  .nexus-entry-content{width:100%;padding:28px 24px;background:linear-gradient(180deg,rgba(6,24,39,.98),rgba(6,24,39,.8))}
+  .nexus-entry h1{font-size:48px}.nexus-entry-copy{font-size:16px}.nexus-proof{bottom:18px;gap:16px}.nexus-city{right:-20%;bottom:-4%;width:100%;height:38%;opacity:.88}
+  .nexus-login-card{left:24px;right:24px;width:auto;top:50%}.nexus-sun{right:8%;top:62%;width:170px;height:170px}
+}
+@media(max-width:560px){
+  .nexus-entry-content{justify-content:flex-start;padding-top:105px}.nexus-entry-brand{top:24px}.nexus-entry-actions{align-items:flex-start;flex-direction:column;margin-top:24px}
+  .nexus-entry h1{font-size:42px}.nexus-proof{display:none}.nexus-city{height:32%}
+  .module-kpi-grid{grid-template-columns:1fr!important}.agent-chat-form{flex-direction:column}.module-toolbar{align-items:flex-start;flex-direction:column}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
 
 :root {
   /* SolarFlow Forest & Sage Brand Tokens */

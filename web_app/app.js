@@ -377,7 +377,35 @@ document.addEventListener('DOMContentLoaded', () => {
   initHashRouting();
   renderRoleDashboard();
   renderAllDataViews();
+  initializeNexusExperience();
 });
+
+function initializeNexusExperience() {
+  const entry = document.getElementById('nexus-entry');
+  if (!entry || sessionStorage.getItem('nexus-entered') === 'true') entry?.remove();
+}
+
+function openNexusLogin() {
+  const login = document.getElementById('nexus-login-card');
+  if (!login) return;
+  login.hidden = false;
+  setTimeout(() => login.classList.add('visible'), 20);
+  document.getElementById('nexus-user')?.focus();
+}
+
+function closeNexusLogin() {
+  const login = document.getElementById('nexus-login-card');
+  login?.classList.remove('visible');
+  setTimeout(() => { if (login) login.hidden = true; }, 180);
+}
+
+function completeNexusLogin() {
+  sessionStorage.setItem('nexus-entered', 'true');
+  const entry = document.getElementById('nexus-entry');
+  if (entry) entry.classList.add('nexus-entering');
+  setTimeout(() => entry?.remove(), 500);
+  showToast('Welcome to SunPower Nexus', 'success');
+}
 
 // Setup Sidebar Toggle
 function setupSidebar() {

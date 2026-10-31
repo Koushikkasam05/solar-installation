@@ -10,6 +10,42 @@
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
+  <section class="nexus-entry" id="nexus-entry" aria-label="SunPower Nexus welcome">
+    <div class="nexus-sun" aria-hidden="true"></div>
+    <div class="nexus-city" aria-hidden="true">
+      <div class="nexus-roof"></div>
+      <div class="nexus-panel-array">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </div>
+    <div class="nexus-entry-content">
+      <a class="nexus-entry-brand" href="#" aria-label="SunPower Nexus home"><span>☀</span> SunPower <strong>Nexus</strong></a>
+      <p class="nexus-eyebrow">ENERGY. INTELLIGENCE. PROGRESS.</p>
+      <h1>Solar operations,<br><em>engineered for impact.</em></h1>
+      <p class="nexus-entry-copy">One intelligent platform for residential, commercial and enterprise solar delivery.</p>
+      <div class="nexus-entry-actions">
+        <button class="nexus-primary" onclick="openNexusLogin()">Enter SunPower Nexus</button>
+        <button class="nexus-text-button" onclick="document.getElementById('nexus-capabilities').scrollIntoView({behavior:'smooth'})">Explore platform <span>→</span></button>
+      </div>
+      <div class="nexus-proof" id="nexus-capabilities">
+        <span><strong>360°</strong> operational visibility</span>
+        <span><strong>6</strong> intelligent business agents</span>
+        <span><strong>24/7</strong> asset insights</span>
+      </div>
+    </div>
+    <div class="nexus-login-card" id="nexus-login-card" role="dialog" aria-modal="true" aria-labelledby="nexus-login-title" hidden>
+      <button class="nexus-login-close" onclick="closeNexusLogin()" aria-label="Close login">×</button>
+      <p class="nexus-eyebrow">AUTHORIZED ACCESS</p>
+      <h2 id="nexus-login-title">Welcome back</h2>
+      <p>Sign in to your SunPower workspace.</p>
+      <label for="nexus-user">Work email</label>
+      <input id="nexus-user" type="email" autocomplete="username" value="admin@sunpower.erp">
+      <label for="nexus-password">Password</label>
+      <input id="nexus-password" type="password" autocomplete="current-password" value="solarflow">
+      <button class="nexus-primary nexus-login-submit" onclick="completeNexusLogin()">Sign in securely</button>
+      <button class="nexus-text-button nexus-customer-login" onclick="window.location.href='customer.html'">Continue as customer</button>
+    </div>
+  </section>
   <div id="solarflow-app">
     <!-- ==================================================================== -->
     <!-- 1. ENTERPRISE COLLAPSIBLE SIDEBAR                                    -->
