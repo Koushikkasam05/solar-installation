@@ -38,7 +38,12 @@ def create_order():
             pkg_price = pkg['total_price']
 
     system_kw = d.get('system_kw', 3.0)
-    subsidy = calculate_subsidy(system_kw) if d.get('subsidy', False) else 0
+    if 'subsidy_amount' in d:
+        subsidy = float(d['subsidy_amount'])
+    elif d.get('subsidy', False):
+        subsidy = 468.0 if system_kw == 3.0 else round(min(pkg_price * 0.3, 1000.0), 2)
+    else:
+        subsidy = 0.0
     net_price = pkg_price - subsidy
 
     oid = execute_db("""INSERT INTO orders (ref, customer_id, lead_id, survey_id, package_id,

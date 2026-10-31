@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """SolarFlow ERP - Serialized Equipment & Inventory Dispatch Routes."""
-from datetime import datetime
+from datetime import datetime, date
 from flask import Blueprint, jsonify, request
 from server.database import query_db, execute_db
 
@@ -38,6 +38,11 @@ def allocate_stock(sid):
         return jsonify({'error': 'Stock lot not found'}), 404
     if lot['status'] == 'allocated':
         return jsonify({'error': f'Serial {lot["serial_number"]} is already allocated. Single-active-allocation constraint violated.'}), 400
+
+    if d.get('order_id'):
+        order = query_db("SELECT dispatch_unlocked FROM orders WHERE id = ?", [d['order_id']], one=True)
+        if order and not order['dispatch_unlocked']:
+            return jsonify({'error': 'Dispatch Gate Blocked: Cannot dispatch equipment. Order requires minimum 50% advance payment before warehouse release.'}), 400
 
     execute_db("""UPDATE stock_lots SET status = 'allocated', allocated_to_order = ?,
         allocated_to_installation = ? WHERE id = ?""",

@@ -64,6 +64,11 @@ def update_phase(iid):
     if phase not in valid_phases:
         return jsonify({'error': f'Invalid phase. Must be one of: {valid_phases}'}), 400
 
+    if phase == 'phase_6_signoff' and value == 1:
+        inst_check = query_db("SELECT qc_passed, qc_earth_ohm FROM installations WHERE id = ?", [iid], one=True)
+        if not inst_check or not inst_check['qc_passed']:
+            return jsonify({'error': 'Safety Gate Blocked: Cannot complete final sign-off. Electrical QC test with Earth Pit resistance <= 5.0 Ohm has not passed.'}), 400
+
     execute_db(f"UPDATE installations SET {phase} = ? WHERE id = ?", [value, iid])
 
     # Recalculate completion %

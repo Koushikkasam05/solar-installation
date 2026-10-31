@@ -41,10 +41,12 @@ def create_cost():
          calc['margin_health'], calc['leakage_alert'], threshold])
     return jsonify({
         'id': cid, 'ref': ref,
+        'revenue': revenue,
+        'material_cost': material,
+        'labour_cost': labour,
+        'transport_cost': transport,
+        'additional_cost': additional,
+        'other_cost': other,
         **calc,
         'message': '⚠️ PROFIT LEAKAGE ALERT — margin below threshold!' if calc['leakage_alert'] else '✅ Margin healthy'
     }), 201
-
-
-# ══════════════════════════════════════════════════════════════════════
-

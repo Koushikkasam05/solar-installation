@@ -1933,33 +1933,194 @@ function markAllNotificationsRead() {
 }
 
 // ==========================================================================
-// 1-CLICK INTERACTIVE 3KW SHOWCASE TOUR
+// 1-CLICK INTERACTIVE 10-STEP JURY SHOWCASE TOUR (DR. RAJESH SHARMA)
 // ==========================================================================
+const JURY_STEPS = [
+  {
+    step: 1,
+    title: "1. Lead Sizing & Feasibility",
+    view: "leads",
+    desc: "Dr. Rajesh Sharma (Bengaluru): 450 kWh / 120 = 3.75kW capped by 5kW load -> 3.0 kW. Feasibility Score: 100/100.",
+    toast: "Step 1: Lead qualified for Dr. Rajesh Sharma. Mathematical Sizing: 3.0 kW Turnkey.",
+    highlightText: "Rajesh"
+  },
+  {
+    step: 2,
+    title: "2. Site Survey & Shadow Validation",
+    view: "surveys",
+    desc: "180° South Azimuth, 12° Tilt, 500 sq.ft shadow-free RCC area. Missing-field validation gate enforced.",
+    toast: "Step 2: Survey SRV-2026-0001 Approved by Chief Engineer. Shadow-free usable area validated.",
+    highlightText: "Rajesh"
+  },
+  {
+    step: 3,
+    title: "3. Solar Package & Auto-BOM",
+    view: "packages",
+    desc: "Package SF-PKG-3KW-OG: 6x 550W Panels ($924) + Inverter ($580) + HDGI Rails ($156) + BOS ($110) = $1,770.",
+    toast: "Step 3: Dynamic Auto-BOM Generated: 6 Panels, Inverter, Rails & BOS totaling $1,770.",
+    highlightText: "3kW"
+  },
+  {
+    step: 4,
+    title: "4. Quotation & 50% Advance Gate",
+    view: "payments",
+    desc: "Gross: $1,770 | Subsidy: -$468 | Net: $1,302. Dispatch is locked until 50% advance ($651) is confirmed.",
+    toast: "Step 4: 50% Advance ($651.00) recorded -> Warehouse dispatch gate unlocked!",
+    highlightText: "Rajesh"
+  },
+  {
+    step: 5,
+    title: "5. Inventory Serial Allocation",
+    view: "inventory",
+    desc: "Serial CS550-2026-A001 allocated. Single-active-allocation constraint prevents duplicate assignment.",
+    toast: "Step 5: Serial CS550-2026-A001 allocated. Duplicate assignment rejected with HTTP 400.",
+    highlightText: "CS550"
+  },
+  {
+    step: 6,
+    title: "6. 6-Phase Installation & Earth Safety",
+    view: "installations",
+    desc: "Ramesh Electrician assigned. Earth Pit 7.5Ω fails QC -> ground treated to 2.4Ω (<=5.0Ω max). Commissioned!",
+    toast: "Step 6: Earth safety gate enforced (7.5Ω rejected, 2.4Ω passed). Project 100% Commissioned!",
+    highlightText: "Rajesh"
+  },
+  {
+    step: 7,
+    title: "7. Digital Warranty & SHA-256 Verification",
+    view: "warranties",
+    desc: "10-Year Inverter & 25-Year Panel Warranties issued with cryptographic SHA-256 token verification.",
+    toast: "Step 7: Digital Warranty issued. Growatt 3kW Inverter SHA-256 token cryptographically verified.",
+    highlightText: "GRW3K"
+  },
+  {
+    step: 8,
+    title: "8. After-Sales Service Ticketing",
+    view: "service",
+    desc: "Inverter Fault Code E-014 -> $0.00 (under warranty) vs External Cable Damage -> $75.00 (billable).",
+    toast: "Step 8: RMA Service: Auto-detected active warranty on serial -> $0.00 charge applied.",
+    highlightText: "Rajesh"
+  },
+  {
+    step: 9,
+    title: "9. Project Job Costing & Leakage Audit",
+    view: "costing",
+    desc: "Revenue: $2,040 | Total Cost: $1,500 | Gross Profit: $540 | Margin: 26.47% (HEALTHY). Leakage alert tested.",
+    toast: "Step 9: Job Costing: Gross Margin 26.47%. Profit Leakage Overrun Alert engine verified.",
+    highlightText: "Rajesh"
+  },
+  {
+    step: 10,
+    title: "10. Management Dashboard & 7-Role RBAC",
+    view: "dashboard",
+    desc: "Live SQLite KPIs updated. Verified 7-role RBAC security matrix (admin, sales, warehouse, tech, support, finance, director).",
+    toast: "Step 10: 10/10 Demonstration Steps Complete! SolarFlow ERP is fully verified.",
+    highlightText: ""
+  }
+];
+
+let juryTourCurrentIndex = 0;
+let juryTourAutoPlayTimer = null;
+
+function renderJuryDemoBar() {
+  let bar = document.getElementById('jury-demo-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'jury-demo-bar';
+    bar.className = 'jury-demo-bar';
+    document.body.appendChild(bar);
+  }
+
+  const step = JURY_STEPS[juryTourCurrentIndex];
+  bar.innerHTML = `
+    <div class="jury-badge">JURY DEMO &bull; STEP ${step.step} OF ${JURY_STEPS.length}</div>
+    <div class="jury-content">
+      <div class="jury-title">${step.title}</div>
+      <div class="jury-desc">${step.desc}</div>
+    </div>
+    <div class="jury-controls">
+      <button class="jury-btn" id="jury-btn-prev" ${juryTourCurrentIndex === 0 ? 'disabled style="opacity:0.4"' : ''}>&larr; Prev</button>
+      <button class="jury-btn jury-btn-primary" id="jury-btn-next">${juryTourCurrentIndex === JURY_STEPS.length - 1 ? 'Finish &check;' : 'Next &rarr;'}</button>
+      <button class="jury-btn" id="jury-btn-autoplay">${juryTourAutoPlayTimer ? '&#10074;&#10074; Pause' : '&#9654;&#9654; Auto'}</button>
+      <button class="jury-close" id="jury-btn-close" title="Exit Jury Showcase">&times;</button>
+    </div>
+  `;
+
+  document.getElementById('jury-btn-prev').onclick = () => navigateJuryStep(juryTourCurrentIndex - 1);
+  document.getElementById('jury-btn-next').onclick = () => {
+    if (juryTourCurrentIndex < JURY_STEPS.length - 1) {
+      navigateJuryStep(juryTourCurrentIndex + 1);
+    } else {
+      stopJuryAutoPlay();
+      bar.remove();
+      showToast('Jury Demonstration successfully concluded!', 'success');
+    }
+  };
+  document.getElementById('jury-btn-autoplay').onclick = toggleJuryAutoPlay;
+  document.getElementById('jury-btn-close').onclick = () => {
+    stopJuryAutoPlay();
+    bar.remove();
+    showToast('Exited Jury Demonstration Mode.', 'info');
+  };
+}
+
+function highlightRowsInCurrentView(text) {
+  if (!text) return;
+  setTimeout(() => {
+    const rows = document.querySelectorAll('.table tbody tr, .card, .kanban-card');
+    rows.forEach(r => {
+      if (r.textContent && r.textContent.includes(text)) {
+        r.classList.add('highlight-demo-row');
+        r.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        r.classList.remove('highlight-demo-row');
+      }
+    });
+  }, 250);
+}
+
+function navigateJuryStep(index) {
+  if (index < 0 || index >= JURY_STEPS.length) return;
+  juryTourCurrentIndex = index;
+  const step = JURY_STEPS[index];
+  switchView(step.view);
+  showToast(step.toast, 'success');
+  renderJuryDemoBar();
+  highlightRowsInCurrentView(step.highlightText);
+}
+
+function toggleJuryAutoPlay() {
+  if (juryTourAutoPlayTimer) {
+    stopJuryAutoPlay();
+    renderJuryDemoBar();
+    showToast('Auto-Play paused.', 'info');
+  } else {
+    showToast('Auto-Play started (advances every 3.5s)...', 'info');
+    juryTourAutoPlayTimer = setInterval(() => {
+      if (juryTourCurrentIndex < JURY_STEPS.length - 1) {
+        navigateJuryStep(juryTourCurrentIndex + 1);
+      } else {
+        stopJuryAutoPlay();
+        renderJuryDemoBar();
+        showToast('Auto-Play completed all 10 demonstration steps!', 'success');
+      }
+    }, 3500);
+    renderJuryDemoBar();
+  }
+}
+
+function stopJuryAutoPlay() {
+  if (juryTourAutoPlayTimer) {
+    clearInterval(juryTourAutoPlayTimer);
+    juryTourAutoPlayTimer = null;
+  }
+}
+
 async function runShowcaseTour() {
-  showToast('Starting 1-Click Turnkey 3kW Showcase Tour...', 'info');
-  switchView('leads');
-  await new Promise(r => setTimeout(r, 1200));
-  showToast('Step 1: Lead qualified for Dr. Rajesh Sharma (3.0 kW sized).', 'success');
-
-  await new Promise(r => setTimeout(r, 1500));
-  switchView('surveys');
-  showToast('Step 2: Rooftop survey SRV-2026-0001 approved (500 sq.ft shadow-free).', 'success');
-
-  await new Promise(r => setTimeout(r, 1500));
-  switchView('payments');
-  showToast('Step 3: 50% Advance Received ($651.00) — Dispatch Unlocked.', 'success');
-
-  await new Promise(r => setTimeout(r, 1500));
-  switchView('installations');
-  showToast('Step 4: Installation SF/INST/2026/0001 completed. Earth Pit = 2.4Ω (&le;5.0Ω PASS).', 'success');
-
-  await new Promise(r => setTimeout(r, 1500));
-  switchView('warranties');
-  showToast('Step 5: 25-Year Cryptographic Digital Warranty issued & verified!', 'success');
-
-  await new Promise(r => setTimeout(r, 1500));
-  switchView('dashboard');
-  showToast('Showcase Complete: Turnkey 3kW lifecycle verified end-to-end!', 'success');
+  stopJuryAutoPlay();
+  juryTourCurrentIndex = 0;
+  showToast('Starting 10-Step Jury Showcase: Dr. Rajesh Sharma (3kW On-Grid)...', 'info');
+  renderJuryDemoBar();
+  navigateJuryStep(0);
 }
 
 // ==========================================================================

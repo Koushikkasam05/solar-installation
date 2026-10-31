@@ -27,7 +27,14 @@ def get_survey(sid):
 
 @survey_bp.route('/api/surveys', methods=['POST'])
 def create_survey():
-    d = request.get_json()
+    d = request.get_json() or {}
+    if not d.get('customer_id'):
+        return jsonify({'error': 'Validation Error: Customer ID is required for site survey.'}), 400
+    if not d.get('usable_area') or str(d.get('usable_area')).strip() == '':
+        return jsonify({'error': 'Validation Error: Usable shadow-free roof area is mandatory.'}), 400
+    if not d.get('roof_type') or str(d.get('roof_type')).strip() == '':
+        return jsonify({'error': 'Validation Error: Roof type is mandatory.'}), 400
+
     ref = get_next_ref('SRV', 'surveys').replace('/', '-')
     sid = execute_db("""INSERT INTO surveys (ref, customer_id, lead_id, roof_type, total_area, usable_area,
         azimuth, tilt, cable_distance_m, grid_phase, recommended_kw, state, engineer, notes, survey_date)
@@ -48,7 +55,7 @@ def approve_survey(sid):
 
 @survey_bp.route('/api/surveys/<int:sid>/reject', methods=['POST'])
 def reject_survey(sid):
-    d = request.get_json()
+    d = request.get_json() or {}
     execute_db("UPDATE surveys SET state = 'rejected', rejection_reason = ? WHERE id = ?",
         [d.get('reason', 'No reason provided'), sid])
     return jsonify({'message': 'Survey rejected'})
@@ -78,10 +85,6 @@ def get_package(pid):
 @survey_bp.route('/api/bom/calculate', methods=['POST'])
 def calculate_bom_api():
     """Calculate Auto-BOM for a given system size."""
-    d = request.get_json()
+    d = request.get_json() or {}
     bom = calculate_auto_bom(d.get('system_kw', 3.0), d.get('cable_distance_m', 20))
     return jsonify(bom)
-
-
-# ══════════════════════════════════════════════════════════════════════
-

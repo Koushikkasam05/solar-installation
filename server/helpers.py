@@ -113,13 +113,13 @@ def get_next_ref(prefix, table, field='ref'):
     """Generate next sequential reference number."""
     result = query_db(f"SELECT {field} FROM {table} ORDER BY id DESC LIMIT 1", one=True)
     if result and result[field]:
-        parts = result[field].split('/')
+        parts = result[field].replace('-', '/').split('/')
         try:
             num = int(parts[-1]) + 1
         except (ValueError, IndexError):
-            num = 1
+            num = query_db(f"SELECT COUNT(*) as c FROM {table}", one=True)['c'] + 1
     else:
-        num = 1
+        num = query_db(f"SELECT COUNT(*) as c FROM {table}", one=True)['c'] + 1
     year = datetime.now().year
     return f"{prefix}/{year}/{num:04d}"
 
