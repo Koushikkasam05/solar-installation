@@ -9,7 +9,26 @@ const definitions = {
 };
 const info = definitions[role];
 async function loadDashboard() {
-  const data = await fetch(`/api/dashboard/${role}`).then(r => r.json());
+  const response = await fetch(`/api/dashboard/${role}`, { credentials: 'same-origin' });
+  if (response.status === 401) {
+    window.location.replace('/');
+    return;
+  }
+  if (!response.ok) {
+    document.getElementById('app').innerHTML = '<main class="dash-main"><h1>Access unavailable</h1><p>Please sign in again with an authorized account.</p><a href="/">Return to sign in</a></main>';
+    return;
+  }
+  const data = await response.json();
+  let customerName = 'Customer';
+  let business = null;
+  if (role === 'customer') {
+    const meResponse = await fetch('/api/auth/me', { credentials: 'same-origin' });
+    if (meResponse.ok) {
+      const me = await meResponse.json();
+      customerName = me.user.name || 'Customer';
+      business = me.user.business;
+    }
+  }
   const unread = data.notifications.length;
   const customerExtras = role === 'customer' ? customerExperience() : '';
   document.getElementById('app').innerHTML = `
@@ -17,7 +36,8 @@ async function loadDashboard() {
       <a class="dash-side-link active" href="${role}.html">⌂ &nbsp; Dashboard</a><a class="dash-side-link" href="quotation.html">▤ &nbsp; Quotations</a><a class="dash-side-link" href="survey.html">⌖ &nbsp; Site Surveys</a>
       <nav class="mobile-nav"><a href="${role}.html">⌂</a><a href="quotation.html">▤</a><a href="survey.html">⌖</a></nav>
     </aside>
-    <main class="dash-main"><header class="dash-top"><div><p class="eyebrow">${info.name}</p><h1>Namaste, ${info.user}</h1></div><div class="dash-actions"><button class="icon-button" title="Notifications" data-dashboard-action="notifications">🔔${unread ? `<span class="badge">${unread}</span>` : ''}</button><button class="icon-button" title="Profile" data-dashboard-action="profile">👤</button><button class="icon-button" title="Logout" data-dashboard-action="logout">↪</button></div></header>
+    <main class="dash-main"><header class="dash-top"><div><p class="eyebrow">${info.name}</p><h1>Namaste, ${role === 'customer' ? customerName : info.user}</h1></div><div class="dash-actions"><button class="icon-button" title="Notifications" data-dashboard-action="notifications">🔔${unread ? `<span class="badge">${unread}</span>` : ''}</button><button class="icon-button" title="Profile" data-dashboard-action="profile">👤</button><button class="icon-button" title="Logout" data-dashboard-action="logout">↪</button></div></header>
+    ${business ? `<section class="panel"><strong>${business.organization_name}</strong><p>B2B email: ${business.email_verified ? 'Verified' : 'Pending verification'} · Approval: ${business.approval_status} · Discount: ${Number(business.discount_percent || 0)}%</p></section>` : ''}
     ${role === 'customer' ? `<section class="customer-hero"><div><p class="eyebrow" style="color:#9fcdb1">YOUR SOLAR JOURNEY</p><h2>Your home is generating smarter energy.</h2><p>Installation 72% complete · Estimated commissioning in 8 days</p></div><div class="solar-score" aria-label="Project completion 84 percent"><span>84%</span></div></section>` : ''}
     <section class="metrics">${info.cards.map((card,i)=>`<div class="metric">${card}<strong>${[data.metrics.products,data.metrics.orders,data.metrics.surveys,data.metrics.warranties][i] ?? '—'}</strong><span>${i === 0 ? 'Current portfolio' : 'Updated now'}</span></div>`).join('')}</section>
     ${customerExtras}
@@ -53,7 +73,16 @@ function customerExperience() {
 function bindDashboardActions() {
   document.querySelectorAll('[data-dashboard-action]').forEach(button => button.addEventListener('click', () => {
     const action = button.dataset.dashboardAction;
-    if (action === 'logout') window.location.href = 'index.html';
+    if (action === 'logout') {
+      fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': sessionStorage.getItem('nexus-csrf') || '' },
+        credentials: 'same-origin'
+      }).finally(() => {
+        sessionStorage.clear();
+        window.location.replace('/');
+      });
+    }
     if (action === 'profile') alert('Profile settings are available from your secure customer workspace.');
     if (action === 'notifications') {
       document.querySelector('.panel-grid')?.scrollIntoView({behavior:'smooth'});

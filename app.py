@@ -4,7 +4,7 @@ import os
 import sqlite3
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from io import BytesIO
 
@@ -61,6 +61,15 @@ def initialize_database():
             role TEXT NOT NULL,
             approved INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            expires_at TEXT NOT NULL,
+            used INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES users(id)
         );
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -208,6 +217,18 @@ def initialize_database():
             connection.execute("ALTER TABLE quotation ADD COLUMN customer_user_id INTEGER")
         if "status" not in quote_columns:
             connection.execute("ALTER TABLE quotation ADD COLUMN status TEXT NOT NULL DEFAULT 'Draft'")
+        user_columns = {row["name"] for row in connection.execute("PRAGMA table_info(users)")}
+        if "account_type" not in user_columns:
+            connection.execute("ALTER TABLE users ADD COLUMN account_type TEXT NOT NULL DEFAULT 'customer'")
+        if "email_verified" not in user_columns:
+            connection.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1")
+        organization_columns = {row["name"] for row in connection.execute("PRAGMA table_info(b2b_organizations)")}
+        if "email_verified" not in organization_columns:
+            connection.execute("ALTER TABLE b2b_organizations ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0")
+        if "verification_code_hash" not in organization_columns:
+            connection.execute("ALTER TABLE b2b_organizations ADD COLUMN verification_code_hash TEXT")
+        if "discount_percent" not in organization_columns:
+            connection.execute("ALTER TABLE b2b_organizations ADD COLUMN discount_percent REAL NOT NULL DEFAULT 5")
         count = connection.execute("SELECT COUNT(*) FROM products").fetchone()[0]
         if count == 0:
             connection.executemany(
@@ -252,7 +273,7 @@ def current_user():
         return None
     with db() as connection:
         return connection.execute(
-            "SELECT id, email, name, role, approved FROM users WHERE id=? AND approved=1",
+            "SELECT id, email, name, role, approved, account_type, email_verified FROM users WHERE id=? AND approved=1",
             (session["user_id"],),
         ).fetchone()
 
@@ -276,7 +297,9 @@ def login_required(roles=None):
 
 @app.before_request
 def enforce_csrf():
-    if request.method in {"POST", "PUT", "PATCH", "DELETE"} and request.path == "/api/auth/login":
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"} and request.path in {
+        "/api/auth/login", "/api/auth/register", "/api/auth/forgot-password", "/api/auth/reset-password"
+    }:
         return None
     if request.method in {"POST", "PUT", "PATCH", "DELETE"} and session.get("user_id"):
         if request.headers.get("X-CSRF-Token") != session.get("csrf_token"):
@@ -310,12 +333,179 @@ def auth_logout():
     return jsonify({"ok": True})
 
 
+@app.post("/api/auth/register")
+def auth_register():
+    payload = request.get_json(silent=True) or {}
+    name = str(payload.get("name", "")).strip()
+    email = str(payload.get("email", "")).strip().lower()
+    password = str(payload.get("password", ""))
+    account_type = str(payload.get("accountType", "customer")).strip().lower()
+    organization_name = str(payload.get("organizationName", "")).strip()
+    if account_type not in {"customer", "b2b"}:
+        account_type = "customer"
+    if account_type == "b2b" and len(organization_name) < 2:
+        return jsonify({"error": "Organization name is required for a B2B account."}), 400
+
+    if len(name) < 2:
+        return jsonify({"error": "Please enter your full name."}), 400
+    if len(email) < 5 or "@" not in email or "." not in email:
+        return jsonify({"error": "Please enter a valid email address."}), 400
+    if len(password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters."}), 400
+
+    with db() as connection:
+        if connection.execute("SELECT 1 FROM users WHERE email=?", (email,)).fetchone():
+            return jsonify({"error": "An account already exists for this email."}), 409
+        connection.execute(
+            """INSERT INTO users(email, name, password_hash, role, approved, account_type, email_verified, created_at)
+               VALUES(?, ?, ?, 'customer', 1, ?, 0, ?)""",
+            (email, name, generate_password_hash(password), account_type, datetime.now().isoformat()),
+        )
+        user_id = connection.execute(
+            "SELECT id FROM users WHERE email=?", (email,)
+        ).fetchone()["id"]
+        verification_code = None
+        if account_type == "b2b":
+            verification_code = str(secrets.randbelow(900000) + 100000)
+            connection.execute(
+                """INSERT INTO b2b_organizations
+                   (id, organization_name, business_type, contact_person, business_email, phone,
+                    registered_address, gstin, documents_json, approval_status, email_verified,
+                    verification_code_hash, discount_percent, created_at)
+                   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 5, ?)""",
+                (uuid.uuid4().hex, organization_name, "Business organization", name, email, "",
+                 "", payload.get("gstin", ""), "[]", "Pending approval",
+                 hashlib.sha256(verification_code.encode()).hexdigest(), datetime.now().isoformat()),
+            )
+    session["user_id"] = user_id
+    session["csrf_token"] = secrets.token_urlsafe(32)
+    return jsonify({
+        "message": "Account created successfully.",
+        "csrfToken": session["csrf_token"],
+        "user": {"email": email, "name": name, "role": "customer"},
+        "accountType": account_type,
+        "emailVerificationRequired": account_type == "b2b",
+        "demoVerificationCode": verification_code if account_type == "b2b" and os.getenv("SUNPOWER_DEMO_EMAIL_VERIFY", "0") == "1" else None,
+    }), 201
+
+
+@app.post("/api/auth/forgot-password")
+def auth_forgot_password():
+    payload = request.get_json(silent=True) or {}
+    email = str(payload.get("email", "")).strip().lower()
+    with db() as connection:
+        user = connection.execute(
+            "SELECT id FROM users WHERE email=? AND approved=1", (email,)
+        ).fetchone()
+        reset_code = None
+        if user:
+            connection.execute(
+                "UPDATE password_reset_tokens SET used=1 WHERE user_id=? AND used=0",
+                (user["id"],),
+            )
+            reset_code = secrets.token_urlsafe(24)
+            connection.execute(
+                """INSERT INTO password_reset_tokens(user_id, token_hash, expires_at, created_at)
+                   VALUES(?, ?, ?, ?)""",
+                (user["id"], hashlib.sha256(reset_code.encode()).hexdigest(),
+                 (datetime.now() + timedelta(minutes=30)).isoformat(),
+                 datetime.now().isoformat()),
+            )
+
+    response = {"message": "If an account exists for that email, password reset instructions are ready."}
+    if reset_code and os.getenv("SUNPOWER_DEMO_RESET", "0") == "1":
+        response["demoResetCode"] = reset_code
+    return jsonify(response)
+
+
+@app.post("/api/auth/reset-password")
+def auth_reset_password():
+    payload = request.get_json(silent=True) or {}
+    reset_code = str(payload.get("code", "")).strip()
+    password = str(payload.get("password", ""))
+    if len(password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters."}), 400
+    if not reset_code:
+        return jsonify({"error": "Reset code is required."}), 400
+
+    token_hash = hashlib.sha256(reset_code.encode()).hexdigest()
+    with db() as connection:
+        token = connection.execute(
+            """SELECT id, user_id, expires_at FROM password_reset_tokens
+               WHERE token_hash=? AND used=0""", (token_hash,)
+        ).fetchone()
+        if not token or datetime.fromisoformat(token["expires_at"]) < datetime.now():
+            return jsonify({"error": "Reset code is invalid or has expired."}), 400
+        connection.execute(
+            "UPDATE users SET password_hash=? WHERE id=?",
+            (generate_password_hash(password), token["user_id"]),
+        )
+        connection.execute("UPDATE password_reset_tokens SET used=1 WHERE id=?", (token["id"],))
+    return jsonify({"message": "Password updated successfully. You can sign in now."})
+
+
 @app.get("/api/auth/me")
 def auth_me():
     user = current_user()
     if user is None:
         return jsonify({"authenticated": False}), 401
-    return jsonify({"authenticated": True, "user": dict(user)})
+    user_data = dict(user)
+    user_data["business"] = None
+    if user["account_type"] == "b2b":
+        with db() as connection:
+            business = connection.execute(
+                """SELECT organization_name, email_verified, approval_status, discount_percent
+                   FROM b2b_organizations WHERE business_email=?""",
+                (user["email"],),
+            ).fetchone()
+        if business:
+            user_data["business"] = dict(business)
+    return jsonify({"authenticated": True, "user": user_data})
+
+
+@app.post("/api/b2b/email/request-code")
+@login_required()
+def request_b2b_verification_code():
+    user = current_user()
+    if user["account_type"] != "b2b":
+        return jsonify({"error": "Email verification is only required for B2B accounts."}), 400
+    verification_code = str(secrets.randbelow(900000) + 100000)
+    verification_hash = hashlib.sha256(verification_code.encode()).hexdigest()
+    with db() as connection:
+        connection.execute(
+            "UPDATE b2b_organizations SET verification_code_hash=? WHERE business_email=?",
+            (verification_hash, user["email"]),
+        )
+    response = {"message": "A verification code has been generated for your business email."}
+    if os.getenv("SUNPOWER_DEMO_EMAIL_VERIFY", "0") == "1":
+        response["demoVerificationCode"] = verification_code
+    return jsonify(response)
+
+
+@app.post("/api/b2b/email/verify")
+@login_required()
+def verify_b2b_email():
+    payload = request.get_json(silent=True) or {}
+    code = str(payload.get("code", "")).strip()
+    if not code:
+        return jsonify({"error": "Verification code is required."}), 400
+    user = current_user()
+    token_hash = hashlib.sha256(code.encode()).hexdigest()
+    with db() as connection:
+        organization = connection.execute(
+            "SELECT id FROM b2b_organizations WHERE business_email=? AND verification_code_hash=?",
+            (user["email"], token_hash),
+        ).fetchone()
+        if organization is None:
+            return jsonify({"error": "Verification code is invalid or expired."}), 400
+        connection.execute(
+            "UPDATE b2b_organizations SET email_verified=1, verification_code_hash=NULL WHERE id=?",
+            (organization["id"],),
+        )
+        connection.execute(
+            "UPDATE users SET email_verified=1 WHERE id=?", (user["id"],)
+        )
+    return jsonify({"message": "Business email verified successfully.", "verified": True})
 
 
 def razorpay_configured():

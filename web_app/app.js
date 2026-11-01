@@ -380,9 +380,30 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeNexusExperience();
 });
 
-function initializeNexusExperience() {
+async function initializeNexusExperience() {
   const entry = document.getElementById('nexus-entry');
-  if (!entry || sessionStorage.getItem('nexus-entered') === 'true') entry?.remove();
+  try {
+    const response = await fetch('/api/auth/me', { credentials: 'same-origin' });
+    if (!response.ok) return;
+    const result = await response.json();
+    activateAuthenticatedRole(result.user.role, result.user);
+    entry?.remove();
+    if (result.user.role === 'customer' && !window.location.pathname.includes('customer.html')) {
+      window.location.replace('/customer.html');
+    }
+  } catch (error) {
+    console.warn('Authentication session could not be restored.', error);
+  }
+}
+
+function activateAuthenticatedRole(serverRole, user) {
+  const frontendRole = serverRole === 'technician' ? 'tech' : serverRole;
+  SolarFlowState.currentRole = frontendRole;
+  sessionStorage.setItem('nexus-role', frontendRole);
+  sessionStorage.setItem('nexus-entered', 'true');
+  applyRole(frontendRole);
+  const roleLabel = document.getElementById('authenticated-role-label');
+  if (roleLabel) roleLabel.textContent = `${(SolarFlowState.roles[frontendRole] || {}).name || frontendRole} · ${user?.name || user?.email || ''}`;
 }
 
 function openNexusLogin() {
@@ -399,9 +420,35 @@ function closeNexusLogin() {
   setTimeout(() => { if (login) login.hidden = true; }, 180);
 }
 
+function showAuthMode(mode) {
+  const login = document.getElementById('nexus-login-form');
+  const register = document.getElementById('nexus-register-form');
+  const forgot = document.getElementById('nexus-forgot-form');
+  login.hidden = mode !== 'login';
+  register.hidden = mode !== 'register';
+  forgot.hidden = mode !== 'forgot';
+  document.getElementById('auth-tab-login').classList.toggle('active', mode === 'login');
+  document.getElementById('auth-tab-register').classList.toggle('active', mode === 'register');
+  if (mode === 'forgot') document.getElementById('nexus-forgot-email').focus();
+  if (mode === 'login') document.getElementById('nexus-user').focus();
+  if (mode === 'register') document.getElementById('nexus-register-name').focus();
+}
+
+function toggleB2BRegistration(accountType) {
+  document.getElementById('nexus-b2b-fields').hidden = accountType !== 'b2b';
+}
+
+function setAuthMessage(id, message, type = 'error') {
+  const element = document.getElementById(id);
+  if (!element) return;
+  element.textContent = message;
+  element.className = `nexus-auth-message ${type}`;
+}
+
 async function completeNexusLogin() {
   const email = document.getElementById('nexus-user')?.value.trim();
   const password = document.getElementById('nexus-password')?.value;
+  setAuthMessage('nexus-login-message', '');
   try {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
@@ -418,9 +465,117 @@ async function completeNexusLogin() {
     if (entry) entry.classList.add('nexus-entering');
     setTimeout(() => entry?.remove(), 500);
     showToast(`Welcome back, ${result.user.name}`, 'success');
-    SolarFlowState.currentRole = result.user.role;
+    activateAuthenticatedRole(result.user.role, result.user);
+    if (result.user.role === 'customer') {
+      setTimeout(() => window.location.assign('/customer.html'), 350);
+    } else if (window.location.hash === '#dashboard' || !window.location.hash) {
+      window.location.replace('/#dashboard');
+    }
   } catch (error) {
-    showToast(error.message, 'error');
+    setAuthMessage('nexus-login-message', error.message);
+  }
+}
+
+async function registerNexusAccount(event) {
+  event.preventDefault();
+  const name = document.getElementById('nexus-register-name').value.trim();
+  const email = document.getElementById('nexus-register-email').value.trim();
+  const password = document.getElementById('nexus-register-password').value;
+  const confirm = document.getElementById('nexus-register-confirm').value;
+  const accountType = document.getElementById('nexus-register-type')?.value || 'customer';
+  const organizationName = document.getElementById('nexus-register-organization')?.value.trim();
+  const gstin = document.getElementById('nexus-register-gstin')?.value.trim();
+  if (password !== confirm) {
+    setAuthMessage('nexus-register-message', 'Passwords do not match.');
+    return;
+  }
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, accountType, organizationName, gstin })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Registration failed');
+    setAuthMessage('nexus-register-message', result.message, 'success');
+    document.getElementById('nexus-register-form').reset();
+    sessionStorage.setItem('nexus-entered', 'true');
+    sessionStorage.setItem('nexus-csrf', result.csrfToken);
+    sessionStorage.setItem('nexus-role', 'customer');
+    if (result.emailVerificationRequired) {
+      document.getElementById('nexus-email-verification').hidden = false;
+      if (result.demoVerificationCode) {
+        document.getElementById('nexus-verification-code').value = result.demoVerificationCode;
+        setAuthMessage('nexus-register-message', `Business email verified with code ${result.demoVerificationCode} (development mode).`, 'success');
+      } else {
+        setAuthMessage('nexus-register-message', 'Enter the verification code sent to your business email.', 'success');
+      }
+      return;
+    }
+    setTimeout(() => window.location.assign('/customer.html'), 300);
+  } catch (error) {
+    setAuthMessage('nexus-register-message', error.message);
+  }
+
+  async function completeB2BEmailVerification() {
+    const code = document.getElementById('nexus-verification-code').value.trim();
+    try {
+      const response = await fetch('/api/b2b/email/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': sessionStorage.getItem('nexus-csrf') || ''
+        },
+        body: JSON.stringify({ code })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Verification failed');
+      setAuthMessage('nexus-register-message', result.message, 'success');
+      setTimeout(() => window.location.assign('/customer.html'), 300);
+    } catch (error) {
+      setAuthMessage('nexus-register-message', error.message);
+    }
+  }
+}
+
+async function requestNexusPasswordReset(event) {
+  event.preventDefault();
+  const email = document.getElementById('nexus-forgot-email').value.trim();
+  try {
+    const response = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Reset request failed');
+    setAuthMessage('nexus-forgot-message', result.message, 'success');
+    if (result.demoResetCode) {
+      document.getElementById('nexus-demo-reset').hidden = false;
+      document.getElementById('nexus-reset-code').value = result.demoResetCode;
+      document.getElementById('nexus-forgot-submit').hidden = true;
+    }
+  } catch (error) {
+    setAuthMessage('nexus-forgot-message', error.message);
+  }
+}
+
+async function completeNexusPasswordReset() {
+  const code = document.getElementById('nexus-reset-code').value.trim();
+  const password = document.getElementById('nexus-reset-password').value;
+  try {
+    const response = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, password })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Password reset failed');
+    setAuthMessage('nexus-forgot-message', result.message, 'success');
+    document.getElementById('nexus-demo-reset').hidden = true;
+    document.getElementById('nexus-forgot-submit').hidden = false;
+  } catch (error) {
+    setAuthMessage('nexus-forgot-message', error.message);
   }
 }
 

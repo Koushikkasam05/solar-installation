@@ -24,7 +24,6 @@
       <h1>Solar operations,<br><em>engineered for impact.</em></h1>
       <p class="nexus-entry-copy">One intelligent platform for residential, commercial and enterprise solar delivery.</p>
       <div class="nexus-entry-actions">
-        <button class="nexus-primary" onclick="openNexusLogin()">Enter SunPower Nexus</button>
         <button class="nexus-text-button" onclick="document.getElementById('nexus-capabilities').scrollIntoView({behavior:'smooth'})">Explore platform <span>→</span></button>
       </div>
       <div class="nexus-proof" id="nexus-capabilities">
@@ -33,17 +32,75 @@
         <span><strong>24/7</strong> asset insights</span>
       </div>
     </div>
-    <div class="nexus-login-card" id="nexus-login-card" role="dialog" aria-modal="true" aria-labelledby="nexus-login-title" hidden>
+    <div class="nexus-login-card visible" id="nexus-login-card" role="dialog" aria-modal="true" aria-labelledby="nexus-login-title">
       <button class="nexus-login-close" onclick="closeNexusLogin()" aria-label="Close login">×</button>
       <p class="nexus-eyebrow">AUTHORIZED ACCESS</p>
-      <h2 id="nexus-login-title">Welcome back</h2>
-      <p>Sign in to your SunPower workspace.</p>
-      <label for="nexus-user">Work email</label>
-      <input id="nexus-user" type="email" autocomplete="username" value="admin@sunpower.local">
-      <label for="nexus-password">Password</label>
-      <input id="nexus-password" type="password" autocomplete="current-password" value="Solar@123">
-      <button class="nexus-primary nexus-login-submit" onclick="completeNexusLogin()">Sign in securely</button>
-      <button class="nexus-text-button nexus-customer-login" onclick="window.location.href='customer.html'">Continue as customer</button>
+      <div class="nexus-auth-tabs" role="tablist" aria-label="Account options">
+        <button type="button" class="active" onclick="showAuthMode('login')" id="auth-tab-login">Sign in</button>
+        <button type="button" onclick="showAuthMode('register')" id="auth-tab-register">Create account</button>
+      </div>
+
+      <form id="nexus-login-form" class="nexus-auth-form" onsubmit="event.preventDefault(); completeNexusLogin();">
+        <h2>Welcome back</h2>
+        <p>Sign in to your SunPower workspace.</p>
+        <label for="nexus-user">Email address</label>
+        <input id="nexus-user" type="email" autocomplete="username" required placeholder="you@example.com">
+        <div class="nexus-password-row">
+          <label for="nexus-password">Password</label>
+          <button type="button" class="nexus-link-button" onclick="showAuthMode('forgot')">Forgot password?</button>
+        </div>
+        <input id="nexus-password" type="password" autocomplete="current-password" required minlength="8" placeholder="Enter your password">
+        <p class="nexus-auth-message" id="nexus-login-message" role="alert" aria-live="polite"></p>
+        <button type="submit" class="nexus-primary nexus-login-submit">Sign in securely</button>
+      </form>
+
+      <form id="nexus-register-form" class="nexus-auth-form" hidden onsubmit="registerNexusAccount(event)">
+        <h2>Create your account</h2>
+        <p>Customer accounts are created immediately. Staff access requires administrator approval.</p>
+        <label for="nexus-register-name">Full name</label>
+        <input id="nexus-register-name" autocomplete="name" required minlength="2" placeholder="Your full name">
+        <label for="nexus-register-type">Account type</label>
+        <select id="nexus-register-type" onchange="toggleB2BRegistration(this.value)">
+          <option value="customer">Personal customer</option>
+          <option value="b2b">Business / B2B customer</option>
+        </select>
+        <div id="nexus-b2b-fields" hidden>
+          <label for="nexus-register-organization">Organization name</label>
+          <input id="nexus-register-organization" placeholder="Your company or organization">
+          <label for="nexus-register-gstin">GSTIN (optional)</label>
+          <input id="nexus-register-gstin" placeholder="22AAAAA0000A1Z5">
+        </div>
+        <label for="nexus-register-email">Email address</label>
+        <input id="nexus-register-email" type="email" autocomplete="email" required placeholder="you@example.com">
+        <label for="nexus-register-password">Password</label>
+        <input id="nexus-register-password" type="password" autocomplete="new-password" required minlength="8" placeholder="At least 8 characters">
+        <label for="nexus-register-confirm">Confirm password</label>
+        <input id="nexus-register-confirm" type="password" autocomplete="new-password" required minlength="8" placeholder="Repeat your password">
+        <p class="nexus-auth-message" id="nexus-register-message" role="alert" aria-live="polite"></p>
+        <button type="submit" class="nexus-primary nexus-login-submit">Create customer account</button>
+        <div id="nexus-email-verification" hidden>
+          <label for="nexus-verification-code">Business email verification code</label>
+          <input id="nexus-verification-code" autocomplete="off" inputmode="numeric">
+          <button type="button" class="nexus-primary nexus-login-submit" onclick="completeB2BEmailVerification()">Verify business email</button>
+        </div>
+      </form>
+
+      <form id="nexus-forgot-form" class="nexus-auth-form" hidden onsubmit="requestNexusPasswordReset(event)">
+        <h2>Reset your password</h2>
+        <p>Enter your account email to receive reset instructions.</p>
+        <label for="nexus-forgot-email">Email address</label>
+        <input id="nexus-forgot-email" type="email" autocomplete="email" required placeholder="you@example.com">
+        <p class="nexus-auth-message" id="nexus-forgot-message" role="alert" aria-live="polite"></p>
+        <div id="nexus-demo-reset" hidden>
+          <label for="nexus-reset-code">Reset code</label>
+          <input id="nexus-reset-code" autocomplete="off">
+          <label for="nexus-reset-password">New password</label>
+          <input id="nexus-reset-password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters">
+          <button type="button" class="nexus-primary nexus-login-submit" onclick="completeNexusPasswordReset()">Update password</button>
+        </div>
+        <button type="submit" class="nexus-primary nexus-login-submit" id="nexus-forgot-submit">Send reset code</button>
+        <button type="button" class="nexus-text-button nexus-back-login" onclick="showAuthMode('login')">Back to sign in</button>
+      </form>
     </div>
   </section>
   <div id="solarflow-app">
@@ -336,19 +393,11 @@
             </div>
           </div>
 
-          <!-- Active Role Switcher (RBAC Matrix) -->
-          <div class="role-badge-selector">
-            <label for="user-role-select">Role:</label>
-            <select id="user-role-select" class="role-dropdown-select">
-              <option value="admin">1. Super Administrator</option>
-              <option value="sales">2. Sales Manager</option>
-              <option value="survey_tech">3. Survey Technician</option>
-              <option value="warehouse">4. Warehouse Manager</option>
-              <option value="tech">5. Installation Technician</option>
-              <option value="support">6. Support Manager</option>
-              <option value="finance">7. Finance Manager</option>
-              <option value="director">8. Director / Investor (Read-Only)</option>
-            </select>
+          <div class="role-badge-selector" id="authenticated-role-badge">
+            <span class="status-pill pill-success">
+              <span>🔒</span>
+              <span id="authenticated-role-label">Authenticated role</span>
+            </span>
           </div>
 
           <!-- Executive Read-Only Indicator -->
