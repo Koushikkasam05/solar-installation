@@ -451,6 +451,10 @@ function showAuthMode(mode) {
 
 function toggleB2BRegistration(accountType) {
   document.getElementById('nexus-b2b-fields').hidden = accountType !== 'b2b';
+  const isBusiness = accountType === 'b2b';
+  document.getElementById('nexus-register-heading').textContent = isBusiness ? 'Create a business account' : 'Create your account';
+  document.querySelector('[for="nexus-register-name"]').textContent = isBusiness ? 'Contact person full name' : 'Full name';
+  document.getElementById('nexus-register-submit').textContent = isBusiness ? 'Create business account' : 'Create customer account';
 }
 
 function setAuthMessage(id, message, type = 'error') {

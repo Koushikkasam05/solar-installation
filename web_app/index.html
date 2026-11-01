@@ -55,7 +55,7 @@
       </form>
 
       <form id="nexus-register-form" class="nexus-auth-form" hidden onsubmit="registerNexusAccount(event)">
-        <h2>Create your account</h2>
+        <h2 id="nexus-register-heading">Create your account</h2>
         <p>Customer accounts are created immediately. Staff access requires administrator approval.</p>
         <label for="nexus-register-name">Full name</label>
         <input id="nexus-register-name" autocomplete="name" required minlength="2" placeholder="Your full name">
@@ -77,7 +77,7 @@
         <label for="nexus-register-confirm">Confirm password</label>
         <input id="nexus-register-confirm" type="password" autocomplete="new-password" required minlength="8" placeholder="Repeat your password">
         <p class="nexus-auth-message" id="nexus-register-message" role="alert" aria-live="polite"></p>
-        <button type="submit" class="nexus-primary nexus-login-submit">Create customer account</button>
+        <button type="submit" class="nexus-primary nexus-login-submit" id="nexus-register-submit">Create customer account</button>
       </form>
 
       <form id="nexus-forgot-form" class="nexus-auth-form" hidden onsubmit="requestNexusPasswordReset(event)">
