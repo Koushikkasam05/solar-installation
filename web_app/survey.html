@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Site survey | SolarFlow</title>
+  <link rel="stylesheet" href="app.css"><link rel="stylesheet" href="quotation.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+  <style>.survey-grid{grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr)}#roofMap{height:390px;border-radius:12px}.map-tools{display:flex;gap:8px;margin-bottom:10px}.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.report-grid textarea{min-height:75px;resize:vertical}.measurement{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.measurement div{background:#f2f7f4;border-radius:8px;padding:10px;font-size:12px}</style>
+</head>
+<body>
+  <header class="module-header"><a href="index.html" class="module-brand">☀ SolarFlow ERP</a><a href="index.html" class="back-link">← Dashboard</a></header>
+  <main class="module-layout survey-grid">
+    <section>
+      <div class="module-card">
+        <div class="module-heading"><div><p class="eyebrow">ROOFTOP INTELLIGENCE</p><h1>Request site visit</h1><p>Capture the location, draw roof boundaries when needed, and submit the technician report.</p></div></div>
+        <div class="form-grid"><label>Customer<input id="customerName" placeholder="Customer name"></label><label>Phone<input id="customerPhone" placeholder="+91"></label><label>Preferred date and time<input id="preferredAt" type="datetime-local"></label><label>Site address<input id="address" placeholder="Full site address"></label></div>
+        <div class="actions"><button class="primary-button" id="useLocation">Use my current location</button><button class="secondary-button" id="requestVisit">Request Site Visit</button></div>
+        <div class="notice" id="locationStatus">GPS supplies location only; it does not measure roof dimensions.</div>
+        <div class="map-tools"><button class="secondary-button" id="startDraw">Draw roof boundary</button><button class="secondary-button" id="clearDraw">Clear boundary</button></div>
+        <div id="roofMap"></div>
+        <p id="apiStatus" class="notice">Checking configured building insights…</p>
+      </div>
+    </section>
+    <aside>
+      <div class="module-card">
+        <p class="eyebrow">AUTOMATED DRAWING</p><h2>Roof measurements</h2>
+        <div class="measurement"><div><span>Area</span><strong id="roofArea">—</strong></div><div><span>Perimeter</span><strong id="roofPerimeter">—</strong></div><div><span>Est. capacity</span><strong id="roofCapacity">—</strong></div></div>
+        <div class="notice">Approximation assumes 75% usable roof area and 180 W/m². Verify on site.</div>
+        <h2>Survey report</h2>
+        <div class="report-grid">
+          <label>Roof condition<textarea id="roofCondition" placeholder="Condition and age"></textarea></label>
+          <label>Shading<textarea id="shading" placeholder="Direction and obstructions"></textarea></label>
+          <label>Orientation<input id="orientation"></label>
+          <label>Inclination (°)<input id="inclination" type="number"></label>
+          <label>Available area (m²)<input id="availableArea" type="number"></label>
+          <label>Cable distance (m)<input id="cableDistance" type="number"></label>
+          <label>Electrical condition<textarea id="electrical"></textarea></label>
+          <label>Earthing required<select id="earthingRequired"><option>No</option><option>Yes</option></select></label>
+          <label>Customer preferences<textarea id="preferences"></textarea></label>
+          <label>Additional remarks<textarea id="remarks"></textarea></label>
+        </div>
+        <label style="display:block;margin-top:12px">Survey photographs<input id="photos" type="file" accept="image/*" multiple></label>
+        <button class="primary-button" id="submitReport" style="width:100%;margin-top:16px">Submit survey report</button>
+        <p id="submissionStatus"></p>
+      </div>
+    </aside>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script src="survey.js"></script>
+</body>
+</html>

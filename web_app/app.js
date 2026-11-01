@@ -906,12 +906,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // SECURITY: Hide the ERP app and customer portal on initial load.
   // Show the login screen. Authentication is required before any data access.
   const loginScreen = document.getElementById('login-screen');
-  const erpApp      = document.getElementById('solarflow-app');
-  const portal      = document.getElementById('customer-portal');
+  const erpApp = document.getElementById('solarflow-app');
+  const portal = document.getElementById('customer-portal');
 
   if (loginScreen) loginScreen.style.display = 'flex';
-  if (erpApp)      erpApp.style.display      = 'none';
-  if (portal)      portal.style.display      = 'none';
+  if (erpApp) erpApp.style.display = 'none';
+  if (portal) portal.style.display = 'none';
 
   // Allow pressing Enter to submit login form
   const passInput = document.getElementById('login-password');
@@ -926,7 +926,62 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Enter') handleLogin();
     });
   }
+
+  setupSidebar();
+  setupRoleSwitcher();
+  setupGlobalSearch();
+  setupNotifications();
+  setupQuickCreate();
+  setupShowcaseTour();
+  initHashRouting();
+  renderRoleDashboard();
+  renderAllDataViews();
+  initializeNexusExperience();
 });
+
+function initializeNexusExperience() {
+  const entry = document.getElementById('nexus-entry');
+  if (!entry || sessionStorage.getItem('nexus-entered') === 'true') entry?.remove();
+}
+
+function openNexusLogin() {
+  const login = document.getElementById('nexus-login-card');
+  if (!login) return;
+  login.hidden = false;
+  setTimeout(() => login.classList.add('visible'), 20);
+  document.getElementById('nexus-user')?.focus();
+}
+
+function closeNexusLogin() {
+  const login = document.getElementById('nexus-login-card');
+  login?.classList.remove('visible');
+  setTimeout(() => { if (login) login.hidden = true; }, 180);
+}
+
+async function completeNexusLogin() {
+  const email = document.getElementById('nexus-user')?.value.trim();
+  const password = document.getElementById('nexus-password')?.value;
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ email, password })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Login failed');
+    sessionStorage.setItem('nexus-entered', 'true');
+    sessionStorage.setItem('nexus-csrf', result.csrfToken);
+    sessionStorage.setItem('nexus-role', result.user.role);
+    const entry = document.getElementById('nexus-entry');
+    if (entry) entry.classList.add('nexus-entering');
+    setTimeout(() => entry?.remove(), 500);
+    showToast(`Welcome back, ${result.user.name}`, 'success');
+    SolarFlowState.currentRole = result.user.role;
+  } catch (error) {
+    showToast(error.message, 'error');
+  }
+}
 
 // Setup Sidebar Toggle
 function setupSidebar() {
@@ -2413,6 +2468,19 @@ function populateGenericModule(mod) {
   if (title) title.textContent = mod.replace(/_/g, ' ').toUpperCase();
   if (desc) desc.textContent = `Operational records and synchronized Odoo datasets for ${mod}.`;
 
+  if (mod === 'b2b_portal') {
+    title.textContent = 'B2B Business Portal';
+    desc.textContent = 'Organization accounts, commercial quotations, bulk orders and installation sites.';
+    renderB2BPortal(content);
+    return;
+  }
+  if (mod === 'ai_business') {
+    title.textContent = 'Agentic Business Management';
+    desc.textContent = 'Evidence-based analysis coordinated by specialist agents and deterministic KPIs.';
+    renderAgenticBusiness(content);
+    return;
+  }
+
   if (content) {
     content.innerHTML = `
       <div style="padding:24px; text-align:center;">
@@ -2424,6 +2492,187 @@ function populateGenericModule(mod) {
         <button class="btn-primary-action" onclick="switchView('dashboard')">Return to Command Center</button>
       </div>
     `;
+  }
+
+  function renderB2BPortal(container) {
+    container.innerHTML = `
+      <div class="module-toolbar">
+        <div>
+          <span class="status-pill pill-success">Organization workspace</span>
+          <span style="margin-left:8px;color:var(--text-muted)">Tata Solar Works Pvt Ltd · Approved</span>
+        </div>
+        <button class="btn-primary-action" onclick="openB2BRegistration()">+ Register organization</button>
+      </div>
+      <div class="module-kpi-grid">
+        <div class="module-stat"><span>Active sites</span><strong>4</strong><small>2 states</small></div>
+        <div class="module-stat"><span>Open quotations</span><strong>3</strong><small>2 negotiated</small></div>
+        <div class="module-stat"><span>Purchase orders</span><strong>12</strong><small>₹48.6L value</small></div>
+        <div class="module-stat"><span>Outstanding</span><strong>₹7.2L</strong><small>Net 30 · On schedule</small></div>
+      </div>
+      <div class="b2b-layout">
+        <div class="content-card b2b-main-card">
+          <div class="module-card-header"><div><h3>Bulk order workspace</h3><p>Select products and quantities for a new site</p></div></div>
+          <div class="b2b-order-grid" id="b2b-order-grid"></div>
+          <div class="module-inline-actions">
+            <button class="btn-secondary-action" onclick="showToast('Draft saved locally','success')">Save draft</button>
+            <button class="btn-primary-action" onclick="showToast('Quotation request submitted for sales review','success')">Request quotation</button>
+          </div>
+        </div>
+        <div class="content-card b2b-side-card">
+          <div class="module-card-header"><h3>Organization profile</h3></div>
+          <dl class="profile-grid">
+            <dt>Business type</dt><dd>Commercial buyer</dd>
+            <dt>Contact</dt><dd>Meera Rao</dd>
+            <dt>Email</dt><dd>meera@tatasolar.example</dd>
+            <dt>Payment terms</dt><dd>Net 30 · approved</dd>
+            <dt>GSTIN</dt><dd>Not GST verified</dd>
+          </dl>
+          <div class="verification-note">GSTIN status is informational only until a verified GST service is integrated.</div>
+        </div>
+      </div>
+      <div class="module-table-grid">
+        <div class="content-card"><div class="module-card-header"><h3>Installation sites</h3></div><div id="b2b-sites"></div></div>
+        <div class="content-card"><div class="module-card-header"><h3>Recent commercial orders</h3></div><div id="b2b-orders"></div></div>
+      </div>
+    `;
+    renderB2BProducts();
+    renderB2BSites();
+    renderB2BOrders();
+  }
+
+  function renderB2BProducts() {
+    const grid = document.getElementById('b2b-order-grid');
+    if (!grid) return;
+    const products = [
+      ['540 W Mono PERC Panel', '₹18,500', 'MOQ 10'],
+      ['550 W TOPCon Panel', '₹20,500', 'MOQ 10'],
+      ['100 kW Commercial Inverter', '₹4.85L', 'MOQ 2'],
+      ['LiFePO4 Storage 30 kWh', '₹5.75L', 'MOQ 1']
+    ];
+    grid.innerHTML = products.map((p, i) => `
+      <label class="b2b-product"><span><strong>${p[0]}</strong><small>${p[1]} · ${p[2]}</small></span>
+        <input type="number" min="0" value="${i === 0 ? 20 : 0}" aria-label="Quantity for ${p[0]}">
+      </label>
+    `).join('');
+  }
+
+  function renderB2BSites() {
+    const el = document.getElementById('b2b-sites');
+    if (!el) return;
+    el.innerHTML = `
+      <div class="data-row"><span><strong>Bengaluru HQ</strong><small>250 kWp · Karnataka</small></span><span class="status-pill pill-success">Live</span></div>
+      <div class="data-row"><span><strong>Pune Warehouse</strong><small>150 kWp · Maharashtra</small></span><span class="status-pill pill-info">Survey</span></div>
+      <div class="data-row"><span><strong>Chennai Factory</strong><small>400 kWp · Tamil Nadu</small></span><span class="status-pill pill-warning">Design</span></div>
+    `;
+  }
+
+  function renderB2BOrders() {
+    const el = document.getElementById('b2b-orders');
+    if (!el) return;
+    el.innerHTML = `
+      <div class="data-row"><span><strong>PO-2026-0112</strong><small>₹12.4L · 18 Aug 2026</small></span><span class="status-pill pill-info">In transit</span></div>
+      <div class="data-row"><span><strong>PO-2026-0108</strong><small>₹18.9L · 02 Aug 2026</small></span><span class="status-pill pill-success">Delivered</span></div>
+      <div class="data-row"><span><strong>PO-2026-0097</strong><small>₹8.7L · 21 Jul 2026</small></span><span class="status-pill pill-warning">Invoice due</span></div>
+    `;
+  }
+
+  function openB2BRegistration() {
+    showModal(
+      'Register B2B Organization',
+      `<div class="form-grid">
+        <label>Organization name<input class="form-input" value="Tata Solar Works Pvt Ltd"></label>
+        <label>Business type<select class="form-input"><option>Commercial customer</option><option>Business organization</option><option>Dealer / distributor</option><option>Corporate buyer</option><option>Installation partner</option></select></label>
+        <label>Contact person<input class="form-input" value="Meera Rao"></label>
+        <label>Business email<input class="form-input" type="email" value="meera@tatasolar.example"></label>
+        <label>Phone<input class="form-input" value="+91 98765 43210"></label>
+        <label>GSTIN<input class="form-input" placeholder="Only if applicable"></label>
+        <label class="form-span-2">Registered address<textarea class="form-input" rows="2">Whitefield, Bengaluru</textarea></label>
+        <label class="form-span-2">Installation locations<textarea class="form-input" rows="2">Bengaluru HQ; Pune Warehouse; Chennai Factory</textarea></label>
+        <label class="form-span-2">Verification documents<input class="form-input" type="file" multiple></label>
+      </div>
+      <div class="verification-note">Submitted documents will remain pending until reviewed by an authorized administrator.</div>`,
+      () => showToast('Organization submitted for approval', 'success')
+    );
+  }
+
+  function renderAgenticBusiness(container) {
+    container.innerHTML = `
+      <div class="agent-status-bar">
+        <div><span class="agent-pulse"></span><strong>Manager Agent ready</strong><small>Deterministic KPI layer · Rule-based retrieval context</small></div>
+        <button class="btn-secondary-action" onclick="downloadAgentReport()">Download report</button>
+      </div>
+      <div class="module-kpi-grid agent-kpis">
+        <div class="module-stat"><span>Revenue MTD</span><strong>₹42.8L</strong><small class="trend-up">↑ 8.4%</small></div>
+        <div class="module-stat"><span>Quote conversion</span><strong>31.2%</strong><small class="trend-down">↓ 3.1 pts</small></div>
+        <div class="module-stat"><span>Gross margin</span><strong>18.7%</strong><small>Actual-period KPI</small></div>
+        <div class="module-stat"><span>Open risks</span><strong>6</strong><small>2 require attention</small></div>
+      </div>
+      <div class="agent-layout">
+        <div class="content-card agent-chat-card">
+          <div class="module-card-header"><div><h3>Management conversation</h3><p>Ask about sales, finance, inventory, customers, operations or risk</p></div></div>
+          <div class="agent-chat-history" id="agent-chat-history">
+            <div class="chat-message chat-assistant"><strong>Manager Agent</strong><p>I can analyze the business records loaded in SunPower Nexus. Ask about sales, stock shortages, margin, delays or pending complaints.</p></div>
+          </div>
+          <form class="agent-chat-form" onsubmit="askManagerAgent(event)">
+            <input id="agent-question" placeholder="Why did solar sales decrease this month?" autocomplete="off">
+            <button class="btn-primary-action" type="submit">Ask agents</button>
+          </form>
+          <div class="suggested-questions">
+            <button onclick="setAgentQuestion('Which products generate the highest gross margin?')">Top-margin products</button>
+            <button onclick="setAgentQuestion('Which installations are delayed?')">Delayed installations</button>
+            <button onclick="setAgentQuestion('Which warehouse has the highest stock shortage?')">Stock shortages</button>
+          </div>
+        </div>
+        <div class="agent-specialists">
+          <div class="specialist-card"><span>📈</span><div><strong>Sales Agent</strong><small>Leads, quotes, orders, demand</small></div></div>
+          <div class="specialist-card"><span>💰</span><div><strong>Finance Agent</strong><small>Margin, revenue, payments</small></div></div>
+          <div class="specialist-card"><span>📦</span><div><strong>Inventory Agent</strong><small>Stock, shortages, reorders</small></div></div>
+          <div class="specialist-card"><span>🤝</span><div><strong>Customer Agent</strong><small>Retention, complaints, feedback</small></div></div>
+          <div class="specialist-card"><span>⚙️</span><div><strong>Operations Agent</strong><small>Survey, delivery, installation</small></div></div>
+          <div class="specialist-card"><span>⚠️</span><div><strong>Risk Agent</strong><small>Financial and operational risks</small></div></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function setAgentQuestion(question) {
+    const input = document.getElementById('agent-question');
+    if (input) input.value = question;
+  }
+
+  async function askManagerAgent(event) {
+    event.preventDefault();
+    const input = document.getElementById('agent-question');
+    const history = document.getElementById('agent-chat-history');
+    if (!input || !input.value.trim() || !history) return;
+    const question = input.value.trim();
+    history.insertAdjacentHTML('beforeend', `<div class="chat-message chat-user">${escapeHTML(question)}</div>`);
+    input.value = '';
+    history.insertAdjacentHTML('beforeend', `<div class="chat-message chat-assistant" id="agent-thinking"><strong>Manager Agent</strong><p>Analyzing actual records…</p></div>`);
+    try {
+      const response = await fetch('/api/agent/analyze', {method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({question})});
+      const result = await response.json();
+      const thinking = document.getElementById('agent-thinking');
+      if (!response.ok) throw new Error(result.error || 'Analysis service unavailable');
+      if (thinking) thinking.innerHTML = formatAgentResponse(result);
+    } catch (error) {
+      const thinking = document.getElementById('agent-thinking');
+      if (thinking) thinking.innerHTML = `<strong>Analysis unavailable</strong><p>${escapeHTML(error.message)}</p><small>No rule-based analysis was substituted without clear labeling.</small>`;
+    }
+  }
+
+  function formatAgentResponse(result) {
+    const evidence = (result.evidence || []).join('; ');
+    const actions = (result.recommendations || []).join('; ');
+    return `<strong>Manager Agent · ${escapeHTML(result.mode || 'rule-based')}</strong>
+      <p>${escapeHTML(result.answer || '')}</p>
+      <div class="agent-evidence"><strong>Observed evidence</strong><p>${escapeHTML(evidence)}</p></div>
+      <div class="agent-evidence"><strong>Recommended action</strong><p>${escapeHTML(actions || 'Continue monitoring the underlying KPI.')}</p></div>
+      <small>Confidence: ${escapeHTML(result.confidence || 'Medium')} · Records considered: ${result.records_considered || 0} · Correlation is not presented as proven causation.</small>`;
+  }
+
+  function downloadAgentReport() {
+    window.location.href = '/api/agent/report.pdf';
   }
 }
 
