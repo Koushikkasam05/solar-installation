@@ -78,14 +78,8 @@ function bindDashboardActions() {
     if (action === 'logout') {
       button.disabled = true;
       button.textContent = 'Signing out...';
-      fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: { 'X-CSRF-Token': sessionStorage.getItem('nexus-csrf') || '' },
-        credentials: 'same-origin'
-      }).finally(() => {
-        sessionStorage.clear();
-        window.location.assign('/');
-      });
+      sessionStorage.clear();
+      window.location.assign('/api/auth/logout');
     }
     if (action === 'profile') alert('Profile settings are available from your secure customer workspace.');
     if (action === 'notifications') {

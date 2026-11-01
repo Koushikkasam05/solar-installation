@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from io import BytesIO
 
-from flask import Flask, jsonify, request, send_file, send_from_directory, session
+from flask import Flask, jsonify, redirect, request, send_file, send_from_directory, session
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 import secrets
@@ -326,10 +326,11 @@ def auth_login():
     })
 
 
-@app.post("/api/auth/logout")
-@login_required()
+@app.route("/api/auth/logout", methods=["GET", "POST"])
 def auth_logout():
     session.clear()
+    if request.method == "GET":
+        return redirect("/")
     return jsonify({"ok": True})
 
 
