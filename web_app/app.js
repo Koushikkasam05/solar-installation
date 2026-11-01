@@ -388,12 +388,27 @@ async function initializeNexusExperience() {
     const result = await response.json();
     activateAuthenticatedRole(result.user.role, result.user);
     entry?.remove();
-    if (result.user.role === 'customer' && !window.location.pathname.includes('customer.html')) {
-      window.location.replace('/customer.html');
-    }
+    redirectAuthenticatedRole(result.user.role);
   } catch (error) {
     console.warn('Authentication session could not be restored.', error);
   }
+}
+
+function redirectAuthenticatedRole(role) {
+  const rolePages = {
+    customer: '/customer.html',
+    admin: '/admin.html',
+    sales: '/sales.html',
+    warehouse: '/warehouse.html',
+    technician: '/technician.html',
+    support: '/support.html',
+    finance: '/dashboard.html?role=finance',
+    director: '/dashboard.html?role=director'
+  };
+  const target = rolePages[role];
+  if (!target) return;
+  const currentPath = `${window.location.pathname}${window.location.search}`;
+  if (currentPath !== target) window.location.replace(target);
 }
 
 function activateAuthenticatedRole(serverRole, user) {
@@ -466,11 +481,7 @@ async function completeNexusLogin() {
     setTimeout(() => entry?.remove(), 500);
     showToast(`Welcome back, ${result.user.name}`, 'success');
     activateAuthenticatedRole(result.user.role, result.user);
-    if (result.user.role === 'customer') {
-      setTimeout(() => window.location.assign('/customer.html'), 350);
-    } else if (window.location.hash === '#dashboard' || !window.location.hash) {
-      window.location.replace('/#dashboard');
-    }
+    setTimeout(() => redirectAuthenticatedRole(result.user.role), 350);
   } catch (error) {
     setAuthMessage('nexus-login-message', error.message);
   }

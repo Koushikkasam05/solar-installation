@@ -1125,7 +1125,7 @@ def notify(role, title, message, due_at=None):
 
 
 @app.get("/api/dashboard/<role>")
-@login_required(["admin", "warehouse", "sales", "technician", "support", "customer"])
+@login_required(["admin", "warehouse", "sales", "technician", "support", "finance", "director", "customer"])
 def dashboard(role):
     if request.user["role"] != "admin" and request.user["role"] != role:
         return jsonify({"error": "Forbidden"}), 403

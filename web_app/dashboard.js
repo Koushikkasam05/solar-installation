@@ -1,11 +1,13 @@
-const role = document.body.dataset.role || new URLSearchParams(location.search).get('role') || 'customer';
+const role = new URLSearchParams(location.search).get('role') || document.body.dataset.role || 'customer';
 const definitions = {
   customer: {name:'Customer', user:'Customer', cards:['Purchased products','Current orders','Warranty cards','Service history'], actions:['Raise complaint','Track complaint','Download quotation','Update profile']},
   warehouse: {name:'Warehouse Manager', user:'Sanjay Warehouse Manager', cards:['Total products','Available stock','Reserved stock','Low-stock alerts'], actions:['Check serial numbers','Assign delivery task','Create customer']},
   sales: {name:'Sales Team', user:'Vikram Sales Manager', cards:['New customers','Approved quotations','Confirmed orders','Completed deliveries'], actions:['Create customer','Assign delivery verification','View warehouse tasks']},
   technician: {name:'Technician', user:'Arun Survey Tech', cards:['Today’s tasks','Pending installations','Survey reports','Completed installations'], actions:['Navigate to site','Submit QC checklist','Customer verification']},
   support: {name:'Support Team', user:'Support Manager', cards:['New support tasks','Warranty issuance','Active warranties','Service tickets'], actions:['Issue warranty','Record acknowledgement','Create customer']},
-  admin: {name:'Super Admin', user:'System Administrator', cards:['Customers','Active orders','Completed installations','Pending installations'], actions:['Manage employees','Manage catalogue','Configure policies','View audit logs']}
+  admin: {name:'Super Admin', user:'System Administrator', cards:['Customers','Active orders','Completed installations','Pending installations'], actions:['Manage employees','Manage catalogue','Configure policies','View audit logs']},
+  finance: {name:'Finance Team', user:'Finance Manager', cards:['Invoices','Payments','Expenses','Project costing'], actions:['Approve payment','Review expenses','Export financial report','View costing']},
+  director: {name:'Director', user:'Director', cards:['Portfolio revenue','Active projects','Margin overview','Risk summary'], actions:['View executive reports','Review project performance']}
 };
 const info = definitions[role];
 async function loadDashboard() {
