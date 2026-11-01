@@ -6,6 +6,12 @@ async function api(url, options) {
   if (!response.ok) throw new Error(await response.text());
   return response.json();
 }
+function authHeaders(headers = {}) {
+  return {
+    ...headers,
+    'X-CSRF-Token': sessionStorage.getItem('nexus-csrf') || ''
+  };
+}
 async function load() {
   products = await api('/api/products');
   addProductRow();
@@ -38,19 +44,20 @@ function payload() {
   };
 }
 async function recalculate() {
-  const calculation = await api('/api/quotes/calculate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())});
+  const calculation = await api('/api/quotes/calculate', {method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify(payload())});
   savedQuote = null;
   document.getElementById('downloadPdf').disabled = true;
   document.getElementById('finalAmount').textContent = format(calculation.final_amount);
   document.getElementById('summaryRows').innerHTML = [
-    ['Products', calculation.products_total], ['Installation', calculation.installation],
+    ['Products', calculation.products_total], ['B2B discount', -calculation.b2b_discount],
+    ['Installation', calculation.installation],
     ['Transportation', calculation.transportation], ['Earthing', calculation.earthing],
     ['Other charges', calculation.other_charges], ['Tax', calculation.tax],
     ['Indicative subsidy', -calculation.subsidy], ['Estimated total', calculation.final_amount]
   ].map(([label,value]) => `<div class="summary-row"><span>${label}</span><strong>₹ ${format(value)}</strong></div>`).join('');
 }
 async function saveQuote() {
-  savedQuote = await api('/api/quotes', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())});
+  savedQuote = await api('/api/quotes', {method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify(payload())});
   document.getElementById('downloadPdf').disabled = false;
   document.getElementById('requestVisit').href = `survey.html?quotation=${savedQuote.id}`;
   alert(`Saved ${savedQuote.number}, version ${savedQuote.version}`);

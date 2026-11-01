@@ -619,7 +619,18 @@ def calculate_quote():
         )
         configured_cap = min(money(payload.get("subsidy_cap", 78000)), eligible_subtotal)
         subsidy = configured_cap if required_capacity <= Decimal("10") else min(configured_cap, money(eligible_subtotal * Decimal("0.30")))
-    final_amount = money(subtotal_before_tax + tax - subsidy)
+    b2b_discount = Decimal("0")
+    user = current_user()
+    if user and user["account_type"] == "b2b":
+        with db() as connection:
+            organization = connection.execute(
+                "SELECT discount_percent FROM b2b_organizations WHERE business_email=?",
+                (user["email"],),
+            ).fetchone()
+        discount_percent = Decimal(str(organization["discount_percent"] if organization else 0))
+        discount_base = subtotal_before_tax + tax - subsidy
+        b2b_discount = money(discount_base * discount_percent / Decimal("100"))
+    final_amount = money(subtotal_before_tax + tax - subsidy - b2b_discount)
     result = {
         "items": line_items,
         "products_total": float(products_total),
@@ -629,6 +640,8 @@ def calculate_quote():
         "other_charges": float(other_charges),
         "tax": float(tax),
         "subsidy": float(subsidy),
+        "b2b_discount": float(b2b_discount),
+        "b2b_discount_percent": float(discount_percent if 'discount_percent' in locals() else 0),
         "final_amount": float(final_amount),
         "assumptions": {
             "tax_rate": payload.get("tax_rate", 0.18),
