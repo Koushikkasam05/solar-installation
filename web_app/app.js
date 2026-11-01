@@ -513,16 +513,6 @@ async function registerNexusAccount(event) {
     sessionStorage.setItem('nexus-entered', 'true');
     sessionStorage.setItem('nexus-csrf', result.csrfToken);
     sessionStorage.setItem('nexus-role', 'customer');
-    if (result.emailVerificationRequired) {
-      document.getElementById('nexus-email-verification').hidden = false;
-      if (result.demoVerificationCode) {
-        document.getElementById('nexus-verification-code').value = result.demoVerificationCode;
-        setAuthMessage('nexus-register-message', `Business email verified with code ${result.demoVerificationCode} (development mode).`, 'success');
-      } else {
-        setAuthMessage('nexus-register-message', 'Enter the verification code sent to your business email.', 'success');
-      }
-      return;
-    }
     setTimeout(() => window.location.assign('/customer.html'), 300);
   } catch (error) {
     setAuthMessage('nexus-register-message', error.message);

@@ -78,11 +78,6 @@
         <input id="nexus-register-confirm" type="password" autocomplete="new-password" required minlength="8" placeholder="Repeat your password">
         <p class="nexus-auth-message" id="nexus-register-message" role="alert" aria-live="polite"></p>
         <button type="submit" class="nexus-primary nexus-login-submit">Create customer account</button>
-        <div id="nexus-email-verification" hidden>
-          <label for="nexus-verification-code">Business email verification code</label>
-          <input id="nexus-verification-code" autocomplete="off" inputmode="numeric">
-          <button type="button" class="nexus-primary nexus-login-submit" onclick="completeB2BEmailVerification()">Verify business email</button>
-        </div>
       </form>
 
       <form id="nexus-forgot-form" class="nexus-auth-form" hidden onsubmit="requestNexusPasswordReset(event)">

@@ -359,7 +359,7 @@ def auth_register():
             return jsonify({"error": "An account already exists for this email."}), 409
         connection.execute(
             """INSERT INTO users(email, name, password_hash, role, approved, account_type, email_verified, created_at)
-               VALUES(?, ?, ?, 'customer', 1, ?, 0, ?)""",
+               VALUES(?, ?, ?, 'customer', 1, ?, 1, ?)""",
             (email, name, generate_password_hash(password), account_type, datetime.now().isoformat()),
         )
         user_id = connection.execute(
@@ -373,7 +373,7 @@ def auth_register():
                    (id, organization_name, business_type, contact_person, business_email, phone,
                     registered_address, gstin, documents_json, approval_status, email_verified,
                     verification_code_hash, discount_percent, created_at)
-                   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 5, ?)""",
+                   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 5, ?)""",
                 (uuid.uuid4().hex, organization_name, "Business organization", name, email, "",
                  "", payload.get("gstin", ""), "[]", "Pending approval",
                  hashlib.sha256(verification_code.encode()).hexdigest(), datetime.now().isoformat()),
@@ -385,7 +385,7 @@ def auth_register():
         "csrfToken": session["csrf_token"],
         "user": {"email": email, "name": name, "role": "customer"},
         "accountType": account_type,
-        "emailVerificationRequired": account_type == "b2b",
+        "emailVerificationRequired": False,
         "demoVerificationCode": verification_code if account_type == "b2b" and os.getenv("SUNPOWER_DEMO_EMAIL_VERIFY", "0") == "1" else None,
     }), 201
 
