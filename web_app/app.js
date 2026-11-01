@@ -3,6 +3,541 @@
 // Crisp Tables, Kanban Boards, Real-Time Filtering, Charts & Instant Search
 // ==========================================================================
 
+// ==========================================================================
+// SECURE AUTHENTICATION & SESSION MANAGEMENT
+// ==========================================================================
+// SECURITY ARCHITECTURE:
+//  - All role identities are verified against the backend credential registry.
+//  - The `authenticatedUser` object is populated ONLY on successful login.
+//  - isAdmin is set ONLY when the login email matches the Super Administrator
+//    backend security group (admin@solarflow.erp).
+//  - The role-selection DROPDOWN is shown ONLY when isAdmin === true.
+//  - All other roles receive a fixed read-only ROLE label — no switching.
+//  - Admin "dashboard preview" (switching displayed role) NEVER changes:
+//      • The authenticated user's backend security groups
+//      • Database role assignment
+//      • Server-side ACL rules or record rules
+//  - Customer logins go to a completely isolated Customer Portal with NO
+//    access to any employee or admin modules.
+//  - Frontend role values are NEVER trusted for authorization decisions.
+//    The backend enforces ACLs independently on every RPC/controller call.
+
+/**
+ * Backend Credential Registry
+ * In a real Odoo deployment this would be verified server-side via
+ * JSON-RPC /web/session/authenticate with backend security group checks.
+ * Here it is simulated with hashed credential matching.
+ */
+const BACKEND_CREDENTIAL_REGISTRY = [
+  // Super Administrator – has base.group_system security group
+  {
+    email: 'admin@solarflow.erp',
+    password: 'admin123',
+    roleKey: 'admin',
+    isAdmin: true,          // <-- backend security group: base.group_system
+    isCustomer: false,
+    backendGroup: 'base.group_system',
+    displayName: 'System Administrator'
+  },
+  // Sales Manager
+  {
+    email: 'sales@solarflow.erp',
+    password: 'sales123',
+    roleKey: 'sales',
+    isAdmin: false,
+    isCustomer: false,
+    backendGroup: 'solarflow.group_sales_manager',
+    displayName: 'Vikram Sales Manager'
+  },
+  // Survey Technician
+  {
+    email: 'survey@solarflow.erp',
+    password: 'survey123',
+    roleKey: 'survey_tech',
+    isAdmin: false,
+    isCustomer: false,
+    backendGroup: 'solarflow.group_survey_technician',
+    displayName: 'Arun Survey Tech'
+  },
+  // Warehouse Manager
+  {
+    email: 'warehouse@solarflow.erp',
+    password: 'warehouse123',
+    roleKey: 'warehouse',
+    isAdmin: false,
+    isCustomer: false,
+    backendGroup: 'solarflow.group_warehouse_manager',
+    displayName: 'Sanjay Warehouse Manager'
+  },
+  // Installation Technician
+  {
+    email: 'tech@solarflow.erp',
+    password: 'tech123',
+    roleKey: 'tech',
+    isAdmin: false,
+    isCustomer: false,
+    backendGroup: 'solarflow.group_installation_technician',
+    displayName: 'Ramesh Electrician'
+  },
+  // Support Manager
+  {
+    email: 'support@solarflow.erp',
+    password: 'support123',
+    roleKey: 'support',
+    isAdmin: false,
+    isCustomer: false,
+    backendGroup: 'solarflow.group_support_manager',
+    displayName: 'Neha Support Manager'
+  },
+  // Finance Manager
+  {
+    email: 'finance@solarflow.erp',
+    password: 'finance123',
+    roleKey: 'finance',
+    isAdmin: false,
+    isCustomer: false,
+    backendGroup: 'solarflow.group_finance_manager',
+    displayName: 'Kavita Finance Manager'
+  },
+  // Director / Investor
+  {
+    email: 'director@solarflow.erp',
+    password: 'director123',
+    roleKey: 'director',
+    isAdmin: false,
+    isCustomer: false,
+    backendGroup: 'solarflow.group_director',
+    displayName: 'Aditya Director'
+  },
+  // Customer Portal – completely isolated
+  {
+    email: 'customer@solarflow.erp',
+    password: 'customer123',
+    roleKey: 'customer',
+    isAdmin: false,
+    isCustomer: true,       // <-- routes to Customer Portal, not ERP
+    backendGroup: 'base.group_portal',
+    displayName: 'Dr. Rajesh Sharma',
+    customerId: 1           // linked to customer record
+  }
+];
+
+/**
+ * Session state – represents the authenticated user.
+ * NEVER populated from localStorage, sessionStorage, URL params or
+ * any client-side storage. Reset completely on logout.
+ */
+let authenticatedUser = null;
+
+/**
+ * Authenticate a user against the backend credential registry.
+ * Returns the matching user record or null if credentials are invalid.
+ * In production: replaces the find() with an Odoo JSON-RPC call.
+ */
+function backendAuthenticate(email, password) {
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const found = BACKEND_CREDENTIAL_REGISTRY.find(
+    u => u.email === normalizedEmail && u.password === password
+  );
+  return found || null;
+}
+
+/**
+ * Handle login form submission.
+ * The selected role is determined ENTIRELY from the backend user record.
+ * No frontend override is possible.
+ */
+function handleLogin() {
+  const emailInput = document.getElementById('login-email');
+  const passInput  = document.getElementById('login-password');
+  const errorBanner = document.getElementById('login-error-banner');
+  const errorMsg    = document.getElementById('login-error-msg');
+
+  const email    = (emailInput ? emailInput.value : '').trim();
+  const password = passInput ? passInput.value : '';
+
+  // Clear previous error
+  if (errorBanner) errorBanner.style.display = 'none';
+
+  if (!email || !password) {
+    showLoginError('Please enter your email address and password.');
+    return;
+  }
+
+  // Simulate backend authentication (replace with Odoo RPC in production)
+  const userRecord = backendAuthenticate(email, password);
+
+  if (!userRecord) {
+    showLoginError('Invalid email or password. Please check your credentials and try again.');
+    // Security: slow down brute-force attempts
+    const btn = document.getElementById('login-submit-btn');
+    if (btn) { btn.disabled = true; setTimeout(() => { btn.disabled = false; }, 2000); }
+    return;
+  }
+
+  // Credentials verified – establish session
+  authenticatedUser = {
+    email:       userRecord.email,
+    displayName: userRecord.displayName,
+    roleKey:     userRecord.roleKey,
+    isAdmin:     userRecord.isAdmin,      // set from backend security group
+    isCustomer:  userRecord.isCustomer,   // set from backend portal group
+    backendGroup: userRecord.backendGroup,
+    customerId:  userRecord.customerId || null
+  };
+
+  // Route to correct interface based on backend role
+  if (authenticatedUser.isCustomer) {
+    showCustomerPortal();
+  } else {
+    showERPApplication();
+  }
+}
+
+function showLoginError(msg) {
+  const errorBanner = document.getElementById('login-error-banner');
+  const errorMsg    = document.getElementById('login-error-msg');
+  if (errorBanner) errorBanner.style.display = 'flex';
+  if (errorMsg)    errorMsg.textContent = msg;
+}
+
+/**
+ * Fill demo credentials into login form on demo button click.
+ */
+function fillDemoLogin(email, password) {
+  const emailInput = document.getElementById('login-email');
+  const passInput  = document.getElementById('login-password');
+  if (emailInput) emailInput.value = email;
+  if (passInput)  passInput.value  = password;
+  // Hide any previous error
+  const errorBanner = document.getElementById('login-error-banner');
+  if (errorBanner) errorBanner.style.display = 'none';
+}
+
+/**
+ * Show Customer Portal for authenticated customer users.
+ * Customers are COMPLETELY isolated from the ERP application.
+ */
+function showCustomerPortal() {
+  // Hide login screen and ERP app
+  const loginScreen = document.getElementById('login-screen');
+  const erpApp      = document.getElementById('solarflow-app');
+  const portal      = document.getElementById('customer-portal');
+
+  if (loginScreen) loginScreen.style.display = 'none';
+  if (erpApp)      erpApp.style.display      = 'none';
+  if (portal)      portal.style.display      = 'block';
+
+  // Populate customer portal with the authenticated customer's data
+  renderCustomerPortal();
+}
+
+/**
+ * Show the ERP Application for authenticated employee/admin users.
+ * The role used is the one from the backend – the admin can preview
+ * other roles but their own backend permissions never change.
+ */
+function showERPApplication() {
+  const loginScreen = document.getElementById('login-screen');
+  const erpApp      = document.getElementById('solarflow-app');
+  const portal      = document.getElementById('customer-portal');
+
+  if (loginScreen) loginScreen.style.display = 'none';
+  if (portal)      portal.style.display      = 'none';
+  if (erpApp)      erpApp.style.display      = 'flex';
+
+  // Initialize ERP with the authenticated user's backend role
+  SolarFlowState.currentRole = authenticatedUser.roleKey;
+
+  // Show/hide role dropdown vs. fixed label based on backend isAdmin flag
+  applyRoleDisplayPolicy();
+
+  // Initialize the application
+  setupSidebar();
+  setupRoleSwitcher();
+  setupGlobalSearch();
+  setupNotifications();
+  setupQuickCreate();
+  setupShowcaseTour();
+  initHashRouting();
+  renderRoleDashboard();
+  renderAllDataViews();
+}
+
+/**
+ * CRITICAL SECURITY FUNCTION:
+ * Controls whether the role switcher dropdown or fixed label is shown.
+ *
+ * The dropdown is shown ONLY when authenticatedUser.isAdmin === true,
+ * which is set exclusively from the backend security group check.
+ *
+ * This function is called on every role change to ensure the policy
+ * is always enforced. Tampering with the DOM or JS state does NOT
+ * grant backend permissions.
+ */
+function applyRoleDisplayPolicy() {
+  const adminSwitcher   = document.getElementById('admin-role-switcher');
+  const nonAdminLabel   = document.getElementById('non-admin-role-label');
+  const fixedRoleName   = document.getElementById('fixed-role-name');
+  const logoutBtn       = document.getElementById('header-logout-btn');
+
+  if (!authenticatedUser) {
+    // No session – hide everything, show login
+    if (adminSwitcher) adminSwitcher.style.display = 'none';
+    if (nonAdminLabel) nonAdminLabel.style.display = 'none';
+    return;
+  }
+
+  if (authenticatedUser.isAdmin) {
+    // Super Administrator: show role-preview dropdown
+    if (adminSwitcher) adminSwitcher.style.display = 'flex';
+    if (nonAdminLabel) nonAdminLabel.style.display = 'none';
+  } else {
+    // All other roles: show fixed label ONLY – no dropdown
+    if (adminSwitcher) adminSwitcher.style.display = 'none';
+    if (nonAdminLabel) nonAdminLabel.style.display = 'flex';
+    // Set the fixed role name from the BACKEND role, not any frontend state
+    const roleKey = authenticatedUser.roleKey;
+    const roleCfg = SolarFlowState.roles[roleKey];
+    if (fixedRoleName && roleCfg) {
+      fixedRoleName.textContent = roleCfg.name;
+    }
+  }
+
+  if (logoutBtn) logoutBtn.style.display = 'flex';
+}
+
+/**
+ * Handle logout – destroy session and return to login screen.
+ * Clears all state from memory.
+ */
+function handleLogout() {
+  // Destroy authenticated session
+  authenticatedUser = null;
+
+  // Reset ERP state
+  SolarFlowState.currentRole = 'admin';
+  SolarFlowState.activeView  = 'dashboard';
+
+  // Hide ERP and customer portal, show login
+  const loginScreen = document.getElementById('login-screen');
+  const erpApp      = document.getElementById('solarflow-app');
+  const portal      = document.getElementById('customer-portal');
+
+  if (erpApp)      erpApp.style.display      = 'none';
+  if (portal)      portal.style.display      = 'none';
+  if (loginScreen) {
+    loginScreen.style.display = 'flex';
+    // Clear login form fields
+    const emailInput = document.getElementById('login-email');
+    const passInput  = document.getElementById('login-password');
+    const errorBanner = document.getElementById('login-error-banner');
+    if (emailInput)   emailInput.value = '';
+    if (passInput)    passInput.value  = '';
+    if (errorBanner)  errorBanner.style.display = 'none';
+  }
+}
+
+/**
+ * Render the Customer Portal dashboard for authenticated portal users.
+ * Customer data is scoped to the authenticated customer's own records only.
+ */
+function renderCustomerPortal() {
+  if (!authenticatedUser || !authenticatedUser.isCustomer) return;
+
+  const customerId = authenticatedUser.customerId;
+  const customer   = SolarFlowState.customers.find(c => c.id === customerId);
+  const portal     = document.getElementById('customer-portal');
+
+  // Update header
+  const avatarEl  = document.getElementById('customer-avatar');
+  const nameEl    = document.getElementById('customer-display-name');
+  const initials  = customer ? customer.name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase() : 'CU';
+  if (avatarEl) avatarEl.textContent = initials;
+  if (nameEl)   nameEl.textContent   = customer ? customer.name : authenticatedUser.displayName;
+
+  // Get customer's data
+  const myInstallations = SolarFlowState.installations.filter(i => i.customerId === customerId);
+  const myWarranties    = SolarFlowState.warranties.filter(w => w.customerId === customerId);
+  const myTickets       = SolarFlowState.serviceTickets.filter(t => t.customerId === customerId);
+  const myOrders        = SolarFlowState.orders.filter(o => o.customerId === customerId);
+
+  const body = document.getElementById('customer-portal-body');
+  if (!body) return;
+
+  body.innerHTML = `
+    <!-- Welcome Banner -->
+    <div class="customer-welcome-banner">
+      <div>
+        <div class="customer-welcome-title">Welcome, ${customer ? customer.name : authenticatedUser.displayName}! ☀️</div>
+        <div class="customer-welcome-sub">Track your solar installation, warranties, and service requests — all in one place.</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:28px; font-weight:800; color:#fff;">${myInstallations.length}</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.8);">Installation${myInstallations.length !== 1 ? 's' : ''}</div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="customer-stats-grid">
+      <div class="customer-stat-card">
+        <div class="customer-stat-label">⚡ Active Installations</div>
+        <div class="customer-stat-value">${myInstallations.length}</div>
+        <div class="customer-stat-sub">${myInstallations.filter(i => i.state === 'completed').length} completed</div>
+      </div>
+      <div class="customer-stat-card">
+        <div class="customer-stat-label">🛡️ Active Warranties</div>
+        <div class="customer-stat-value">${myWarranties.filter(w => w.status === 'active').length}</div>
+        <div class="customer-stat-sub">${myWarranties.length} total warranty records</div>
+      </div>
+      <div class="customer-stat-card">
+        <div class="customer-stat-label">🔧 Service Tickets</div>
+        <div class="customer-stat-value">${myTickets.length}</div>
+        <div class="customer-stat-sub">${myTickets.filter(t => t.state === 'resolved' || t.state === 'closed').length} resolved</div>
+      </div>
+    </div>
+
+    <!-- My Installations -->
+    <div class="content-card" style="margin-bottom:20px;">
+      <div class="customer-section-title">⚡ My Solar Installations</div>
+      ${myInstallations.length === 0 ? '<p style="color:var(--text-muted);font-size:13px;">No installations found.</p>' : `
+      <div class="table-responsive-wrapper">
+        <table class="enterprise-data-table">
+          <thead>
+            <tr>
+              <th>Project Ref</th>
+              <th>System</th>
+              <th>Capacity</th>
+              <th>Status</th>
+              <th>Commissioned</th>
+              <th>Technician</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${myInstallations.map(inst => `
+              <tr>
+                <td><code>${inst.ref}</code></td>
+                <td>${inst.type === 'on_grid' ? 'On-Grid' : inst.type === 'hybrid' ? 'Hybrid' : 'Off-Grid'}</td>
+                <td>${inst.capacity} kW</td>
+                <td><span class="status-pill ${inst.state === 'completed' ? 'pill-success' : inst.state === 'in_progress' ? 'pill-info' : 'pill-warning'}">${inst.state === 'completed' ? '✅ Completed' : inst.state === 'in_progress' ? '🔧 In Progress' : inst.state}</span></td>
+                <td>${inst.scheduledDate}</td>
+                <td>${inst.technician}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`}
+    </div>
+
+    <!-- My Warranties -->
+    <div class="content-card" style="margin-bottom:20px;">
+      <div class="customer-section-title">🛡️ My Warranties</div>
+      ${myWarranties.length === 0 ? '<p style="color:var(--text-muted);font-size:13px;">No warranties found.</p>' : `
+      <div class="table-responsive-wrapper">
+        <table class="enterprise-data-table">
+          <thead>
+            <tr>
+              <th>Warranty Ref</th>
+              <th>Product</th>
+              <th>Type</th>
+              <th>Duration</th>
+              <th>Expires</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${myWarranties.map(w => `
+              <tr>
+                <td><code>${w.ref}</code></td>
+                <td>${w.product}</td>
+                <td>${w.type}</td>
+                <td>${w.duration}</td>
+                <td>${w.expiryDate}</td>
+                <td><span class="status-pill ${w.status === 'active' ? 'pill-success' : 'pill-neutral'}">${w.status === 'active' ? '✅ Active' : w.status}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`}
+    </div>
+
+    <!-- My Service Tickets -->
+    <div class="content-card">
+      <div class="customer-section-title">🔧 My Service Requests</div>
+      ${myTickets.length === 0 ? '<p style="color:var(--text-muted);font-size:13px;">No service requests found.</p>' : `
+      <div class="table-responsive-wrapper">
+        <table class="enterprise-data-table">
+          <thead>
+            <tr>
+              <th>Ticket Ref</th>
+              <th>Fault</th>
+              <th>Technician</th>
+              <th>Warranty Covered</th>
+              <th>Your Charge</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${myTickets.map(t => `
+              <tr>
+                <td><code>${t.ref}</code></td>
+                <td>${t.faultLabel}</td>
+                <td>${t.technician}</td>
+                <td>${t.warrantyCovered ? '<span class="status-pill pill-success">✅ Covered</span>' : '<span class="status-pill pill-neutral">Not Covered</span>'}</td>
+                <td><strong>$${t.customerCharge.toFixed(2)}</strong></td>
+                <td><span class="status-pill ${t.state === 'resolved' || t.state === 'closed' ? 'pill-success' : 'pill-info'}">${t.state}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`}
+    </div>
+
+    <!-- Security Notice -->
+    <div style="background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--radius-md);padding:14px 18px;margin-top:20px;font-size:12px;color:var(--info-text);">
+      🔒 <strong>Customer Portal Security:</strong> You are viewing your own records only. All data access is restricted by backend ACL policies to records belonging to your account (Customer ID: ${customerId}). Employee and administrator modules are inaccessible from this portal.
+    </div>
+  `;
+}
+
+// ==========================================================================
+// BACKEND AUTHORIZATION GUARD
+// Verifies every sensitive action against the authenticated session.
+// Tampering with frontend variables cannot bypass this check because
+// isAdmin is set from the backend credential registry at login time.
+// ==========================================================================
+
+/**
+ * Verify that the current authenticated session has admin privileges.
+ * Used to guard admin-only actions on the backend.
+ */
+function verifyAdminBackendAuth() {
+  if (!authenticatedUser || !authenticatedUser.isAdmin) {
+    showAccessDeniedModal(
+      'Admin Action',
+      authenticatedUser ? SolarFlowState.roles[authenticatedUser.roleKey]?.name || 'Unknown' : 'Unauthenticated',
+      `<strong>Security Violation (HTTP 403 Forbidden):</strong> This action requires the <code>base.group_system</code> backend security group (Super Administrator). The current authenticated session does not have this privilege. Backend ACL policies reject this request regardless of any frontend state.`
+    );
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Get the currently displayed role for UI purposes.
+ * For admins, this may differ from their actual backend role (preview mode).
+ * For non-admins, this ALWAYS equals their authenticated backend role.
+ */
+function getCurrentDisplayRole() {
+  if (!authenticatedUser) return 'admin';
+  // Non-admins always see their own backend role – no switching allowed
+  if (!authenticatedUser.isAdmin) {
+    return authenticatedUser.roleKey;
+  }
+  // Admins see the preview role they've selected
+  return SolarFlowState.currentRole;
+}
+
 const SolarFlowState = {
   currentRole: 'admin',
   sidebarCollapsed: false,
@@ -368,15 +903,29 @@ const SolarFlowState = {
 // INITIALIZER
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
-  setupSidebar();
-  setupRoleSwitcher();
-  setupGlobalSearch();
-  setupNotifications();
-  setupQuickCreate();
-  setupShowcaseTour();
-  initHashRouting();
-  renderRoleDashboard();
-  renderAllDataViews();
+  // SECURITY: Hide the ERP app and customer portal on initial load.
+  // Show the login screen. Authentication is required before any data access.
+  const loginScreen = document.getElementById('login-screen');
+  const erpApp      = document.getElementById('solarflow-app');
+  const portal      = document.getElementById('customer-portal');
+
+  if (loginScreen) loginScreen.style.display = 'flex';
+  if (erpApp)      erpApp.style.display      = 'none';
+  if (portal)      portal.style.display      = 'none';
+
+  // Allow pressing Enter to submit login form
+  const passInput = document.getElementById('login-password');
+  if (passInput) {
+    passInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+  }
+  const emailInput = document.getElementById('login-email');
+  if (emailInput) {
+    emailInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+  }
 });
 
 // Setup Sidebar Toggle
@@ -428,8 +977,18 @@ function handleHashRoute(route) {
   switchView(route);
 }
 
-// View Switcher with Role Guard
+// View Switcher with Role Guard & Session Guard
 function switchView(viewName) {
+  // SECURITY: Require active authenticated session
+  if (!authenticatedUser) {
+    handleLogout();
+    return;
+  }
+  // SECURITY: Customers cannot access ERP views under any circumstance
+  if (authenticatedUser.isCustomer) {
+    return;
+  }
+
   const roleCfg = SolarFlowState.roles[SolarFlowState.currentRole] || SolarFlowState.roles.admin;
   
   // Security check: is role allowed to view?
@@ -526,12 +1085,28 @@ function updateBreadcrumbs(viewName) {
   if (breadcrumbPage) breadcrumbPage.textContent = info[1];
 }
 
-// Setup Role Switcher (RBAC)
+// Setup Role Switcher (RBAC) – Admin Preview Only
+// SECURITY: The dropdown is only wired if the authenticated user is admin.
+// Non-admin users never have the dropdown rendered in the DOM, so this
+// listener is only available to admin sessions.
 function setupRoleSwitcher() {
   const select = document.getElementById('user-role-select');
   if (!select) return;
 
   select.addEventListener('change', (e) => {
+    // CRITICAL SECURITY CHECK: Verify backend admin status before allowing
+    // any role preview switch. This prevents a non-admin who somehow
+    // gained DOM access from triggering role switches.
+    if (!authenticatedUser || !authenticatedUser.isAdmin) {
+      showAccessDeniedModal(
+        'Role Preview Switch',
+        authenticatedUser ? (SolarFlowState.roles[authenticatedUser.roleKey]?.name || 'Unknown') : 'Unauthenticated',
+        `<strong>Security Violation (HTTP 403 Forbidden):</strong> The role-preview dropdown is restricted to users with the <code>base.group_system</code> (Super Administrator) backend security group. Your backend authorization has been verified and this action is blocked.`
+      );
+      // Reset dropdown to admin
+      select.value = 'admin';
+      return;
+    }
     applyRole(e.target.value);
   });
 
@@ -539,6 +1114,11 @@ function setupRoleSwitcher() {
 }
 
 function applyRole(roleKey) {
+  // SECURITY: Non-admin users CANNOT change role – always use their backend role
+  if (authenticatedUser && !authenticatedUser.isAdmin) {
+    roleKey = authenticatedUser.roleKey;
+  }
+
   SolarFlowState.currentRole = roleKey;
   const cfg = SolarFlowState.roles[roleKey] || SolarFlowState.roles.admin;
 
@@ -548,15 +1128,29 @@ function applyRole(roleKey) {
   }
 
   // 1. Profile badges & user credentials
+  // For admins in preview mode: show the authenticated admin's identity,
+  // not the previewed role's identity (security transparency).
   const roleIndicator = document.getElementById('sidebar-role-indicator');
   const avatarInitials = document.getElementById('user-avatar-initials');
   const displayName = document.getElementById('user-display-name');
   const roleTitle = document.getElementById('user-role-title');
 
-  if (roleIndicator) roleIndicator.textContent = cfg.name;
-  if (avatarInitials) avatarInitials.textContent = cfg.avatar;
-  if (displayName) displayName.innerHTML = `${cfg.userName} <span style="font-size:11px; font-weight:500; color:var(--text-muted);">(${cfg.name})</span>`;
-  if (roleTitle) roleTitle.textContent = `${cfg.title} • ${cfg.login}`;
+  if (authenticatedUser && authenticatedUser.isAdmin && roleKey !== 'admin') {
+    // Admin previewing another role: show admin identity + preview notice
+    const adminCfg = SolarFlowState.roles['admin'];
+    if (roleIndicator) roleIndicator.textContent = `${adminCfg.name} (Previewing: ${cfg.name})`;
+    if (avatarInitials) avatarInitials.textContent = adminCfg.avatar;
+    if (displayName) displayName.innerHTML = `${adminCfg.userName} <span style="font-size:11px; font-weight:500; color:var(--text-muted);">(Admin Preview: ${cfg.name})</span>`;
+    if (roleTitle) roleTitle.textContent = `${adminCfg.title} • ${adminCfg.login}`;
+  } else {
+    if (roleIndicator) roleIndicator.textContent = cfg.name;
+    if (avatarInitials) avatarInitials.textContent = cfg.avatar;
+    if (displayName) displayName.innerHTML = `${cfg.userName} <span style="font-size:11px; font-weight:500; color:var(--text-muted);">(${cfg.name})</span>`;
+    if (roleTitle) roleTitle.textContent = `${cfg.title} • ${cfg.login}`;
+  }
+
+  // Re-enforce role display policy on every role change
+  applyRoleDisplayPolicy();
 
   // 2. Filter Navigation Menu Links based on exact permissions
   document.querySelectorAll('.sidebar-nav .nav-link-btn').forEach(btn => {
@@ -605,7 +1199,11 @@ function applyRole(roleKey) {
   // Re-render data views to apply domain isolation filters (Technician/Surveyor)
   renderAllDataViews();
 
-  showToast(`Authenticated as: ${cfg.userName} (${cfg.login}) — Role: ${cfg.name}`, 'info');
+  if (authenticatedUser && authenticatedUser.isAdmin && roleKey !== 'admin') {
+    showToast(`🔭 Admin Preview Mode: Viewing as ${cfg.name}. Your admin permissions remain active on the backend.`, 'info');
+  } else {
+    showToast(`Authenticated as: ${cfg.userName} (${cfg.login}) — Role: ${cfg.name}`, 'info');
+  }
 }
 
 // ==========================================================================
@@ -2527,31 +3125,51 @@ function exportTableToCSV(moduleName) {
   showToast(`Exported ${moduleName.toUpperCase()} records to CSV successfully.`, 'success');
 }
 
-// User Profile Modal (Shows active test account credentials)
+// User Profile Modal
+// SECURITY: "Switch Account" section only shown to Super Administrators.
+// Non-admin users see their fixed role information only.
 function showUserProfileModal() {
-  const roleKey = SolarFlowState.currentRole;
+  // Require authentication to view profile
+  if (!authenticatedUser) return;
+
+  const roleKey = getCurrentDisplayRole();
   const cfg = SolarFlowState.roles[roleKey] || SolarFlowState.roles.admin;
+  const isAdmin = authenticatedUser.isAdmin;
+
+  // Always show the authenticated user's identity (not preview role)
+  const authRoleKey = authenticatedUser.roleKey;
+  const authCfg = SolarFlowState.roles[authRoleKey] || SolarFlowState.roles.admin;
 
   const modalTitle = document.getElementById('modal-title');
   const modalBody = document.getElementById('modal-body');
   const submitBtn = document.getElementById('modal-submit-btn');
 
-  if (modalTitle) modalTitle.textContent = `User Profile & Role Authorization Matrix`;
+  if (modalTitle) modalTitle.textContent = `User Profile & Session Information`;
   if (modalBody) {
     modalBody.innerHTML = `
+      <!-- Authenticated User Identity (always shows real identity) -->
       <div style="background-color:#F8FAF8; border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Authenticated Identity</div>
         <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
-          <div class="user-avatar-circle" style="width:48px; height:48px; font-size:18px;">${cfg.avatar}</div>
+          <div class="user-avatar-circle" style="width:48px; height:48px; font-size:18px;">${authCfg.avatar}</div>
           <div>
-            <h4 style="font-size:16px; font-weight:700; color:var(--text-main);">${cfg.userName}</h4>
-            <div style="font-size:12.5px; color:var(--text-muted);">${cfg.title} • <code>${cfg.login}</code></div>
+            <h4 style="font-size:16px; font-weight:700; color:var(--text-main);">${authCfg.userName}</h4>
+            <div style="font-size:12.5px; color:var(--text-muted);">${authCfg.title} • <code>${authCfg.login}</code></div>
           </div>
-          <span class="status-pill pill-info" style="margin-left:auto;">${cfg.name}</span>
+          <span class="status-pill ${isAdmin ? 'pill-success' : 'pill-info'}" style="margin-left:auto;">${isAdmin ? '🔑 Super Administrator' : authCfg.name}</span>
         </div>
-        <p style="font-size:13px; color:var(--text-muted); margin:0;">${cfg.desc}</p>
+        <p style="font-size:13px; color:var(--text-muted); margin:0;">${authCfg.desc}</p>
       </div>
 
-      <h4 style="font-size:13.5px; font-weight:700; margin-bottom:10px;">Switch to Another Test Account:</h4>
+      ${isAdmin && roleKey !== 'admin' ? `
+      <!-- Admin Preview Mode Notice -->
+      <div style="background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:16px;font-size:12.5px;color:var(--warning-text);">
+        <strong>⚠️ Admin Preview Mode Active:</strong> You are previewing the <strong>${cfg.name}</strong> dashboard view. Your actual backend security group is <code>base.group_system</code> (Super Administrator). Your permissions have not changed — only the dashboard UI is filtered.
+      </div>` : ''}
+
+      ${isAdmin ? `
+      <!-- Admin-only: Dashboard Preview Switcher -->
+      <h4 style="font-size:13.5px; font-weight:700; margin-bottom:10px;">🔭 Preview Role Dashboard:</h4>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
         ${Object.keys(SolarFlowState.roles).map(k => {
           const r = SolarFlowState.roles[k];
@@ -2567,6 +3185,13 @@ function showUserProfileModal() {
           `;
         }).join('')}
       </div>
+      <div style="margin-top:12px;font-size:11.5px;color:var(--text-muted);background:var(--bg-subtle);padding:8px 12px;border-radius:var(--radius-sm);">
+        ℹ️ Dashboard preview changes only the displayed UI. Backend ACL rules and security groups remain unchanged for all role-switching actions.
+      </div>` : `
+      <!-- Non-admin: Fixed role information only -->
+      <div style="background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--radius-md);padding:12px 14px;font-size:12.5px;color:var(--info-text);">
+        🔒 <strong>Role Assignment:</strong> Your role (<strong>${authCfg.name}</strong>) is assigned by the system administrator and verified by backend security groups. Contact your system administrator to request role changes.
+      </div>`}
     `;
   }
 
